@@ -2,35 +2,36 @@
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common;
+using Apps.Marketo.Dtos;
+using Blackbird.Applications.Sdk.Common.Invocation;
+using Apps.Marketo.Models.Requests;
+using Apps.Marketo.Models.Responses;
 
 namespace Apps.Marketo
 {
     [ActionList]
-    public class Actions
+    public class Actions : BaseInvocable
     {
-        [Action]
-        public FileResponse fetchFile(IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders, [ActionParameter] string id)
+        public Actions(InvocationContext invocationContext) : base(invocationContext)
         {
-            var client = new MarketoClient(authenticationCredentialsProviders: authenticationCredentialsProviders);
-            var clientId = authenticationCredentialsProviders.First(v => v.KeyName == "clientId");
-            var clientSecret = authenticationCredentialsProviders.First(v => v.KeyName == "clientSecret");
+        }
 
-            var authRequest = new RestRequest("/identity/oauth/token", Method.Get);
-            authRequest.AddQueryParameter("grant_type", "client_credentials");
-            authRequest.AddQueryParameter("client_id", $"{clientId}");
-            authRequest.AddQueryParameter("client_secret", $"{clientSecret}");
+        [Action("List all files", Description = "List all files")]
+        public ListFilesResponse ListFiles()
+        {
+            var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
+            var request = new MarketoRequest($"/rest/asset/v1/files.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
+            var response = client.Execute<FetchFileDto>(request);
+            return new ListFilesResponse() { Files = response.Data.Result };
+        }
 
-            var authResponse = client.Execute<AuthResponse>(authRequest);
-            if (authResponse.Data == null) throw new Exception("auth response was null");
-            var accessToken = authResponse.Data.AccessToken;
-
-            var request = new RestRequest($"/rest/asset/v1/file/{id}.json", Method.Get);
-            request.AddQueryParameter("access_token", accessToken);
-
-            var response = client.Execute<FetchFileResponse>(request);
-            if (response.Data == null) throw new Exception("response data was null");
-
-            return response.Data.Result[0];
+        [Action("Get file info", Description = "Get file info")]
+        public FileResponse GetFileInfo([ActionParameter] GetFileInfoRequest input)
+        { 
+            var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
+            var request = new MarketoRequest($"/rest/asset/v1/file/{input.FileId}.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
+            var response = client.Execute<FetchFileDto>(request);
+            return response.Data.Result.First();
         }
     }
 }

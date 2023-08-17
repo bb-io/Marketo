@@ -10,12 +10,12 @@ namespace Apps.Marketo
         {
             new ConnectionPropertyGroup
             {
-                Name = "non-oauth",
+                Name = "OAuth",
                 AuthenticationType = ConnectionAuthenticationType.Undefined,
                 ConnectionUsage = ConnectionUsage.Actions,
                 ConnectionProperties = new List<ConnectionProperty>()
                 {
-                    new ConnectionProperty("munchkin"),
+                    new ConnectionProperty("url"),
                     new ConnectionProperty("clientId"),
                     new ConnectionProperty("clientSecret")
                 }
@@ -25,21 +25,21 @@ namespace Apps.Marketo
         public IEnumerable<AuthenticationCredentialsProvider> CreateAuthorizationCredentialsProviders(Dictionary<string, string> values)
         {
             yield return new AuthenticationCredentialsProvider(
-                AuthenticationCredentialsRequestLocation.Header,
+                AuthenticationCredentialsRequestLocation.Body,
                 "clientId",
                 values["clientId"]
             );
 
             yield return new AuthenticationCredentialsProvider(
-                AuthenticationCredentialsRequestLocation.Header,
+                AuthenticationCredentialsRequestLocation.Body,
                 "clientSecret",
                 values["clientSecret"]
             );
 
             yield return new AuthenticationCredentialsProvider(
                 AuthenticationCredentialsRequestLocation.QueryString,
-                "munchkin",
-                 values["munchkin"]
+                "url",
+                 values["url"]
              );
         }
     }
