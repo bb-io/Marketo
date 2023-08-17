@@ -1,0 +1,10 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/Apps.Marketo/Test/Test.csproj
+/Apps.Marketo/Apps.Marketo/bin
+/Apps.Marketo/.vs
+/Apps.Marketo/Apps.Marketo/obj
+/Apps.Marketo/Apps.Marketo/Properties/PublishProfiles
+/Apps.Marketo/Test
