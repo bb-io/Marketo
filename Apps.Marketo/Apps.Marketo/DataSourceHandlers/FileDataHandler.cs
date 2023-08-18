@@ -22,8 +22,8 @@ namespace Apps.Marketo.DataSourceHandlers
         {
             var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
             var request = new MarketoRequest($"/rest/asset/v1/files.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
-            var response = client.Execute<FetchFileDto>(request);
-            return response.Data.Result.ToDictionary(k => k.Id.ToString(), v => v.Name);
+            var response = client.Execute<BaseResponseDto<FileInfoDto>>(request);
+            return response.Data.Result.Where(str => str.Name.Contains(context.SearchString)).ToDictionary(k => k.Id.ToString(), v => v.Name);
         }
     }
 }

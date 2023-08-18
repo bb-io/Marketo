@@ -7,12 +7,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Apps.Marketo.Models.Requests
+namespace Apps.Marketo.Models.Folder.Requests
 {
-    public class GetFileInfoRequest
+    public class GetFolderInfoRequest
     {
-        [Display("File")]
-        [DataSource(typeof(FileDataHandler))]
-        public string FileId { get; set; }
+        [Display("Folder")]
+        [DataSource(typeof(FolderDataHandler))]
+        public string FolderId { get; set; }
     }
 }

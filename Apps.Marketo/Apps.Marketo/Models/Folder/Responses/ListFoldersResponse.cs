@@ -5,10 +5,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Apps.Marketo.Models.Responses
+namespace Apps.Marketo.Models.Folder.Responses
 {
-    public class ListFilesResponse
+    public class ListFoldersResponse
     {
-        public IEnumerable<FileResponse> Files { get; set; }
+        public IEnumerable<FolderInfoDto> Folders { get; set; }
     }
 }
