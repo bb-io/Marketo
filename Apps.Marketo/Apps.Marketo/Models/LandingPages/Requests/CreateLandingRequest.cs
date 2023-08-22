@@ -34,7 +34,9 @@ namespace Apps.Marketo.Models.LandingPages.Requests
         [Display("Prefill form")]
         public bool? PrefillForm { get; set; }
         public string? Robots { get; set; }
-        public int Template { get; set; }
+
+        [DataSource(typeof(LandingPageTemplateDataHandler))]
+        public string Template { get; set; }
         public string? Title { get; set; }
 
         [Display("Url page name")]

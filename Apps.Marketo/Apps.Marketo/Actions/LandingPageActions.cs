@@ -38,7 +38,7 @@ namespace Apps.Marketo.Actions
         }
 
         [Action("Get landing page info", Description = "Get landing page info")]
-        public LandingPageDto GetFolderInfo([ActionParameter] GetLandingInfoRequest input)
+        public LandingPageDto GetLandingInfo([ActionParameter] GetLandingInfoRequest input)
         {
             var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
             var request = new MarketoRequest($"/rest/asset/v1/landingPage/{input.Id}.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
@@ -47,7 +47,7 @@ namespace Apps.Marketo.Actions
         }
 
         [Action("Create landing page", Description = "Create landing page")]
-        public FolderInfoDto CreateFolder([ActionParameter] CreateLandingRequest input)
+        public LandingPageDto CreateLandingPage([ActionParameter] CreateLandingRequest input)
         {
             var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
             var request = new MarketoRequest($"/rest/asset/v1/landingPages.json", Method.Post, InvocationContext.AuthenticationCredentialsProviders);
@@ -58,7 +58,7 @@ namespace Apps.Marketo.Actions
             request.AddParameter("mobileEnabled", input.MobileEnabled ?? false);
             request.AddParameter("prefillForm", input.PrefillForm ?? false);
             if (input.Robots != null) request.AddParameter("robots", input.Robots);
-            request.AddParameter("template", input.Template);
+            request.AddParameter("template", int.Parse(input.Template));
             if (input.Title != null) request.AddParameter("title", input.Title);
             if (input.UrlPageName != null) request.AddParameter("urlPageName", input.UrlPageName);
             if (input.Workspace != null) request.AddParameter("workspace", input.Workspace);
@@ -67,7 +67,8 @@ namespace Apps.Marketo.Actions
                 id = int.Parse(input.FolderId),
                 type = input.Type ?? "Folder"
             }));
-            var response = client.Execute<BaseResponseDto<FolderInfoDto>>(request);
+            request.AddParameter("name", input.Name);
+            var response = client.Execute<BaseResponseDto<LandingPageDto>>(request);
             return response.Data.Result.First();
         }
 
