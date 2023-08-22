@@ -15,7 +15,7 @@ namespace Apps.Marketo
                 ConnectionUsage = ConnectionUsage.Actions,
                 ConnectionProperties = new List<ConnectionProperty>()
                 {
-                    new ConnectionProperty("URL"),
+                    new ConnectionProperty("Munchkin Account ID"),
                     new ConnectionProperty("Client ID"),
                     new ConnectionProperty("Client secret")
                 }
@@ -38,8 +38,8 @@ namespace Apps.Marketo
 
             yield return new AuthenticationCredentialsProvider(
                 AuthenticationCredentialsRequestLocation.QueryString,
-                "URL",
-                 values["URL"]
+                "Munchkin Account ID",
+                 values["Munchkin Account ID"]
              );
         }
     }
