@@ -6,6 +6,7 @@ using Apps.Marketo.Models.Folder.Responses;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Newtonsoft.Json;
 using RestSharp;
 using System;
 using System.Collections.Generic;
@@ -50,16 +51,13 @@ namespace Apps.Marketo.Actions
         {
             var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
             var request = new MarketoRequest($"/rest/asset/v1/folders.json", Method.Post, InvocationContext.AuthenticationCredentialsProviders);
-            request.AddBody(new
+            request.AddParameter("description", input.Description);
+            request.AddParameter("name", input.Name);
+            request.AddParameter("parent", JsonConvert.SerializeObject(new
             {
-                description = input.Description,
-                name = input.Name,
-                parent = new
-                {
-                    id = input.FolderId,
-                    type = input.Type
-                }
-            });
+                id = int.Parse(input.FolderId),
+                type = input.Type ?? "Folder"
+            }));
             var response = client.Execute<BaseResponseDto<FolderInfoDto>>(request);
             return response.Data.Result.First();
         }
