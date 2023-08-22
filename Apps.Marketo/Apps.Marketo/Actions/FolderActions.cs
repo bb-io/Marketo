@@ -33,7 +33,7 @@ namespace Apps.Marketo.Actions
             request.AddQueryParameter("maxDepth", input.MaxDepth ?? 10);
             request.AddQueryParameter("offset", input.Offset ?? 0);
             request.AddQueryParameter("workSpace", input.WorkSpace);
-            var response = client.Get<BaseResponseDto<FolderInfoDto>>(request);
+            var response = client.ExecuteWithError<FolderInfoDto>(request);
             return new ListFoldersResponse() { Folders = response.Result};
         }
 
@@ -42,8 +42,8 @@ namespace Apps.Marketo.Actions
         {
             var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
             var request = new MarketoRequest($"/rest/asset/v1/folder/{input.FolderId}.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
-            var response = client.Execute<BaseResponseDto<FolderInfoDto>>(request);
-            return response.Data.Result.First();
+            var response = client.ExecuteWithError<FolderInfoDto>(request);
+            return response.Result.First();
         }
 
         [Action("Create folder", Description = "Create folder")]
@@ -58,8 +58,8 @@ namespace Apps.Marketo.Actions
                 id = int.Parse(input.FolderId),
                 type = input.Type ?? "Folder"
             }));
-            var response = client.Execute<BaseResponseDto<FolderInfoDto>>(request);
-            return response.Data.Result.First();
+            var response = client.ExecuteWithError<FolderInfoDto>(request);
+            return response.Result.First();
         }
 
         [Action("Delete folder", Description = "Delete folder")]
@@ -67,7 +67,7 @@ namespace Apps.Marketo.Actions
         {
             var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
             var request = new MarketoRequest($"/rest/asset/v1/folder/{input.FolderId}/delete.json", Method.Post, InvocationContext.AuthenticationCredentialsProviders);
-            client.Execute(request);
+            client.ExecuteWithError<IdDto>(request);
         }
     }
 }

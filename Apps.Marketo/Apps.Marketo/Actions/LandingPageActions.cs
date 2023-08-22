@@ -33,7 +33,7 @@ namespace Apps.Marketo.Actions
             request.AddQueryParameter("maxReturn", input.MaxReturn ?? 200);
             request.AddQueryParameter("offset", input.Offset ?? 0);
             if (input.FolderId != null) request.AddQueryParameter("folder", JsonConvert.SerializeObject(new { id = int.Parse(input.FolderId), type = input.Type ?? "Folder" }));
-            var response = client.Get<BaseResponseDto<LandingPageDto>>(request);
+            var response = client.ExecuteWithError<LandingPageDto>(request);
             return new ListLandingPagesResponse() { LandingPages = response.Result };
         }
 
@@ -42,8 +42,8 @@ namespace Apps.Marketo.Actions
         {
             var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
             var request = new MarketoRequest($"/rest/asset/v1/landingPage/{input.Id}.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
-            var response = client.Execute<BaseResponseDto<LandingPageDto>>(request);
-            return response.Data.Result.First();
+            var response = client.ExecuteWithError<LandingPageDto>(request);
+            return response.Result.First();
         }
 
         [Action("Create landing page", Description = "Create landing page")]
@@ -68,8 +68,8 @@ namespace Apps.Marketo.Actions
                 type = input.Type ?? "Folder"
             }));
             request.AddParameter("name", input.Name);
-            var response = client.Execute<BaseResponseDto<LandingPageDto>>(request);
-            return response.Data.Result.First();
+            var response = client.ExecuteWithError<LandingPageDto>(request);
+            return response.Result.First();
         }
 
         [Action("Delete landing page", Description = "Delete landing page")]
@@ -77,7 +77,7 @@ namespace Apps.Marketo.Actions
         {
             var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
             var request = new MarketoRequest($"/rest/asset/v1/landingPage/{input.Id}/delete.json", Method.Post, InvocationContext.AuthenticationCredentialsProviders);
-            client.Execute(request);
+            client.ExecuteWithError<IdDto>(request);
         }
 
         [Action("Approve landing page draft", Description = "Approve landing page draft")]
@@ -85,7 +85,7 @@ namespace Apps.Marketo.Actions
         {
             var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
             var request = new MarketoRequest($"/rest/asset/v1/landingPage/{input.Id}/approveDraft.json", Method.Post, InvocationContext.AuthenticationCredentialsProviders);
-            client.Execute(request);
+            client.ExecuteWithError<IdDto>(request);
         }
 
         [Action("Discard landing page draft", Description = "Discard landing page draft")]
@@ -93,7 +93,7 @@ namespace Apps.Marketo.Actions
         {
             var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
             var request = new MarketoRequest($"/rest/asset/v1/landingPage/{input.Id}/discardDraft.json", Method.Post, InvocationContext.AuthenticationCredentialsProviders);
-            client.Execute(request);
+            client.ExecuteWithError<IdDto>(request);
         }
 
         [Action("Unapprove landing page (back to draft)", Description = "Unapprove landing page (back to draft)")]
@@ -101,7 +101,7 @@ namespace Apps.Marketo.Actions
         {
             var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
             var request = new MarketoRequest($"/rest/asset/v1/landingPage/{input.Id}/unapprove.json", Method.Post, InvocationContext.AuthenticationCredentialsProviders);
-            client.Execute(request);
+            client.ExecuteWithError<IdDto>(request);
         }
 
         [Action("Get landing page full content", Description = "Get landing page full content")]
@@ -109,8 +109,8 @@ namespace Apps.Marketo.Actions
         {
             var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
             var request = new MarketoRequest($"/rest/asset/v1/landingPage/{input.Id}/fullContent.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
-            var response = client.Execute<BaseResponseDto<LandingPageContentDto>>(request);
-            return response.Data.Result.First();
+            var response = client.ExecuteWithError<LandingPageContentDto>(request);
+            return response.Result.First();
         }
     }
 }

@@ -22,8 +22,8 @@ namespace Apps.Marketo.Actions
         {
             var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
             var request = new MarketoRequest($"/rest/asset/v1/files.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
-            var response = client.Execute<BaseResponseDto<FileInfoDto>>(request);
-            return new ListFilesResponse() { Files = response.Data.Result };
+            var response = client.ExecuteWithError<FileInfoDto>(request);
+            return new ListFilesResponse() { Files = response.Result };
         }
 
         [Action("Get file info", Description = "Get file info")]
@@ -31,8 +31,8 @@ namespace Apps.Marketo.Actions
         {
             var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
             var request = new MarketoRequest($"/rest/asset/v1/file/{input.FileId}.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
-            var response = client.Execute<BaseResponseDto<FileInfoDto>>(request);
-            return response.Data.Result.First();
+            var response = client.ExecuteWithError<FileInfoDto>(request);
+            return response.Result.First();
         }
 
         [Action("Download file", Description = "Download file")]
@@ -62,12 +62,8 @@ namespace Apps.Marketo.Actions
                 id = int.Parse(input.FolderId),
                 type = input.Type
             }));
-            var response = client.Execute<BaseResponseDto<FileInfoDto>>(request);
-            if (response.Data.Errors.Any())
-            {
-                throw new ArgumentException(response.Data.Errors.First().Message);
-            }
-            return response.Data.Result.First();
+            var response = client.ExecuteWithError<FileInfoDto>(request);
+            return response.Result.First();
         }
     }
 }

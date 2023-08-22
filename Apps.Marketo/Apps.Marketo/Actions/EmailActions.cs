@@ -37,7 +37,7 @@ namespace Apps.Marketo.Actions
             if (input.EarliestUpdatedAt != null) request.AddQueryParameter("earliestUpdatedAt", ((DateTime)input.EarliestUpdatedAt).ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture));
             if (input.LatestUpdatedAt != null) request.AddQueryParameter("latestUpdatedAt", ((DateTime)input.LatestUpdatedAt).ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture));
 
-            var response = client.Execute<BaseResponseDto<EmailDto>>(request).Data;
+            var response = client.ExecuteWithError<EmailDto>(request);
             return new ListEmailsResponse() { Emails = response.Result };
         }
 
@@ -46,8 +46,8 @@ namespace Apps.Marketo.Actions
         {
             var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
             var request = new MarketoRequest($"/rest/asset/v1/email/{input.EmailId}.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
-            var response = client.Execute<BaseResponseDto<EmailDto>>(request);
-            return response.Data.Result.First();
+            var response = client.ExecuteWithError<EmailDto>(request);
+            return response.Result.First();
         }
 
         [Action("Get email content", Description = "Get email content")]
@@ -55,8 +55,8 @@ namespace Apps.Marketo.Actions
         {
             var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
             var request = new MarketoRequest($"/rest/asset/v1/email/{input.EmailId}/content.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
-            var response = client.Execute<BaseResponseDto<EmailContentDto>>(request);    
-            return new EmailContentResponse(response.Data.Result.First());
+            var response = client.ExecuteWithError<EmailContentDto>(request);    
+            return new EmailContentResponse(response.Result.First());
         }
 
         [Action("Delete email", Description = "Delete email")]
@@ -64,7 +64,7 @@ namespace Apps.Marketo.Actions
         {
             var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
             var request = new MarketoRequest($"/rest/asset/v1/email/{input.EmailId}/delete.json", Method.Post, InvocationContext.AuthenticationCredentialsProviders);
-            client.Execute(request);
+            client.ExecuteWithError<IdDto>(request);
         }
     }
 }
