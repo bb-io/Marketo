@@ -22,7 +22,7 @@ namespace Apps.Marketo
         public BaseResponseDto<T> ExecuteWithError<T>(MarketoRequest request)
         {
             var res = this.Execute(request).Content;
-            var deserialized = JsonSerializer.Deserialize<BaseResponseDto<T>>(res);
+            var deserialized = JsonSerializer.Deserialize<BaseResponseDto<T>>(res, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true});
             if (deserialized.Errors.Any())
             {
                 throw new ArgumentException(deserialized.Errors.First().Message);
