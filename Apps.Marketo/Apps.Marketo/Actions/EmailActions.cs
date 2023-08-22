@@ -58,5 +58,13 @@ namespace Apps.Marketo.Actions
             var response = client.Execute<BaseResponseDto<EmailContentDto>>(request);    
             return new EmailContentResponse(response.Data.Result.First());
         }
+
+        [Action("Delete email", Description = "Delete email")]
+        public void DeleteEmail([ActionParameter] GetEmailInfoRequest input)
+        {
+            var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
+            var request = new MarketoRequest($"/rest/asset/v1/email/{input.EmailId}/delete.json", Method.Post, InvocationContext.AuthenticationCredentialsProviders);
+            client.Execute(request);
+        }
     }
 }

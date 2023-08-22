@@ -61,5 +61,13 @@ namespace Apps.Marketo.Actions
             var response = client.Execute<BaseResponseDto<FolderInfoDto>>(request);
             return response.Data.Result.First();
         }
+
+        [Action("Delete folder", Description = "Delete folder")]
+        public void DeleteFolder([ActionParameter] GetFolderInfoRequest input)
+        {
+            var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
+            var request = new MarketoRequest($"/rest/asset/v1/folder/{input.FolderId}/delete.json", Method.Post, InvocationContext.AuthenticationCredentialsProviders);
+            client.Execute(request);
+        }
     }
 }
