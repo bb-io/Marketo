@@ -15,9 +15,9 @@ namespace Apps.Marketo
                 ConnectionUsage = ConnectionUsage.Actions,
                 ConnectionProperties = new List<ConnectionProperty>()
                 {
-                    new ConnectionProperty("url"),
-                    new ConnectionProperty("clientId"),
-                    new ConnectionProperty("clientSecret")
+                    new ConnectionProperty("URL"),
+                    new ConnectionProperty("Client ID"),
+                    new ConnectionProperty("Client secret")
                 }
             }
         };
@@ -26,20 +26,20 @@ namespace Apps.Marketo
         {
             yield return new AuthenticationCredentialsProvider(
                 AuthenticationCredentialsRequestLocation.Body,
-                "clientId",
-                values["clientId"]
+                "Client ID",
+                values["Client ID"]
             );
 
             yield return new AuthenticationCredentialsProvider(
                 AuthenticationCredentialsRequestLocation.Body,
-                "clientSecret",
-                values["clientSecret"]
+                "Client secret",
+                values["Client secret"]
             );
 
             yield return new AuthenticationCredentialsProvider(
                 AuthenticationCredentialsRequestLocation.QueryString,
-                "url",
-                 values["url"]
+                "URL",
+                 values["URL"]
              );
         }
     }

@@ -13,7 +13,7 @@ namespace Apps.Marketo
 
         private static Uri GetUri(IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProvider)
         {
-            var url = authenticationCredentialsProvider.First(v => v.KeyName == "url").Value;
+            var url = authenticationCredentialsProvider.First(v => v.KeyName == "URL").Value;
             return new Uri($"https://{url}.mktorest.com");
         }
     }

@@ -21,8 +21,8 @@ namespace Apps.Marketo
         {
             var client = new MarketoClient(authenticationCredentialsProviders: authenticationCredentialsProviders);
 
-            var clientId = authenticationCredentialsProviders.First(v => v.KeyName == "clientId").Value;
-            var clientSecret = authenticationCredentialsProviders.First(v => v.KeyName == "clientSecret").Value;
+            var clientId = authenticationCredentialsProviders.First(v => v.KeyName == "Client ID").Value;
+            var clientSecret = authenticationCredentialsProviders.First(v => v.KeyName == "Client secret").Value;
 
             var authRequest = new RestRequest("/identity/oauth/token", Method.Get);
             authRequest.AddQueryParameter("grant_type", "client_credentials");
