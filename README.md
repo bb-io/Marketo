@@ -21,8 +21,6 @@ Before you can connect you need to make sure that:
 4. Fill in the "Munchkin Account ID", "Client ID" and "Client secret" of your Marketo instance you want to connect to. You can find it in Marketo settings
 5. Click _Authorize connection_.
 
-![Connecting](image/README/1692612174111.png)
-
 ## Actions
 
 ### Emails
