@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
-using Apps.Marketo.DataSourceHandlers;
-using Apps.Marketo.Dtos;
+﻿using Apps.Marketo.DataSourceHandlers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
+using File = Blackbird.Applications.Sdk.Common.Files.File;
 
 namespace Apps.Marketo.Models.Files.Requests
 {
@@ -15,12 +9,10 @@ namespace Apps.Marketo.Models.Files.Requests
     {
         public string? Description { get; set; }
 
-        public byte[] File { get; set; }
+        public File File { get; set; }
 
         [Display("Insert only")]
         public bool? InsertOnly { get; set; }
-
-        public string Name { get; set; }
 
         [Display("Folder")]
         [DataSource(typeof(FolderDataHandler))]

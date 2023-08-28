@@ -1,12 +1,12 @@
 ﻿using RestSharp;
 using Blackbird.Applications.Sdk.Common.Actions;
-using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common;
 using Apps.Marketo.Dtos;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Apps.Marketo.Models.Files.Responses;
 using Apps.Marketo.Models.Files.Requests;
 using Newtonsoft.Json;
+using File = Blackbird.Applications.Sdk.Common.Files.File;
 
 namespace Apps.Marketo.Actions
 {
@@ -44,8 +44,11 @@ namespace Apps.Marketo.Actions
             var response = client.Get(request).RawBytes;
             return new FileDataResponse()
             {
-                Filename = fileInfo.Name,
-                File = response
+                File = new File(response)
+                {
+                    Name = fileInfo.Name,
+                    ContentType = fileInfo.MimeType
+                }
             };
         }
 
@@ -54,9 +57,9 @@ namespace Apps.Marketo.Actions
         {
             var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
             var request = new MarketoRequest($"/rest/asset/v1/files.json", Method.Post, InvocationContext.AuthenticationCredentialsProviders);
-            request.AddParameter("name", input.Name);
+            request.AddParameter("name", input.File.Name);
             request.AddParameter("description", input.Description);
-            request.AddFile("file", input.File, input.Name);
+            request.AddFile("file", input.File.Bytes, input.File.Name);
             request.AddParameter("insertOnly", input.InsertOnly ?? true);
             request.AddParameter("folder", JsonConvert.SerializeObject(new {
                 id = int.Parse(input.FolderId),
