@@ -4,6 +4,8 @@ Blackbird is the new automation backbone for the language technology industry. B
 
 ## Introduction
 
+<!-- begin docs -->
+
 Marketo is Software-as-a-Service (SaaS)-based marketing automation software owned by Adobe and built to help organizations automate and measure marketing engagement, tasks and workflows.
 
 ## Before setting up
@@ -39,21 +41,21 @@ Before you can connect you need to make sure that:
 
 ### Folders
 
-- **List folders** 
-- **Get folder info** 
-- **Create folder** 
-- **Delete folder** 
+- **List folders**
+- **Get folder info**
+- **Create folder**
+- **Delete folder**
 
 ### Landing pages
 
-- **List landing pages** 
-- **Get landing page info** 
-- **Create landing page** 
+- **List landing pages**
+- **Get landing page info**
+- **Create landing page**
 - **Delete landing page**
 - **Approve landing page draft**
-- **Discard landing page draft** 
+- **Discard landing page draft**
 - **Unapprove landing page (back to draft)**
-- **Get landing page full content** 
+- **Get landing page full content**
 
 ## Missing features
 
@@ -69,3 +71,5 @@ Let us know if you're interested!
 ## Feedback
 
 Feedback to our implementation of Marketo is always very welcome. Reach out to us using the established channels or create an issue.
+
+<!-- end docs -->
