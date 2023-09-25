@@ -2,12 +2,11 @@
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 
-namespace Apps.Marketo.Models.LandingPages.Requests
+namespace Apps.Marketo.Models.LandingPages.Requests;
+
+public class GetLandingInfoRequest
 {
-    public class GetLandingInfoRequest
-    {
-        [DataSource(typeof(LandingPageHandler))]
-        [Display("Landing page")]
-        public string Id { get; set; }
-    }
+    [DataSource(typeof(LandingPageHandler))]
+    [Display("Landing page")]
+    public string Id { get; set; }
 }

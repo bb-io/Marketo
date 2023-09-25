@@ -1,13 +1,12 @@
 ﻿using Blackbird.Applications.Sdk.Utils.Sdk.DataSourceHandlers;
 
-namespace Apps.Marketo.DataSourceHandlers
+namespace Apps.Marketo.DataSourceHandlers;
+
+public class StatusDataHandler : EnumDataHandler
 {
-    public class StatusDataHandler : EnumDataHandler
+    protected override Dictionary<string, string> EnumValues => new()
     {
-        protected override Dictionary<string, string> EnumValues => new()
-        {
-            { "approved", "Approved" },
-            { "draft", "Draft" },
-        };
-    }
+        { "approved", "Approved" },
+        { "draft", "Draft" },
+    };
 }
