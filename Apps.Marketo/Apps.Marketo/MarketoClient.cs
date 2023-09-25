@@ -1,5 +1,4 @@
-﻿using System;
-using System.Text.Json;
+﻿using System.Text.Json;
 using Apps.Marketo.Dtos;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using RestSharp;

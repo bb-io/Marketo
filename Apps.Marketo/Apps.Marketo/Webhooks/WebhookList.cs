@@ -1,9 +1,6 @@
-﻿using Apps.Marketo.Dtos;
-using Apps.Marketo.Webhooks.Payload;
+﻿using Apps.Marketo.Webhooks.Payload;
 using Blackbird.Applications.Sdk.Common.Webhooks;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.Text.Json;
 
 namespace Apps.Marketo.Webhooks
 {

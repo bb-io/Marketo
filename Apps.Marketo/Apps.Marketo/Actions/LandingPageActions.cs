@@ -1,6 +1,4 @@
 ﻿using Apps.Marketo.Dtos;
-using Apps.Marketo.Models.Folder.Requests;
-using Apps.Marketo.Models.Folder.Responses;
 using Apps.Marketo.Models.LandingPages.Requests;
 using Apps.Marketo.Models.LandingPages.Responses;
 using Blackbird.Applications.Sdk.Common;
@@ -8,11 +6,6 @@ using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Newtonsoft.Json;
 using RestSharp;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Apps.Marketo.Actions
 {

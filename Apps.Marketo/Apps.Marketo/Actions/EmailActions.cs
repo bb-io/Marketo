@@ -1,20 +1,12 @@
 ﻿using Apps.Marketo.Dtos;
 using Apps.Marketo.Models.Emails.Requests;
 using Apps.Marketo.Models.Emails.Responses;
-using Apps.Marketo.Models.Files.Requests;
-using Apps.Marketo.Models.Files.Responses;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using RestSharp;
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Apps.Marketo.Actions
 {
