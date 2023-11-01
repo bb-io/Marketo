@@ -50,6 +50,8 @@ public class FieldMetaData
     public string? FieldMask { get; set; }
     public int? VisibleLines { get; set; }
     public bool? MultiSelect { get; set; }
+    public decimal? MinValue { get; set; }
+    public decimal? MaxValue { get; set; }
     public IEnumerable<SelectLabelValue>? Values { get; set; }
 }
 

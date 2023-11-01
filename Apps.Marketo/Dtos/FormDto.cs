@@ -48,7 +48,7 @@ public class FormDto
     public KnownVisitorDto KnownVisitor { get; set; }
     
     [Display("Thank you list")]
-    public List<ThankYouListDto> ThankYouList { get; set; }
+    public IEnumerable<ThankYouListDto> ThankYouList { get; set; }
     
     [Display("Button location")]
     public int ButtonLocation { get; set; }
@@ -56,7 +56,7 @@ public class FormDto
     [Display("Button label")]
     public string ButtonLabel { get; set; }
     
-    [Display("Waiting location")]
+    [Display("Waiting label")]
     public string WaitingLabel { get; set; }
     
     [Display("Work space ID")]
@@ -82,6 +82,12 @@ public class ThankYouListDto
     public object FollowupValue { get; set; }
     
     public bool Default { get; set; }
+    
+    public string? SubjectField { get; set; }
+    
+    public string? Operator { get; set; }
+    
+    public IEnumerable<string>? Values { get; set; }
 }
 
 public class KnownVisitorDto

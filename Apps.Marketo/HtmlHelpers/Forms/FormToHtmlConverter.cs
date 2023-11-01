@@ -7,8 +7,9 @@ public static class FormToHtmlConverter
 {
     public static string ConvertToHtml(FormDto formDto, IEnumerable<FormFieldDto> formData)
     {
-        var html = new StringBuilder();
+        const string formElementAttribute = "data-marketo-form-element";
         
+        var html = new StringBuilder();
         html.Append($"<div data-marketo-{nameof(formDto.Description)}=\"{formDto.Description}\" ");
         html.Append($"data-marketo-{nameof(formDto.Theme)}=\"{formDto.Theme}\" ");
         html.Append($"data-marketo-{nameof(formDto.ProgressiveProfiling)}=\"{formDto.ProgressiveProfiling}\" ");
@@ -18,6 +19,38 @@ public static class FormToHtmlConverter
         html.Append($"data-marketo-folderId=\"{formDto.Folder.Value}\" ");
         html.Append($"data-marketo-folderType=\"{formDto.Folder.Type}\">");
 
+        html.Append($"<div {formElementAttribute}=\"button\" data-marketo-{nameof(formDto.ButtonLocation)}={formDto.ButtonLocation}>");
+        html.Append($"<p {formElementAttribute}=\"{nameof(formDto.ButtonLabel)}\">{formDto.ButtonLabel}</p>");
+        html.Append($"<p {formElementAttribute}=\"{nameof(formDto.WaitingLabel)}\">{formDto.WaitingLabel}</p>");
+        html.Append("</div>");
+
+        html.Append($"<div {formElementAttribute}=\"thankYouList\">");
+
+        foreach (var thankYouPage in formDto.ThankYouList)
+        {
+            html.Append($"<div data-marketo-{nameof(thankYouPage.FollowupType)}=\"{thankYouPage.FollowupType}\" ");
+            html.Append($"data-marketo-{nameof(thankYouPage.FollowupValue)}=\"{thankYouPage.FollowupValue}\" ");
+            html.Append($"data-marketo-{nameof(thankYouPage.Default)}=\"{thankYouPage.Default}\" ");
+            
+            if (thankYouPage.Operator != null)
+                html.Append($"data-marketo-{nameof(thankYouPage.Operator)}=\"{thankYouPage.Operator}\" ");
+            
+            if (thankYouPage.SubjectField != null)
+                html.Append($"data-marketo-{nameof(thankYouPage.SubjectField)}=\"{thankYouPage.SubjectField}\" ");
+
+            html.Append(">");
+            
+            if (thankYouPage.Values != null)
+                foreach (var value in thankYouPage.Values)
+                {
+                    html.Append($"<p>{value}</p>");
+                }
+
+            html.Append("</div>");
+        }
+
+        html.Append($"<div {formElementAttribute}=\"fields\">");
+        
         foreach (var field in formData)
         {
             var htmlField = WrapFieldInDiv(field);
@@ -25,12 +58,13 @@ public static class FormToHtmlConverter
         }
 
         html.Append("</div>");
+        html.Append("</div>");
         return html.ToString();
     }
     
     private static string WrapFieldInDiv(FormFieldDto field)
     {
-        const string dataTextTypeAttribute = "data-marketo-text-type";
+        const string dataFieldDataAttribute = "data-marketo-field-data";
         var htmlField = new StringBuilder();
         
         htmlField.Append($"<div data-marketo-{nameof(field.Id)}=\"{field.Id}\" ");
@@ -56,24 +90,25 @@ public static class FormToHtmlConverter
         htmlField.Append(">");
         
         if (field.Label != null)
-            htmlField.Append($"<div {dataTextTypeAttribute}=\"{nameof(field.Label)}\">{field.Label}</div>");
+            htmlField.Append($"<div {dataFieldDataAttribute}=\"{nameof(field.Label)}\">{field.Label}</div>");
         
         if (field.Instructions != null)
-            htmlField.Append($"<div {dataTextTypeAttribute}=\"{nameof(field.Instructions)}\">{field.Instructions}</div>");
+            htmlField.Append($"<div {dataFieldDataAttribute}=\"{nameof(field.Instructions)}\">{field.Instructions}</div>");
             
         if (field.DefaultValue != null)
-            htmlField.Append($"<div {dataTextTypeAttribute}=\"{nameof(field.DefaultValue)}\">{field.DefaultValue}</div>");
+            htmlField.Append($"<div {dataFieldDataAttribute}=\"{nameof(field.DefaultValue)}\">{field.DefaultValue}</div>");
         
         if (field.ValidationMessage != null)
-            htmlField.Append($"<div {dataTextTypeAttribute}=\"{nameof(field.ValidationMessage)}\">{field.ValidationMessage}</div>");
+            htmlField.Append($"<div {dataFieldDataAttribute}=\"{nameof(field.ValidationMessage)}\">{field.ValidationMessage}</div>");
             
         if (field.HintText != null)
-            htmlField.Append($"<div {dataTextTypeAttribute}=\"{nameof(field.HintText)}\">{field.HintText}</div>");
+            htmlField.Append($"<div {dataFieldDataAttribute}=\"{nameof(field.HintText)}\">{field.HintText}</div>");
             
         if (field.Text != null)
-            htmlField.Append($"<div {dataTextTypeAttribute}=\"{nameof(field.Text)}\">{field.Text}</div>");
+            htmlField.Append($"<div {dataFieldDataAttribute}=\"{nameof(field.Text)}\">{field.Text}</div>");
 
         htmlField.Append($"<div data-marketo-{nameof(field.VisibilityRules.RuleType)}=\"{field.VisibilityRules.RuleType}\">");
+        
         if (field.VisibilityRules.Rules != null)
         {
             foreach (var rule in field.VisibilityRules.Rules)
@@ -90,9 +125,12 @@ public static class FormToHtmlConverter
                 htmlField.Append("</div>");
             }
         }
+
+        htmlField.Append("</div>");
         
         if (field.FieldMetaData != null)
         {
+            htmlField.Append($"<div {dataFieldDataAttribute}=\"{nameof(field.FieldMetaData)}\">");
             htmlField.Append("<div ");
             
             if (field.FieldMetaData.FieldMask != null)
@@ -106,6 +144,12 @@ public static class FormToHtmlConverter
             
             if (field.FieldMetaData.MultiSelect != null)
                 htmlField.Append($"data-marketo-{nameof(field.FieldMetaData.MultiSelect)}=\"{field.FieldMetaData.MultiSelect}\" ");
+            
+            if (field.FieldMetaData.MinValue != null)
+                htmlField.Append($"data-marketo-{nameof(field.FieldMetaData.MinValue)}=\"{field.FieldMetaData.MinValue}\" ");
+            
+            if (field.FieldMetaData.MaxValue != null)
+                htmlField.Append($"data-marketo-{nameof(field.FieldMetaData.MaxValue)}=\"{field.FieldMetaData.MaxValue}\" ");
 
             htmlField.Append(">");
 
@@ -125,10 +169,10 @@ public static class FormToHtmlConverter
                 }
             }
             
-            htmlField.Append("</div>");
+            htmlField.Append("</div></div>");
         }
 
-        htmlField.Append("</div></div>");
+        htmlField.Append("</div>");
 
         return htmlField.ToString();
     }

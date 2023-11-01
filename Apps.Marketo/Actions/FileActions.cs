@@ -3,11 +3,11 @@ using RestSharp;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common;
 using Apps.Marketo.Dtos;
+using Apps.Marketo.Models;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Apps.Marketo.Models.Files.Responses;
 using Apps.Marketo.Models.Files.Requests;
 using Newtonsoft.Json;
-using ContentType = RestSharp.ContentType;
 using File = Blackbird.Applications.Sdk.Common.Files.File;
 
 namespace Apps.Marketo.Actions;
@@ -38,13 +38,13 @@ public class FileActions : BaseInvocable
     }
 
     [Action("Download file", Description = "Download file")]
-    public FileDataResponse DownloadFile([ActionParameter] GetFileInfoRequest input)
+    public FileWrapper DownloadFile([ActionParameter] GetFileInfoRequest input)
     {
         var fileInfo = GetFileInfo(input);
         var client = new RestClient();
         var request = new RestRequest(fileInfo.Url, Method.Get);
         var response = client.Get(request).RawBytes;
-        return new FileDataResponse()
+        return new FileWrapper()
         {
             File = new File(response)
             {
