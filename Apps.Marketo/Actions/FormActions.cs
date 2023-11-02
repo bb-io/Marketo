@@ -56,7 +56,9 @@ public class FormActions : BaseInvocable
             var request = new MarketoRequest($"/rest/asset/v1/forms.json?maxReturn={maxReturn}&offset={offset}", 
                 Method.Get, _credentials);
             response = _client.ExecuteWithError<FormDto>(request);
-            var updatedForms = response.Result.Where(form => form.UpdatedAt >= startDateTime);
+            var updatedForms = response.Result.Where(form => form.UpdatedAt >= startDateTime 
+                                                             && (input.FolderId == null 
+                                                                 || form.Folder.Value == int.Parse(input.FolderId)));
             
             if (input.Status != null)
                 updatedForms = updatedForms.Where(form => form.Status == input.Status);
