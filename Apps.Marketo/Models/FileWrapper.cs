@@ -1,8 +1,8 @@
 ﻿using File = Blackbird.Applications.Sdk.Common.Files.File;
 
-namespace Apps.Marketo.Models.Files.Responses;
+namespace Apps.Marketo.Models;
 
-public class FileDataResponse
+public class FileWrapper
 {
     public File File { get; set; }
 }
