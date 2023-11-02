@@ -8,7 +8,7 @@ public class FormFieldDto
     public string DataType { get; set; }
     public int RowNumber { get; set; }
     public int ColumnNumber { get; set; }
-    public VisibilityRules VisibilityRules { get; set; } // contains localizable content under Rules
+    public VisibilityRules? VisibilityRules { get; set; } // contains localizable content under Rules
     public int? LabelWidth { get; set; }
     public int? FieldWidth { get; set; }
     public int? MaxLength { get; set; }
