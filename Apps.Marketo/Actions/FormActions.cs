@@ -85,7 +85,7 @@ public class FormActions : BaseInvocable
         {
             File = new File(Encoding.UTF8.GetBytes(resultHtml))
             {
-                Name = $"{form.Name}.html",
+                Name = $"{form.Name.Replace(" ", "_")}.html",
                 ContentType = MediaTypeNames.Text.Html
             }
         };
@@ -93,7 +93,7 @@ public class FormActions : BaseInvocable
 
     [Action("Create new form from translated HTML", Description = "Create a new form from translated HTML.")]
     public FormDto SetFormFromHtml([ActionParameter] FileWrapper form, 
-        [ActionParameter] [DataSource(typeof(FolderDataHandler))] string? folderId)
+        [ActionParameter] [DataSource(typeof(FolderDataHandler))] [Display("Folder")] string? folderId)
     {
         var jsonSerializerSettings = new JsonSerializerOptions(JsonSerializerDefaults.Web)
         {

@@ -72,24 +72,27 @@ public static class FormToHtmlConverter
         if (field.Text != null)
             htmlField.Append($"<div {dataFieldDataAttribute}=\"{nameof(field.Text)}\">{field.Text}</div>");
 
-        htmlField.Append($"<div {dataFieldDataAttribute}=\"{nameof(field.VisibilityRules)}\">");
-        
-        if (field.VisibilityRules.Rules != null)
+        if (field.VisibilityRules != null)
         {
-            foreach (var rule in field.VisibilityRules.Rules)
+            htmlField.Append($"<div {dataFieldDataAttribute}=\"{nameof(field.VisibilityRules)}\">");
+        
+            if (field.VisibilityRules.Rules != null)
             {
-                htmlField.Append("<div>");
-                htmlField.Append($"<label>{rule.AltLabel}</label>");
-
-                foreach (var value in rule.Values)
+                foreach (var rule in field.VisibilityRules.Rules)
                 {
-                    htmlField.Append($"<p>{value}</p>");
-                }
-                htmlField.Append("</div>");
-            }
-        }
+                    htmlField.Append("<div>");
+                    htmlField.Append($"<label>{rule.AltLabel}</label>");
 
-        htmlField.Append("</div>");
+                    foreach (var value in rule.Values)
+                    {
+                        htmlField.Append($"<p>{value}</p>");
+                    }
+                    htmlField.Append("</div>");
+                }
+            }
+
+            htmlField.Append("</div>");
+        }
         
         if (field.FieldMetaData != null)
         {
