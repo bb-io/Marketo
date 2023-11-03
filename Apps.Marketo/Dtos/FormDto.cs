@@ -20,7 +20,7 @@ public class FormDto
     [Display("Updated at")]
     public DateTime UpdatedAt { get; set; }
     
-    public string Url { get; set; }
+    public string? Url { get; set; }
     
     public string Status { get; set; }
     
@@ -28,7 +28,7 @@ public class FormDto
     
     public string Language { get; set; }
     
-    public string Locale { get; set; }
+    public string? Locale { get; set; }
     
     [Display("Progressive profiling")]
     public bool ProgressiveProfiling { get; set; }
@@ -95,6 +95,6 @@ public class KnownVisitorDto
 {
     public string Type { get; set; }
     
-    public object Template { get; set; }
+    public object? Template { get; set; }
 }
 

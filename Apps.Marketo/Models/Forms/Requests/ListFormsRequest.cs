@@ -6,7 +6,11 @@ namespace Apps.Marketo.Models.Forms.Requests;
 
 public class ListFormsRequest
 {
-    public int? Hours { get; set; }
+    [Display("Start date")]
+    public DateTime StartDate { get; set; }
+    
+    [Display("End date")]
+    public DateTime? EndDate { get; set; }
     
     [DataSource(typeof(StatusDataHandler))]
     public string? Status { get; set; }

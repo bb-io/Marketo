@@ -40,12 +40,13 @@ public class FormActions : BaseInvocable
         return form;
     }
 
-    [Action("List recently created or updated forms", Description = "List all forms that have been created or updated " +
-                                                                    "during past hours. If number of hours is not specified, " +
-                                                                    "forms created or updated during past 24 hours are listed.")]
+    [Action("List forms created or updated in date range", Description = "List all forms that have been created or " +
+                                                                         "updated in the specified date range. If end " +
+                                                                         "date is not specified, it is set to current date.")]
     public ListFormsResponse ListRecentlyCreatedOrUpdatedForms([ActionParameter] ListFormsRequest input)
     {
-        var startDateTime = (DateTime.Now - TimeSpan.FromHours(input.Hours ?? 24)).ToUniversalTime();
+        var endDateTime = input.EndDate ?? DateTime.Now.ToUniversalTime();
+        var startDateTime = input.StartDate.ToUniversalTime();
         var offset = 0;
         var maxReturn = 200;
         var forms = new List<FormDto>();
@@ -56,7 +57,8 @@ public class FormActions : BaseInvocable
             var request = new MarketoRequest($"/rest/asset/v1/forms.json?maxReturn={maxReturn}&offset={offset}", 
                 Method.Get, _credentials);
             response = _client.ExecuteWithError<FormDto>(request);
-            var updatedForms = response.Result.Where(form => form.UpdatedAt >= startDateTime 
+            var updatedForms = response.Result.Where(form => form.UpdatedAt >= startDateTime
+                                                             && form.UpdatedAt <= endDateTime 
                                                              && (input.FolderId == null 
                                                                  || form.Folder.Value == int.Parse(input.FolderId)));
             
@@ -137,12 +139,13 @@ public class FormActions : BaseInvocable
             Method.Post, _credentials);
         updateSubmitButtonRequest.AddParameter("label", formDto.ButtonLabel);
         updateSubmitButtonRequest.AddParameter("waitingLabel", formDto.WaitingLabel);
-        _client.ExecuteWithError(updateSubmitButtonRequest);
+        clonedForm = _client.ExecuteWithError<FormDto>(updateSubmitButtonRequest).Result.First();
         
         var updateThankYouListRequest = new MarketoRequest($"/rest/asset/v1/form/{clonedForm.Id}/thankYouPage.json", 
             Method.Post, _credentials);
         updateThankYouListRequest.AddParameter("thankyou", JsonSerializer.Serialize(formDto.ThankYouList, jsonSerializerSettings));
-        clonedForm = _client.ExecuteWithError<FormDto>(updateThankYouListRequest).Result.First();
+        var updatedThankYouList = _client.ExecuteWithError<FormDto>(updateThankYouListRequest).Result.First();
+        clonedForm.ThankYouList = updatedThankYouList.ThankYouList;
 
         foreach (var field in formFields)
         {
