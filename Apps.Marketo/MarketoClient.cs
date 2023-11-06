@@ -10,6 +10,8 @@ namespace Apps.Marketo;
 
 public class MarketoClient : RestClient
 {
+    private readonly JsonSerializerOptions _jsonSerializerOptions = new() { PropertyNameCaseInsensitive = true };
+    
     public MarketoClient(IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders)
         : base(
             new RestClientOptions { ThrowOnAnyError = true, BaseUrl = GetUri(authenticationCredentialsProviders) },
@@ -22,26 +24,37 @@ public class MarketoClient : RestClient
         var url = authenticationCredentialsProvider.First(v => v.KeyName == "Munchkin Account ID").Value;
         return new Uri($"https://{url}.mktorest.com");
     }
-
+    
     public BaseResponseDto<T> ExecuteWithError<T>(MarketoRequest request)
     {
-        var res = this.Execute(request).Content;
-        var deserialized = JsonSerializer.Deserialize<BaseResponseDto<T>>(res, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true});
-        if (deserialized.Errors.Any())
-        {
-            throw new ArgumentException(deserialized.Errors.First().Message);
-        }
-        return deserialized;
+        var response = ExecuteWithErrorHandling(request);
+        return JsonSerializer.Deserialize<BaseResponseDto<T>>(response.Content, _jsonSerializerOptions)!;
     }
-    public RestResponse ExecuteWithError(MarketoRequest request)
+
+    public RestResponse ExecuteWithError(MarketoRequest request) => ExecuteWithErrorHandling(request);
+
+    private RestResponse ExecuteWithErrorHandling(MarketoRequest request)
     {
-        var res = this.Execute(request);
+        var response = this.Execute(request);
+        var errors = JsonSerializer.Deserialize<ErrorResponse>(response.Content, _jsonSerializerOptions);
 
-        var errors = JsonSerializer.Deserialize<ErrorResponse>(res.Content, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true});
-     
         if (errors.Errors.Any())
-            throw new ArgumentException(errors.Errors.First().Message);
+        {
+            if (errors.Errors.Any(error => error.Code == "606"))
+            {
+                Thread.Sleep(TimeSpan.FromSeconds(20));
+                var retryResponse = this.Execute(request);
+                var retryErrors = JsonSerializer.Deserialize<ErrorResponse>(retryResponse.Content, _jsonSerializerOptions);
+                
+                if (retryErrors.Errors.Any())
+                    throw new ArgumentException(errors.Errors.First().Message);
 
-        return res;
+                return retryResponse;
+            }
+            
+            throw new ArgumentException(errors.Errors.First().Message);
+        }
+
+        return response;
     }
 }
