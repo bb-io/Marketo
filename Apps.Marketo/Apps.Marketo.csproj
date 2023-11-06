@@ -1,14 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <OutputType>Library</OutputType>
-	<Product>Marketo</Product>
-	<Version>1.3.0</Version>
-	<Description>Marketo is a marketing automation solution from Adobe.</Description>
-	<AssemblyName>Apps.Marketo</AssemblyName>
+    <Product>Marketo</Product>
+    <Version>1.3.1</Version>
+    <Description>Marketo is a marketing automation solution from Adobe.</Description>
+    <AssemblyName>Apps.Marketo</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Blackbird.Applications.Sdk.Utils" Version="1.0.12" />
@@ -16,7 +15,7 @@
     <PackageReference Include="RestSharp" Version="110.2.0" />
     <PackageReference Include="Blackbird.Applications.Sdk.Common" Version="2.2.0-alpha3" />
   </ItemGroup>
-	<ItemGroup>
-		<EmbeddedResource CopyToOutputDirectory="Always" Include="image\icon.png" />
-	</ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource CopyToOutputDirectory="Always" Include="image\icon.png" />
+  </ItemGroup>
 </Project>
