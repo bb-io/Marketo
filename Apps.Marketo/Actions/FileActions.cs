@@ -13,27 +13,23 @@ using File = Blackbird.Applications.Sdk.Common.Files.File;
 namespace Apps.Marketo.Actions;
 
 [ActionList]
-public class FileActions : BaseInvocable
+public class FileActions : BaseActions
 {
-    public FileActions(InvocationContext invocationContext) : base(invocationContext)
-    {
-    }
+    public FileActions(InvocationContext invocationContext) : base(invocationContext) { }
 
     [Action("List all files", Description = "List all files")]
     public ListFilesResponse ListFiles()
     {
-        var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
-        var request = new MarketoRequest($"/rest/asset/v1/files.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
-        var response = client.ExecuteWithError<FileInfoDto>(request);
+        var request = new MarketoRequest("/rest/asset/v1/files.json", Method.Get, Credentials);
+        var response = Client.ExecuteWithError<FileInfoDto>(request);
         return new ListFilesResponse() { Files = response.Result };
     }
 
     [Action("Get file info", Description = "Get file info")]
     public FileInfoDto GetFileInfo([ActionParameter] GetFileInfoRequest input)
     {
-        var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
-        var request = new MarketoRequest($"/rest/asset/v1/file/{input.FileId}.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
-        var response = client.ExecuteWithError<FileInfoDto>(request);
+        var request = new MarketoRequest($"/rest/asset/v1/file/{input.FileId}.json", Method.Get, Credentials);
+        var response = Client.ExecuteWithError<FileInfoDto>(request);
         return response.Result.First();
     }
 
@@ -58,20 +54,16 @@ public class FileActions : BaseInvocable
     public void UpdateFile([ActionParameter] UpdateFileRequest input)
     {
         var fileInfo = GetFileInfo(input);
-        var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
-       
-        var request = new MarketoRequest($"/rest/asset/v1/file/{input.FileId}/content.json", Method.Post, InvocationContext.AuthenticationCredentialsProviders);
+        var request = new MarketoRequest($"/rest/asset/v1/file/{input.FileId}/content.json", Method.Post, Credentials);
         request.AddFile("file", input.File.Bytes, input.File.Name, fileInfo.MimeType);
         request.AddParameter("id", input.FileId);
-        
-        client.ExecuteWithError(request);
+        Client.ExecuteWithError(request);
     }
 
     [Action("Upload file", Description = "Upload file")]
     public FileInfoDto UploadFile([ActionParameter] UploadFileRequest input)
     {
-        var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
-        var request = new MarketoRequest($"/rest/asset/v1/files.json", Method.Post, InvocationContext.AuthenticationCredentialsProviders);
+        var request = new MarketoRequest("/rest/asset/v1/files.json", Method.Post, Credentials);
         request.AddParameter("name", input.File.Name);
         request.AddParameter("description", input.Description);
         request.AddFile("file", input.File.Bytes, input.File.Name);
@@ -80,7 +72,7 @@ public class FileActions : BaseInvocable
             id = int.Parse(input.FolderId),
             type = input.Type
         }));
-        var response = client.ExecuteWithError<FileInfoDto>(request);
+        var response = Client.ExecuteWithError<FileInfoDto>(request);
         return response.Result.First();
     }
 }
