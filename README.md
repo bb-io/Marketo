@@ -57,9 +57,17 @@ Before you can connect you need to make sure that:
 - **Unapprove landing page (back to draft)**
 - **Get landing page full content**
 
+### Forms
+
+- **Get form**
+- **List forms created or updated in date range**
+- **Get form as HTML for translation**
+- **Create new form from translated HTML**
+
+**Get form as HTML for translation** and **Create new form from translated HTML** are intended to be used together in translation flow: you can retrieve a form as HTML file, put it into TMS, then retrieve a translated HTML file and put it back to Marketo. **Create new form from translated HTML** expects the same HTML structure as the structure of the file retrieved with **Get form as HTML for translation**.
+
 ## Missing features
 
-- Forms
 - Email templates
 - Programs
 - Segments
