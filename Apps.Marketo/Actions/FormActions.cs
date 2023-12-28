@@ -11,11 +11,11 @@ using Apps.Marketo.Models.Forms.Requests;
 using Apps.Marketo.Models.Forms.Responses;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
-using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
+using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using RestSharp;
-using File = Blackbird.Applications.Sdk.Common.Files.File;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Apps.Marketo.Actions;
@@ -23,7 +23,13 @@ namespace Apps.Marketo.Actions;
 [ActionList]
 public class FormActions : BaseActions
 {
-    public FormActions(InvocationContext invocationContext) : base(invocationContext) { }
+    private readonly IFileManagementClient _fileManagementClient;
+
+    public FormActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
+        : base(invocationContext)
+    {
+        _fileManagementClient = fileManagementClient;
+    }
     
     [Action("Get form", Description = "Get specified form.")]
     public FormDto GetForm([ActionParameter] GetFormRequest input)
@@ -76,14 +82,10 @@ public class FormActions : BaseActions
         var fieldsHtml = FormToHtmlConverter.ConvertToHtml(form, formFields.Result);
         var resultHtml = $"<html><body>{fieldsHtml}</body></html>";
         
-        return new FileWrapper
-        {
-            File = new File(Encoding.UTF8.GetBytes(resultHtml))
-            {
-                Name = $"{form.Name.Replace(" ", "_")}.html",
-                ContentType = MediaTypeNames.Text.Html
-            }
-        };
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
+        var file = _fileManagementClient
+            .UploadAsync(stream, MediaTypeNames.Text.Html, $"{form.Name.Replace(" ", "_")}.html").Result;
+        return new FileWrapper { File = file };
     }
 
     [Action("Create new form from translated HTML", Description = "Create a new form from translated HTML.")]
@@ -97,7 +99,8 @@ public class FormActions : BaseActions
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
         };
 
-        var html = Encoding.UTF8.GetString(form.File.Bytes);
+        var formBytes = _fileManagementClient.DownloadAsync(form.File).Result.GetByteData().Result;
+        var html = Encoding.UTF8.GetString(formBytes);
         var (formDto, formFields) = HtmlToFormConverter.ConvertToForm(html, Credentials);
         
         object folder;

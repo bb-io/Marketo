@@ -1,15 +1,12 @@
 ﻿using Apps.Marketo.DataSourceHandlers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
-using File = Blackbird.Applications.Sdk.Common.Files.File;
 
 namespace Apps.Marketo.Models.Files.Requests;
 
-public class UploadFileRequest
+public class UploadFileRequest : FileWrapper
 {
     public string? Description { get; set; }
-
-    public File File { get; set; }
 
     [Display("Insert only")]
     public bool? InsertOnly { get; set; }
