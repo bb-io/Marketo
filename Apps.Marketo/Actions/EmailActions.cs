@@ -53,10 +53,10 @@ public class EmailActions : BaseActions
         Client.ExecuteWithError<IdDto>(request);
     }
 
-    [Action("Update dynamic content", Description = "Update dynamic content")]
+    [Action("Update email dynamic content", Description = "Update email dynamic content")]
     public IdDto UpdateEmailDynamicContent([ActionParameter] GetEmailInfoRequest getEmailInfoRequest, 
         [ActionParameter] GetEmailDynamicItemRequest getEmailDynamicItemRequest,
-        [ActionParameter] GetSegmentRequest getSegmentRequest,
+        [ActionParameter] GetEmailSegmentRequest getSegmentRequest,
         [ActionParameter] UpdateEmailDynamicContentRequest updateEmailDynamicContentRequest)
     {
         var request = new MarketoRequest($"/rest/asset/v1/email/{getEmailInfoRequest.EmailId}/dynamicContent/{getEmailDynamicItemRequest.DynamicContentId}.json", Method.Post, Credentials);
@@ -65,5 +65,37 @@ public class EmailActions : BaseActions
         request.AddQueryParameter("value", updateEmailDynamicContentRequest.HTMLContent);
         var response = Client.ExecuteWithError<IdDto>(request);
         return response.Result.First();
+    }
+
+    [Action("Get email dynamic content", Description = "Get email dynamic content")]
+    public EmailSegmentDto GetEmailDynamicContent([ActionParameter] GetEmailInfoRequest getEmailInfoRequest,
+        [ActionParameter] GetEmailDynamicItemRequest getEmailDynamicItemRequest,
+        [ActionParameter] GetEmailSegmentRequest getSegmentRequest)
+    {
+        var request = new MarketoRequest($"/rest/asset/v1/email/{getEmailInfoRequest.EmailId}/dynamicContent/{getEmailDynamicItemRequest.DynamicContentId}.json", Method.Get, Credentials);
+        var response = Client.ExecuteWithError<DynamicContentDto>(request);
+        var dynamicContent = response.Result.First().Content.Where(x => x.Type == "HTML" && x.SegmentName == getSegmentRequest.Segment).FirstOrDefault();
+        return dynamicContent;
+    }
+
+    [Action("List email dynamic content", Description = "List email dynamic content by segmentation")]
+    public ListEmailDynamicContentResponse ListEmailDynamicContent([ActionParameter] GetEmailInfoRequest getEmailInfoRequest,
+        [ActionParameter] GetSegmentationRequest getSegmentationRequest,
+        [ActionParameter] GetSegmentBySegmentationRequest getSegmentBySegmentationRequest)
+    {
+        var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
+        var request = new MarketoRequest($"/rest/asset/v1/email/{getEmailInfoRequest.EmailId}/content.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
+        request.AddQueryParameter("maxReturn", 200);
+        var response = client.ExecuteWithError<EmailContentDto>(request);
+        var allDynamicContentInfo = response.Result.Where(e => e.ContentType == "DynamicContent").ToList();
+
+        var result = new List<EmailSegmentDto>();
+        foreach( var dynamicContentInfo in allDynamicContentInfo )
+        {
+            result.Add(GetEmailDynamicContent(getEmailInfoRequest, 
+                new GetEmailDynamicItemRequest() { DynamicContentId = dynamicContentInfo.Value.ToString() }, 
+                new GetEmailSegmentRequest() { Segment = getSegmentBySegmentationRequest.Segment }));
+        }
+        return new ListEmailDynamicContentResponse() { EmailDynamicContentList = result };
     }
 }

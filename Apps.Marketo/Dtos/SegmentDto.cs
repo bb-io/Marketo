@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,14 +8,10 @@ namespace Apps.Marketo.Dtos
 {
     public class SegmentDto
     {
-        public string Id { get; set; }
-
-        public int SegmentId { get; set; }
-
-        public string SegmentName { get; set; }
-
-        public string Content { get; set; }
-
-        public string Type { get; set; }
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string CreatedAt { get; set; }
+        public string UpdatedAt { get; set; }
+        public int SegmentationId { get; set; }
     }
 }
