@@ -94,7 +94,7 @@ public class EmailActions : BaseActions
         {
             var requestSeg = new MarketoRequest($"/rest/asset/v1/email/{getEmailInfoRequest.EmailId}/dynamicContent/{dynamicContentInfo.Value.ToString()}.json", Method.Get, Credentials);
             var responseSeg = Client.ExecuteWithError<DynamicContentDto>(request);
-            if(responseSeg.Result.First().ToString() == getSegmentationRequest.SegmentationId)
+            if(responseSeg.Result.First().Segmentation.ToString() == getSegmentationRequest.SegmentationId)
                 result.Add(responseSeg.Result.First().Content.Where(x => x.Type == "HTML" && x.SegmentName == getSegmentBySegmentationRequest.Segment).FirstOrDefault());
         }
         return new ListEmailDynamicContentResponse() { EmailDynamicContentList = result };
