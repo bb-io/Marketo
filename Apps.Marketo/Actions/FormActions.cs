@@ -13,8 +13,9 @@ using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Blackbird.Applications.Sdk.Utils.Extensions.Files;
+using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using RestSharp;
-using File = Blackbird.Applications.Sdk.Common.Files.File;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Apps.Marketo.Actions;
@@ -22,7 +23,11 @@ namespace Apps.Marketo.Actions;
 [ActionList]
 public class FormActions : BaseActions
 {
-    public FormActions(InvocationContext invocationContext) : base(invocationContext) { }
+    private readonly IFileManagementClient _fileManagementClient;
+    public FormActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : base(invocationContext) 
+    {
+        _fileManagementClient = fileManagementClient;
+    }
     
     [Action("Get form", Description = "Get specified form.")]
     public FormDto GetForm([ActionParameter] GetFormRequest input)
@@ -65,7 +70,7 @@ public class FormActions : BaseActions
     }
 
     [Action("Get form as HTML for translation", Description = "Retrieve a form as HTML file for translation.")]
-    public FileWrapper GetFormAsHtml([ActionParameter] GetFormRequest input)
+    public async Task<FileWrapper> GetFormAsHtml([ActionParameter] GetFormRequest input)
     {
         var getFormRequest = new MarketoRequest($"/rest/asset/v1/form/{input.FormId}.json", Method.Get, Credentials);
         var form = Client.ExecuteWithError<FormDto>(getFormRequest).Result.First();
@@ -74,14 +79,13 @@ public class FormActions : BaseActions
         var formFields = Client.ExecuteWithError<FormFieldDto>(getFieldsRequest);
         var fieldsHtml = FormToHtmlConverter.ConvertToHtml(form, formFields.Result);
         var resultHtml = $"<html><body>{fieldsHtml}</body></html>";
-        
+
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
+        var file = await _fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html, $"{form.Name.Replace(" ", "_")}.html");
+
         return new FileWrapper
         {
-            File = new File(Encoding.UTF8.GetBytes(resultHtml))
-            {
-                Name = $"{form.Name.Replace(" ", "_")}.html",
-                ContentType = MediaTypeNames.Text.Html
-            }
+            File = file
         };
     }
 
@@ -95,8 +99,8 @@ public class FormActions : BaseActions
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
         };
-
-        var html = Encoding.UTF8.GetString(form.File.Bytes);
+        var fileBytes = _fileManagementClient.DownloadAsync(form.File).Result.GetByteData().Result;
+        var html = Encoding.UTF8.GetString(fileBytes);
         var (formDto, formFields) = HtmlToFormConverter.ConvertToForm(html, Credentials);
         
         object folder;

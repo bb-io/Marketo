@@ -1,7 +1,7 @@
 ﻿using Apps.Marketo.DataSourceHandlers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
-using File = Blackbird.Applications.Sdk.Common.Files.File;
+using Blackbird.Applications.Sdk.Common.Files;
 
 namespace Apps.Marketo.Models.Files.Requests;
 
@@ -9,7 +9,7 @@ public class UploadFileRequest
 {
     public string? Description { get; set; }
 
-    public File File { get; set; }
+    public FileReference File { get; set; }
 
     [Display("Insert only")]
     public bool? InsertOnly { get; set; }

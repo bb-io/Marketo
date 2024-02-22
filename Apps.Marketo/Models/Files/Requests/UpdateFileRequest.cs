@@ -1,8 +1,8 @@
-﻿using File = Blackbird.Applications.Sdk.Common.Files.File;
+﻿using Blackbird.Applications.Sdk.Common.Files;
 
 namespace Apps.Marketo.Models.Files.Requests;
 
 public class UpdateFileRequest : GetFileInfoRequest
 {
-    public File File { get; set; }
+    public FileReference File { get; set; }
 }
