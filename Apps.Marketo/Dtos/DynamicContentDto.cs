@@ -12,6 +12,6 @@ namespace Apps.Marketo.Dtos
         public string UpdatedAt { get; set; }
         public int Id { get; set; }
         public int Segmentation { get; set; }
-        public List<SegmentDto> Content { get; set; }
+        public List<EmailSegmentDto> Content { get; set; }
     }
 }

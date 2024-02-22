@@ -9,10 +9,10 @@ using System.Threading.Tasks;
 
 namespace Apps.Marketo.Models.Emails.Requests
 {
-    public class GetSegmentRequest
+    public class GetSegmentBySegmentationRequest
     {
         [Display("Segment")]
-        [DataSource(typeof(EmailSegmentDataHandler))]
+        [DataSource(typeof(SegmentBySegmentationDataHandler))]
         public string Segment { get; set; }
     }
 }
