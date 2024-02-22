@@ -68,14 +68,14 @@ public class EmailActions : BaseActions
     }
 
     [Action("Get email dynamic content", Description = "Get email dynamic content")]
-    public EmailSegmentDto GetEmailDynamicContent([ActionParameter] GetEmailInfoRequest getEmailInfoRequest,
+    public GetEmailDynamicContentResponse GetEmailDynamicContent([ActionParameter] GetEmailInfoRequest getEmailInfoRequest,
         [ActionParameter] GetEmailDynamicItemRequest getEmailDynamicItemRequest,
         [ActionParameter] GetEmailSegmentRequest getSegmentRequest)
     {
         var request = new MarketoRequest($"/rest/asset/v1/email/{getEmailInfoRequest.EmailId}/dynamicContent/{getEmailDynamicItemRequest.DynamicContentId}.json", Method.Get, Credentials);
         var response = Client.ExecuteWithError<DynamicContentDto>(request);
         var dynamicContent = response.Result.First().Content.Where(x => x.Type == "HTML" && x.SegmentName == getSegmentRequest.Segment).FirstOrDefault();
-        return dynamicContent;
+        return new GetEmailDynamicContentResponse(dynamicContent) { DynamicContentId = getEmailDynamicItemRequest.DynamicContentId };
     }
 
     [Action("List email dynamic content", Description = "List email dynamic content by segmentation")]
@@ -89,13 +89,16 @@ public class EmailActions : BaseActions
         var response = client.ExecuteWithError<EmailContentDto>(request);
         var allDynamicContentInfo = response.Result.Where(e => e.ContentType == "DynamicContent").ToList();
 
-        var result = new List<EmailSegmentDto>();
+        var result = new List<GetEmailDynamicContentResponse>();
         foreach( var dynamicContentInfo in allDynamicContentInfo )
         {
             var requestSeg = new MarketoRequest($"/rest/asset/v1/email/{getEmailInfoRequest.EmailId}/dynamicContent/{dynamicContentInfo.Value.ToString()}.json", Method.Get, Credentials);
             var responseSeg = Client.ExecuteWithError<DynamicContentDto>(requestSeg);
-            if(responseSeg.Result.First().Segmentation.ToString() == getSegmentationRequest.SegmentationId)
-                result.Add(responseSeg.Result.First().Content.Where(x => x.Type == "HTML" && x.SegmentName == getSegmentBySegmentationRequest.Segment).FirstOrDefault());
+            if(responseSeg.Result!.First().Segmentation.ToString() == getSegmentationRequest.SegmentationId)
+                result.Add(responseSeg.Result!.First().Content.
+                    Where(x => x.Type == "HTML" && x.SegmentName == getSegmentBySegmentationRequest.Segment).
+                    Select(x => new GetEmailDynamicContentResponse(x) { DynamicContentId = dynamicContentInfo.Value.ToString()! }).
+                    FirstOrDefault()!);
         }
         return new ListEmailDynamicContentResponse() { EmailDynamicContentList = result };
     }
