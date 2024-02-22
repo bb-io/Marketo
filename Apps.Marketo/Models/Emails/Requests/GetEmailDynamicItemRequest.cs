@@ -12,7 +12,7 @@ namespace Apps.Marketo.Models.Emails.Requests
     public class GetEmailDynamicItemRequest
     {
         [Display("Dynamic content ID")]
-        [DataSource(typeof(EmailDataHandler))]
+        [DataSource(typeof(EmailDynamicItemsDataHandler))]
         public string DynamicContentId { get; set; }
     }
 }
