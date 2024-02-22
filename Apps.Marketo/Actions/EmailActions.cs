@@ -43,7 +43,7 @@ public class EmailActions : BaseActions
     { 
         var request = new MarketoRequest($"/rest/asset/v1/email/{input.EmailId}/content.json", Method.Get, Credentials);
         var response = Client.ExecuteWithError<EmailContentDto>(request);    
-        return new EmailContentResponse(response.Result.First());
+        return new EmailContentResponse(response.Result);
     }
 
     [Action("Delete email", Description = "Delete email")]
@@ -51,5 +51,19 @@ public class EmailActions : BaseActions
     {
         var request = new MarketoRequest($"/rest/asset/v1/email/{input.EmailId}/delete.json", Method.Post, Credentials);
         Client.ExecuteWithError<IdDto>(request);
+    }
+
+    [Action("Update dynamic content", Description = "Update dynamic content")]
+    public IdDto UpdateEmailDynamicContent([ActionParameter] GetEmailInfoRequest getEmailInfoRequest, 
+        [ActionParameter] GetEmailDynamicItemRequest getEmailDynamicItemRequest,
+        [ActionParameter] GetSegmentRequest getSegmentRequest,
+        [ActionParameter] UpdateEmailDynamicContentRequest updateEmailDynamicContentRequest)
+    {
+        var request = new MarketoRequest($"/rest/asset/v1/email/{getEmailInfoRequest.EmailId}/dynamicContent/{getEmailDynamicItemRequest.DynamicContentId}.json", Method.Post, Credentials);
+        request.AddQueryParameter("segment", getSegmentRequest.Segment);
+        request.AddQueryParameter("type", "HTML");
+        request.AddQueryParameter("value", updateEmailDynamicContentRequest.HTMLContent);
+        var response = Client.ExecuteWithError<IdDto>(request);
+        return response.Result.First();
     }
 }

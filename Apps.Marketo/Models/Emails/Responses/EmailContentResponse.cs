@@ -4,17 +4,10 @@ namespace Apps.Marketo.Models.Emails.Responses;
 
 public class EmailContentResponse
 {
-    public EmailContentResponse(EmailContentDto email)
+    public EmailContentResponse(List<EmailContentDto> contentItems)
     {
-        ContentType = email.ContentType;
-        HtmlId = email.HtmlId;
-        Index = email.Index;
-        IsLocked = email.IsLocked;
-        ParentHtmlId = email.ParentHtmlId;
+        EmailContentItems = contentItems;
     }
-    public string ContentType { get; set; }
-    public string HtmlId { get; set; }
-    public int Index { get; set; }
-    public bool IsLocked { get; set; }
-    public string ParentHtmlId { get; set; }
+
+    public List<EmailContentDto> EmailContentItems { get; set; }
 }

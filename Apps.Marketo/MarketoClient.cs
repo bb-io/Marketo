@@ -3,6 +3,8 @@ using System.Text.Json.Serialization;
 using Apps.Marketo.Dtos;
 using Apps.Marketo.Models;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Utils.Extensions.String;
+using Newtonsoft.Json;
 using RestSharp;
 using RestSharp.Serializers.Json;
 
@@ -10,33 +12,55 @@ namespace Apps.Marketo;
 
 public class MarketoClient : RestClient
 {
-    private readonly JsonSerializerOptions _jsonSerializerOptions = new() { PropertyNameCaseInsensitive = true };
-    
     public MarketoClient(IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders)
         : base(
             new RestClientOptions { ThrowOnAnyError = true, BaseUrl = GetUri(authenticationCredentialsProviders) },
             configureSerialization: s => s.UseSystemTextJson(new JsonSerializerOptions(JsonSerializerDefaults.Web)
                 { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull })
-        ) { }
+        )
+    {
+    }
 
     private static Uri GetUri(IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProvider)
     {
         var url = authenticationCredentialsProvider.First(v => v.KeyName == "Munchkin Account ID").Value;
         return new Uri($"https://{url}.mktorest.com");
     }
-    
-    public BaseResponseDto<T> ExecuteWithError<T>(MarketoRequest request)
+
+    public BaseResponseDto<T> ExecuteWithError<T>(RestRequest request)
     {
         var response = ExecuteWithErrorHandling(request);
-        return JsonSerializer.Deserialize<BaseResponseDto<T>>(response.Content, _jsonSerializerOptions)!;
+        return JsonConvert.DeserializeObject<BaseResponseDto<T>>(response.Content)!;
     }
 
-    public RestResponse ExecuteWithError(MarketoRequest request) => ExecuteWithErrorHandling(request);
+    public List<T> Paginate<T>(RestRequest request)
+    {
+        var offset = 0;
+        var limit = 200;
 
-    private RestResponse ExecuteWithErrorHandling(MarketoRequest request)
+        var baseUrl = request.Resource.SetQueryParameter("maxReturn", limit.ToString());
+
+        var result = new List<T>();
+        BaseResponseDto<T> response;
+        do
+        {
+            request.Resource = baseUrl.SetQueryParameter("offset", offset.ToString());
+
+            response = ExecuteWithError<T>(request);
+            result.AddRange(response.Result ?? Enumerable.Empty<T>());
+
+            offset += limit;
+        } while (response.Result?.Any() is true);
+
+        return result;
+    }
+
+    public RestResponse ExecuteWithError(RestRequest request) => ExecuteWithErrorHandling(request);
+
+    private RestResponse ExecuteWithErrorHandling(RestRequest request)
     {
         var response = this.Execute(request);
-        var errors = JsonSerializer.Deserialize<ErrorResponse>(response.Content, _jsonSerializerOptions);
+        var errors = JsonConvert.DeserializeObject<ErrorResponse>(response.Content);
 
         if (errors.Errors.Any())
         {
@@ -44,14 +68,15 @@ public class MarketoClient : RestClient
             {
                 Thread.Sleep(TimeSpan.FromSeconds(20));
                 var retryResponse = this.Execute(request);
-                var retryErrors = JsonSerializer.Deserialize<ErrorResponse>(retryResponse.Content, _jsonSerializerOptions);
-                
+                var retryErrors =
+                    JsonConvert.DeserializeObject<ErrorResponse>(retryResponse.Content);
+
                 if (retryErrors.Errors.Any())
                     throw new ArgumentException(errors.Errors.First().Message);
 
                 return retryResponse;
             }
-            
+
             throw new ArgumentException(errors.Errors.First().Message);
         }
 

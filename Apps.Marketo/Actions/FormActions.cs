@@ -72,7 +72,7 @@ public class FormActions : BaseActions
     }
 
     [Action("Get form as HTML for translation", Description = "Retrieve a form as HTML file for translation.")]
-    public FileWrapper GetFormAsHtml([ActionParameter] GetFormRequest input)
+    public async Task<FileWrapper> GetFormAsHtml([ActionParameter] GetFormRequest input)
     {
         var getFormRequest = new MarketoRequest($"/rest/asset/v1/form/{input.FormId}.json", Method.Get, Credentials);
         var form = Client.ExecuteWithError<FormDto>(getFormRequest).Result.First();

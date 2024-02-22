@@ -40,7 +40,7 @@ public class FileActions : BaseActions
     }
 
     [Action("Download file", Description = "Download file")]
-    public FileWrapper DownloadFile([ActionParameter] GetFileInfoRequest input)
+    public async Task<FileWrapper> DownloadFile([ActionParameter] GetFileInfoRequest input)
     {
         var fileInfo = GetFileInfo(input);
         var client = new RestClient();
