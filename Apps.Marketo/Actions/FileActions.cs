@@ -1,5 +1,4 @@
-﻿using System.Net.Mime;
-using RestSharp;
+﻿using RestSharp;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common;
 using Apps.Marketo.Dtos;
@@ -7,9 +6,9 @@ using Apps.Marketo.Models;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Apps.Marketo.Models.Files.Responses;
 using Apps.Marketo.Models.Files.Requests;
-using Newtonsoft.Json;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Utils.Extensions.Files;
+using Newtonsoft.Json;
 
 namespace Apps.Marketo.Actions;
 
@@ -18,7 +17,8 @@ public class FileActions : BaseActions
 {
     private readonly IFileManagementClient _fileManagementClient;
 
-    public FileActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : base(invocationContext) 
+    public FileActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
+        : base(invocationContext)
     {
         _fileManagementClient = fileManagementClient;
     }
@@ -46,12 +46,10 @@ public class FileActions : BaseActions
         var client = new RestClient();
         var request = new RestRequest(fileInfo.Url, Method.Get);
         var response = client.Get(request);
+
         using var stream = new MemoryStream(response.RawBytes);
-        var file = await _fileManagementClient.UploadAsync(stream, response.ContentType, fileInfo.Name);
-        return new FileWrapper()
-        {
-            File = file
-        };
+        var file = _fileManagementClient.UploadAsync(stream, fileInfo.MimeType, fileInfo.Name).Result;
+        return new FileWrapper { File = file };
     }
     
     [Action("Update file", Description = "Update file content")]
@@ -59,7 +57,6 @@ public class FileActions : BaseActions
     {
         var fileInfo = GetFileInfo(input);
         var request = new MarketoRequest($"/rest/asset/v1/file/{input.FileId}/content.json", Method.Post, Credentials);
-
         var fileBytes = _fileManagementClient.DownloadAsync(input.File).Result.GetByteData().Result;
         request.AddFile("file", fileBytes, input.File.Name, fileInfo.MimeType);
         request.AddParameter("id", input.FileId);
@@ -70,9 +67,9 @@ public class FileActions : BaseActions
     public FileInfoDto UploadFile([ActionParameter] UploadFileRequest input)
     {
         var request = new MarketoRequest("/rest/asset/v1/files.json", Method.Post, Credentials);
+        var fileBytes = _fileManagementClient.DownloadAsync(input.File).Result.GetByteData().Result;
         request.AddParameter("name", input.File.Name);
         request.AddParameter("description", input.Description);
-        var fileBytes = _fileManagementClient.DownloadAsync(input.File).Result.GetByteData().Result;
         request.AddFile("file", fileBytes, input.File.Name);
         request.AddParameter("insertOnly", input.InsertOnly ?? true);
         request.AddParameter("folder", JsonConvert.SerializeObject(new {

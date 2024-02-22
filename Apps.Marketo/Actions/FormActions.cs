@@ -13,8 +13,8 @@ using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Invocation;
-using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
+using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using RestSharp;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
@@ -24,7 +24,9 @@ namespace Apps.Marketo.Actions;
 public class FormActions : BaseActions
 {
     private readonly IFileManagementClient _fileManagementClient;
-    public FormActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : base(invocationContext) 
+
+    public FormActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
+        : base(invocationContext)
     {
         _fileManagementClient = fileManagementClient;
     }
@@ -79,14 +81,11 @@ public class FormActions : BaseActions
         var formFields = Client.ExecuteWithError<FormFieldDto>(getFieldsRequest);
         var fieldsHtml = FormToHtmlConverter.ConvertToHtml(form, formFields.Result);
         var resultHtml = $"<html><body>{fieldsHtml}</body></html>";
-
+        
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
-        var file = await _fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html, $"{form.Name.Replace(" ", "_")}.html");
-
-        return new FileWrapper
-        {
-            File = file
-        };
+        var file = _fileManagementClient
+            .UploadAsync(stream, MediaTypeNames.Text.Html, $"{form.Name.Replace(" ", "_")}.html").Result;
+        return new FileWrapper { File = file };
     }
 
     [Action("Create new form from translated HTML", Description = "Create a new form from translated HTML.")]
@@ -99,8 +98,9 @@ public class FormActions : BaseActions
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
         };
-        var fileBytes = _fileManagementClient.DownloadAsync(form.File).Result.GetByteData().Result;
-        var html = Encoding.UTF8.GetString(fileBytes);
+
+        var formBytes = _fileManagementClient.DownloadAsync(form.File).Result.GetByteData().Result;
+        var html = Encoding.UTF8.GetString(formBytes);
         var (formDto, formFields) = HtmlToFormConverter.ConvertToForm(html, Credentials);
         
         object folder;
