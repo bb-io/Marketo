@@ -68,7 +68,7 @@ public class SnippetActions : BaseActions
     [Action("Update snippet content", Description = "Update content of a specific snippet")]
     public void UpdateSnippetContent(
         [ActionParameter] SnippetRequest snippetRequest,
-        [ActionParameter] UpdateSnippetContentRequest input)
+        [ActionParameter] UpdateContentRequest input)
     {
         var request = new MarketoRequest($"/rest/asset/v1/snippet/{snippetRequest.SnippetId}/content.json", Method.Post,
                 Credentials)

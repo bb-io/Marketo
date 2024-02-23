@@ -3,9 +3,9 @@ using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Marketo.Models.Snippets.Request;
 
-public class UpdateSnippetContentRequest
+public class UpdateContentRequest
 {
-    [DataSource(typeof(SnippetContentHandler))]
+    [DataSource(typeof(ContentTypeHandler))]
     public string Type { get; set; }
     
     public string Content { get; set; }
