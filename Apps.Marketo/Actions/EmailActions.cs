@@ -7,6 +7,7 @@ using Blackbird.Applications.Sdk.Common.Invocation;
 using Newtonsoft.Json;
 using RestSharp;
 using System.Globalization;
+using Apps.Marketo.Models.Snippets.Request;
 
 namespace Apps.Marketo.Actions;
 
@@ -21,13 +22,11 @@ public class EmailActions : BaseActions
         var request = new MarketoRequest($"/rest/asset/v1/emails.json", Method.Get, Credentials);
         if(input.Status != null) request.AddQueryParameter("status", input.Status);
         if(input.FolderId != null) request.AddQueryParameter("folder", JsonConvert.SerializeObject(new { id = int.Parse(input.FolderId), type = input.Type ?? "Folder"}));
-        request.AddQueryParameter("offset", input.Offset ?? 0);
-        request.AddQueryParameter("maxReturn", input.MaxReturn ?? 200);
         if (input.EarliestUpdatedAt != null) request.AddQueryParameter("earliestUpdatedAt", ((DateTime)input.EarliestUpdatedAt).ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture));
         if (input.LatestUpdatedAt != null) request.AddQueryParameter("latestUpdatedAt", ((DateTime)input.LatestUpdatedAt).ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture));
 
-        var response = Client.ExecuteWithError<EmailDto>(request);
-        return new ListEmailsResponse() { Emails = response.Result };
+        var response = Client.Paginate<EmailDto>(request);
+        return new ListEmailsResponse() { Emails = response };
     }
 
     [Action("Get email info", Description = "Get email info")]
@@ -45,6 +44,20 @@ public class EmailActions : BaseActions
         var response = Client.ExecuteWithError<EmailContentDto>(request);    
         return new EmailContentResponse(response.Result);
     }
+    
+    
+    [Action("Update email content", Description = "Update content of a specific email")]
+    public void UpdateEmailContent(
+        [ActionParameter] GetEmailInfoRequest emailRequest,
+        [ActionParameter] UpdateContentRequest input)
+    {
+        var request = new MarketoRequest($"/rest/asset/v1/email/{emailRequest.EmailId}/content.json", Method.Post,
+                Credentials)
+            .AddParameter("type", input.Type)
+            .AddParameter("content", input.Content);
+
+        Client.ExecuteWithError(request);
+    }
 
     [Action("Delete email", Description = "Delete email")]
     public void DeleteEmail([ActionParameter] GetEmailInfoRequest input)
@@ -56,11 +69,12 @@ public class EmailActions : BaseActions
     [Action("Update email dynamic content", Description = "Update email dynamic content")]
     public IdDto UpdateEmailDynamicContent([ActionParameter] GetEmailInfoRequest getEmailInfoRequest, 
         [ActionParameter] GetEmailDynamicItemRequest getEmailDynamicItemRequest,
-        [ActionParameter] GetEmailSegmentRequest getSegmentRequest,
+        [ActionParameter] GetSegmentationRequest getSegmentationRequest,
+        [ActionParameter] GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
         [ActionParameter] UpdateEmailDynamicContentRequest updateEmailDynamicContentRequest)
     {
         var request = new MarketoRequest($"/rest/asset/v1/email/{getEmailInfoRequest.EmailId}/dynamicContent/{getEmailDynamicItemRequest.DynamicContentId}.json", Method.Post, Credentials);
-        request.AddQueryParameter("segment", getSegmentRequest.Segment);
+        request.AddQueryParameter("segment", getSegmentBySegmentationRequest.Segment);
         request.AddQueryParameter("type", "HTML");
         request.AddQueryParameter("value", updateEmailDynamicContentRequest.HTMLContent);
         var response = Client.ExecuteWithError<IdDto>(request);
@@ -100,6 +114,9 @@ public class EmailActions : BaseActions
                     Select(x => new GetEmailDynamicContentResponse(x) { DynamicContentId = dynamicContentInfo.Value.ToString()! }).
                     FirstOrDefault()!);
         }
-        return new ListEmailDynamicContentResponse() { EmailDynamicContentList = result };
+        return new ListEmailDynamicContentResponse() 
+        { 
+            EmailDynamicContentList = result
+        };
     }
 }
