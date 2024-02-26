@@ -116,8 +116,7 @@ public class EmailActions : BaseActions
         }
         return new ListEmailDynamicContentResponse() 
         { 
-            EmailDynamicContentList = result,
-            Segment = getSegmentBySegmentationRequest.Segment
+            EmailDynamicContentList = result
         };
     }
 }
