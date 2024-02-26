@@ -1,4 +1,5 @@
 using Apps.Marketo.Dtos;
+using Apps.Marketo.Invocables;
 using Apps.Marketo.Models.Snippets.Request;
 using Apps.Marketo.Models.Snippets.Response;
 using Blackbird.Applications.Sdk.Common;
@@ -10,7 +11,7 @@ using RestSharp;
 namespace Apps.Marketo.Actions;
 
 [ActionList]
-public class SnippetActions : BaseActions
+public class SnippetActions : MarketoInvocable
 {
     public SnippetActions(InvocationContext invocationContext) : base(invocationContext)
     {
@@ -29,11 +30,10 @@ public class SnippetActions : BaseActions
     [Action("Get snippet", Description = "Get details of a specific snippet")]
     public SnippetDto GetSnippet([ActionParameter] SnippetRequest snippetRequest)
     {
-        var request = new MarketoRequest($"/rest/asset/v1/snippet/{snippetRequest.SnippetId}.json", Method.Get,
-            Credentials);
+        var endpoit = $"/rest/asset/v1/snippet/{snippetRequest.SnippetId}.json";
+        var request = new MarketoRequest(endpoit, Method.Get, Credentials);
 
-        var response = Client.ExecuteWithError<SnippetDto>(request);
-        return response.Result.First();
+        return Client.GetSingleEntity<SnippetDto>(request);
     }
 
     [Action("Get snippet content", Description = "Get content of a specific snippet")]
@@ -61,8 +61,7 @@ public class SnippetActions : BaseActions
                 type = snippetRequest.FolderType
             }));
 
-        var response = Client.ExecuteWithError<SnippetDto>(request);
-        return response.Result!.First();
+        return Client.GetSingleEntity<SnippetDto>(request);
     }
 
     [Action("Update snippet content", Description = "Update content of a specific snippet")]
@@ -75,6 +74,6 @@ public class SnippetActions : BaseActions
             .AddParameter("type", input.Type)
             .AddParameter("content", input.Content);
 
-        Client.ExecuteWithError(request);
+        Client.ExecuteWithErrorHandling(request);
     }
 }

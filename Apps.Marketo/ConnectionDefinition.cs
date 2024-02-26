@@ -23,19 +23,19 @@ public class ConnectionDefinition : IConnectionDefinition
 
     public IEnumerable<AuthenticationCredentialsProvider> CreateAuthorizationCredentialsProviders(Dictionary<string, string> values)
     {
-        yield return new AuthenticationCredentialsProvider(
+        yield return new(
             AuthenticationCredentialsRequestLocation.Body,
             "Client ID",
             values["Client ID"]
         );
 
-        yield return new AuthenticationCredentialsProvider(
+        yield return new(
             AuthenticationCredentialsRequestLocation.Body,
             "Client secret",
             values["Client secret"]
         );
 
-        yield return new AuthenticationCredentialsProvider(
+        yield return new(
             AuthenticationCredentialsRequestLocation.QueryString,
             "Munchkin Account ID",
             values["Munchkin Account ID"]

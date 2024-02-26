@@ -13,8 +13,5 @@ public class ListFoldersRequest
     [Display("Max depth")]
     public int? MaxDepth { get; set; }
 
-    [Display("Max return (maximum 200)")]
-    public int? MaxReturn { get; set; }
-    public int? Offset { get; set; }
     public string? WorkSpace { get; set; }
 }

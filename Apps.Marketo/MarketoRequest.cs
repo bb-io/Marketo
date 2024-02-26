@@ -25,7 +25,7 @@ public class MarketoRequest : RestRequest
         authRequest.AddQueryParameter("client_secret", $"{clientSecret}");
 
         var authResponse = client.Execute<AuthDto>(authRequest);
-        if (authResponse.Data == null) throw new Exception("Auth response was null");
+        if (authResponse.Data == null) throw new("Auth response was null");
         return authResponse.Data.AccessToken;
     }
 }

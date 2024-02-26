@@ -9,10 +9,6 @@ public class ListLandingPagesRequest
     [DataSource(typeof(StatusDataHandler))]
     public string? Status { get; set; }
 
-    [Display("Max return (maximum 200)")]
-    public int? MaxReturn { get; set; }
-    public int? Offset { get; set; }
-
     [Display("Folder")]
     [DataSource(typeof(FolderDataHandler))]
     public string? FolderId { get; set; }
