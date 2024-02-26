@@ -7,6 +7,7 @@ using Blackbird.Applications.Sdk.Common.Invocation;
 using Newtonsoft.Json;
 using RestSharp;
 using System.Globalization;
+using Apps.Marketo.Models.Snippets.Request;
 
 namespace Apps.Marketo.Actions;
 
@@ -21,13 +22,11 @@ public class EmailActions : BaseActions
         var request = new MarketoRequest($"/rest/asset/v1/emails.json", Method.Get, Credentials);
         if(input.Status != null) request.AddQueryParameter("status", input.Status);
         if(input.FolderId != null) request.AddQueryParameter("folder", JsonConvert.SerializeObject(new { id = int.Parse(input.FolderId), type = input.Type ?? "Folder"}));
-        request.AddQueryParameter("offset", input.Offset ?? 0);
-        request.AddQueryParameter("maxReturn", input.MaxReturn ?? 200);
         if (input.EarliestUpdatedAt != null) request.AddQueryParameter("earliestUpdatedAt", ((DateTime)input.EarliestUpdatedAt).ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture));
         if (input.LatestUpdatedAt != null) request.AddQueryParameter("latestUpdatedAt", ((DateTime)input.LatestUpdatedAt).ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture));
 
-        var response = Client.ExecuteWithError<EmailDto>(request);
-        return new ListEmailsResponse() { Emails = response.Result };
+        var response = Client.Paginate<EmailDto>(request);
+        return new ListEmailsResponse() { Emails = response };
     }
 
     [Action("Get email info", Description = "Get email info")]
@@ -44,6 +43,20 @@ public class EmailActions : BaseActions
         var request = new MarketoRequest($"/rest/asset/v1/email/{input.EmailId}/content.json", Method.Get, Credentials);
         var response = Client.ExecuteWithError<EmailContentDto>(request);    
         return new EmailContentResponse(response.Result);
+    }
+    
+    
+    [Action("Update email content", Description = "Update content of a specific email")]
+    public void UpdateEmailContent(
+        [ActionParameter] GetEmailInfoRequest emailRequest,
+        [ActionParameter] UpdateContentRequest input)
+    {
+        var request = new MarketoRequest($"/rest/asset/v1/email/{emailRequest.EmailId}/content.json", Method.Post,
+                Credentials)
+            .AddParameter("type", input.Type)
+            .AddParameter("content", input.Content);
+
+        Client.ExecuteWithError(request);
     }
 
     [Action("Delete email", Description = "Delete email")]

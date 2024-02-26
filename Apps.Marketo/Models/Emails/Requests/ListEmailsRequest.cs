@@ -17,8 +17,6 @@ public class ListEmailsRequest
     public string? Type { get; set; }
 
     [Display("Max return (maximum 200)")]
-    public int? MaxReturn { get; set; }
-    public int? Offset { get; set; }
     public DateTime? EarliestUpdatedAt { get; set; }
     public DateTime? LatestUpdatedAt { get; set; }
 }
