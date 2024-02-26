@@ -78,13 +78,14 @@ public class EmailActions : MarketoInvocable
     [Action("Update email dynamic content", Description = "Update email dynamic content")]
     public IdDto UpdateEmailDynamicContent([ActionParameter] GetEmailInfoRequest getEmailInfoRequest,
         [ActionParameter] GetEmailDynamicItemRequest getEmailDynamicItemRequest,
-        [ActionParameter] GetEmailSegmentRequest getSegmentRequest,
+        [ActionParameter] GetSegmentationRequest getSegmentationRequest,
+        [ActionParameter] GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
         [ActionParameter] UpdateEmailDynamicContentRequest updateEmailDynamicContentRequest)
     {
         var endpoint =
             $"/rest/asset/v1/email/{getEmailInfoRequest.EmailId}/dynamicContent/{getEmailDynamicItemRequest.DynamicContentId}.json";
         var request = new MarketoRequest(endpoint, Method.Post, Credentials)
-            .AddQueryParameter("segment", getSegmentRequest.Segment)
+            .AddQueryParameter("segment", getSegmentBySegmentationRequest.Segment)
             .AddQueryParameter("type", "HTML")
             .AddQueryParameter("value", updateEmailDynamicContentRequest.HTMLContent);
 
@@ -137,7 +138,6 @@ public class EmailActions : MarketoInvocable
                     .Select(x => new GetEmailDynamicContentResponse(x)
                         { DynamicContentId = dynamicContentInfo.Value.ToString()! }).FirstOrDefault()!);
         }
-
         return new() { EmailDynamicContentList = result };
     }
 }

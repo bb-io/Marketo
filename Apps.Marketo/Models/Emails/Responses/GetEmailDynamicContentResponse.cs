@@ -8,19 +8,15 @@ namespace Apps.Marketo.Models.Emails.Responses
         public GetEmailDynamicContentResponse(EmailSegmentDto input)
         {
             Id = input.Id;
-            SegmentId = input.SegmentId;
-            SegmentName = input.SegmentName;
+            Segment = input.SegmentName;
             Content = input.Content;
             Type = input.Type;
         }
 
         public string Id { get; set; }
 
-        [Display("Segment ID")]
-        public int SegmentId { get; set; }
-
-        [Display("Segment name")]
-        public string SegmentName { get; set; }
+        [Display("Segment")]
+        public string Segment { get; set; }
 
         public string Content { get; set; }
 
