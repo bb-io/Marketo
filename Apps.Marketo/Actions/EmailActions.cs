@@ -9,14 +9,27 @@ using RestSharp;
 using System.Globalization;
 using Apps.Marketo.Invocables;
 using Apps.Marketo.Models.Snippets.Request;
+using HtmlAgilityPack;
+using Newtonsoft.Json.Linq;
+using System.Web;
+using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
+using System.Net.Mime;
+using System.Text;
+using Apps.Marketo.Models;
 
 namespace Apps.Marketo.Actions;
 
 [ActionList]
 public class EmailActions : MarketoInvocable
 {
-    public EmailActions(InvocationContext invocationContext) : base(invocationContext)
+    private const string LanguageAttribute = "lang";
+    private const string HtmlIdAttribute = "id";
+
+    private readonly IFileManagementClient _fileManagementClient;
+
+    public EmailActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : base(invocationContext)
     {
+        _fileManagementClient = fileManagementClient;
     }
 
     [Action("List emails", Description = "List all emails")]
@@ -73,6 +86,25 @@ public class EmailActions : MarketoInvocable
     {
         var request = new MarketoRequest($"/rest/asset/v1/email/{input.EmailId}/delete.json", Method.Post, Credentials);
         Client.ExecuteWithError<IdDto>(request);
+    }
+
+    [Action("Get email as HTML file", Description = "Get email as HTML file")]
+    public async Task<FileWrapper> GetEmailAsHtml(
+        [ActionParameter] GetEmailInfoRequest getEmailInfoRequest,
+        [ActionParameter] GetSegmentationRequest getSegmentationRequest,
+        [ActionParameter] GetSegmentBySegmentationRequest getSegmentBySegmentationRequest)
+    {
+        var endpoint = $"/rest/asset/v1/email/{getEmailInfoRequest.EmailId}/content.json";
+        var request = new MarketoRequest(endpoint, Method.Get, Credentials)
+            .AddQueryParameter("maxReturn", 200);
+        var response = Client.ExecuteWithError<EmailContentDto>(request);
+        var sectionContent = response.Result.ToDictionary(x => x.HtmlId, y => GetEmailSectionContent(getEmailInfoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, y));
+        var resultHtml = GenerateHtml(sectionContent, getEmailInfoRequest.EmailId, getSegmentBySegmentationRequest.Segment);
+        
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
+        var file = await _fileManagementClient
+            .UploadAsync(stream, MediaTypeNames.Text.Html, $"{getEmailInfoRequest.EmailId}.html");
+        return new() { File = file };
     }
 
     [Action("Update email dynamic content", Description = "Update email dynamic content")]
@@ -139,5 +171,68 @@ public class EmailActions : MarketoInvocable
                         { DynamicContentId = dynamicContentInfo.Value.ToString()! }).FirstOrDefault()!);
         }
         return new() { EmailDynamicContentList = result };
+    }
+
+    private IdDto ConvertSectionToDynamicContent(string emailId, string htmlId, string segmentationId)
+    {
+        var endpoint = $"/rest/asset/v1/email/{emailId}/content/{htmlId}.json";
+        var request = new MarketoRequest(endpoint, Method.Post, Credentials)
+            .AddParameter("value", segmentationId);
+
+        return Client.ExecuteWithError<IdDto>(request).Result.FirstOrDefault();
+    }
+
+    private string GetEmailSectionContent(
+        GetEmailInfoRequest getEmailInfoRequest,
+        GetSegmentationRequest getSegmentationRequest,
+        GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
+        EmailContentDto sectionContent)
+    {
+        if(sectionContent.ContentType == "DynamicContent")
+        {
+            var requestSeg =
+                new MarketoRequest(
+                    $"/rest/asset/v1/email/{getEmailInfoRequest.EmailId}/dynamicContent/{sectionContent.Value.ToString()}.json",
+                    Method.Get, Credentials);
+            var responseSeg = Client.ExecuteWithError<DynamicContentDto>(requestSeg);
+            if (responseSeg.Result!.First().Segmentation.ToString() == getSegmentationRequest.SegmentationId)
+                return responseSeg.Result!.First().Content
+                    .Where(x => x.Type == "HTML" && x.SegmentName == getSegmentBySegmentationRequest.Segment)
+                    .Select(x => new GetEmailDynamicContentResponse(x)
+                    { DynamicContentId = sectionContent.Value.ToString()! }).First().Content;
+        }
+        else if(sectionContent.ContentType == "Text")
+        {
+            return JsonConvert.DeserializeObject<List<EmailContentValueDto>>(sectionContent.Value.ToString()).First(x => x.Type == "HTML").Value;
+        }
+        return string.Empty;
+    }
+
+    private string GenerateHtml(Dictionary<string, string> sections,
+        string title, string language)
+    {
+        var htmlDoc = new HtmlDocument();
+        var htmlNode = htmlDoc.CreateElement("html");
+        htmlDoc.DocumentNode.AppendChild(htmlNode);
+
+        var headNode = htmlDoc.CreateElement("head");
+        htmlNode.AppendChild(headNode);
+
+        var titleNode = htmlDoc.CreateElement("title");
+        headNode.AppendChild(titleNode);
+        titleNode.InnerHtml = title;
+
+        var bodyNode = htmlDoc.CreateElement("body");
+        bodyNode.SetAttributeValue(LanguageAttribute, language);
+        htmlNode.AppendChild(bodyNode);
+
+        foreach(var section in sections)
+        {
+            var sectionNode = htmlDoc.CreateElement("div");
+            sectionNode.SetAttributeValue(HtmlIdAttribute, section.Key);
+            sectionNode.InnerHtml = section.Value;
+            bodyNode.AppendChild(sectionNode);
+        }
+        return htmlDoc.DocumentNode.OuterHtml;
     }
 }
