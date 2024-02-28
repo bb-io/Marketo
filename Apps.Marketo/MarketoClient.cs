@@ -15,7 +15,7 @@ public class MarketoClient : RestClient
     public MarketoClient(IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders)
         : base(
             new RestClientOptions { ThrowOnAnyError = true, BaseUrl = GetUri(authenticationCredentialsProviders) },
-            configureSerialization: s => s.UseSystemTextJson(new JsonSerializerOptions(JsonSerializerDefaults.Web)
+            configureSerialization: s => s.UseSystemTextJson(new(JsonSerializerDefaults.Web)
                 { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull })
         )
     {
@@ -24,9 +24,14 @@ public class MarketoClient : RestClient
     private static Uri GetUri(IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProvider)
     {
         var url = authenticationCredentialsProvider.First(v => v.KeyName == "Munchkin Account ID").Value;
-        return new Uri($"https://{url}.mktorest.com");
+        return new($"https://{url}.mktorest.com");
     }
 
+    public T GetSingleEntity<T>(RestRequest request)
+    {
+        return ExecuteWithError<T>(request).Result!.First();
+    }
+    
     public BaseResponseDto<T> ExecuteWithError<T>(RestRequest request)
     {
         var response = ExecuteWithErrorHandling(request);
@@ -55,9 +60,7 @@ public class MarketoClient : RestClient
         return result;
     }
 
-    public RestResponse ExecuteWithError(RestRequest request) => ExecuteWithErrorHandling(request);
-
-    private RestResponse ExecuteWithErrorHandling(RestRequest request)
+    public RestResponse ExecuteWithErrorHandling(RestRequest request)
     {
         var response = this.Execute(request);
         var errors = JsonConvert.DeserializeObject<ErrorResponse>(response.Content);

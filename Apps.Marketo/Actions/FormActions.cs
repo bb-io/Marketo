@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 using Apps.Marketo.DataSourceHandlers;
 using Apps.Marketo.Dtos;
 using Apps.Marketo.HtmlHelpers.Forms;
+using Apps.Marketo.Invocables;
 using Apps.Marketo.Models;
 using Apps.Marketo.Models.Forms.Requests;
 using Apps.Marketo.Models.Forms.Responses;
@@ -21,7 +22,7 @@ using JsonSerializer = System.Text.Json.JsonSerializer;
 namespace Apps.Marketo.Actions;
 
 [ActionList]
-public class FormActions : BaseActions
+public class FormActions : MarketoInvocable
 {
     private readonly IFileManagementClient _fileManagementClient;
 
@@ -30,13 +31,14 @@ public class FormActions : BaseActions
     {
         _fileManagementClient = fileManagementClient;
     }
-    
+
     [Action("Get form", Description = "Get specified form.")]
     public FormDto GetForm([ActionParameter] GetFormRequest input)
     {
-        var request = new MarketoRequest($"/rest/asset/v1/form/{input.FormId}.json", Method.Get, Credentials);
-        var form = Client.ExecuteWithError<FormDto>(request).Result.First();
-        return form;
+        var endpoint = $"/rest/asset/v1/form/{input.FormId}.json";
+        var request = new MarketoRequest(endpoint, Method.Get, Credentials);
+
+        return Client.GetSingleEntity<FormDto>(request);
     }
 
     [Action("List forms created or updated in date range", Description = "List all forms that have been created or " +
@@ -53,44 +55,46 @@ public class FormActions : BaseActions
 
         do
         {
-            var request = new MarketoRequest($"/rest/asset/v1/forms.json?maxReturn={maxReturn}&offset={offset}", 
+            var request = new MarketoRequest($"/rest/asset/v1/forms.json?maxReturn={maxReturn}&offset={offset}",
                 Method.Get, Credentials);
             response = Client.ExecuteWithError<FormDto>(request);
             var updatedForms = response.Result.Where(form => form.UpdatedAt >= startDateTime
-                                                             && form.UpdatedAt <= endDateTime 
-                                                             && (input.FolderId == null 
+                                                             && form.UpdatedAt <= endDateTime
+                                                             && (input.FolderId == null
                                                                  || form.Folder.Value == int.Parse(input.FolderId)));
-            
+
             if (input.Status != null)
                 updatedForms = updatedForms.Where(form => form.Status == input.Status);
-            
+
             forms.AddRange(updatedForms);
             offset += maxReturn;
         } while (response.Result.Count == maxReturn);
 
-        return new ListFormsResponse { Forms = forms };
+        return new() { Forms = forms };
     }
 
     [Action("Get form as HTML for translation", Description = "Retrieve a form as HTML file for translation.")]
     public async Task<FileWrapper> GetFormAsHtml([ActionParameter] GetFormRequest input)
     {
         var getFormRequest = new MarketoRequest($"/rest/asset/v1/form/{input.FormId}.json", Method.Get, Credentials);
-        var form = Client.ExecuteWithError<FormDto>(getFormRequest).Result.First();
-        
-        var getFieldsRequest = new MarketoRequest($"/rest/asset/v1/form/{input.FormId}/fields.json", Method.Get, Credentials);
+        var form = Client.GetSingleEntity<FormDto>(getFormRequest);
+
+        var getFieldsRequest =
+            new MarketoRequest($"/rest/asset/v1/form/{input.FormId}/fields.json", Method.Get, Credentials);
         var formFields = Client.ExecuteWithError<FormFieldDto>(getFieldsRequest);
         var fieldsHtml = FormToHtmlConverter.ConvertToHtml(form, formFields.Result);
         var resultHtml = $"<html><body>{fieldsHtml}</body></html>";
-        
+
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
         var file = _fileManagementClient
             .UploadAsync(stream, MediaTypeNames.Text.Html, $"{form.Name.Replace(" ", "_")}.html").Result;
-        return new FileWrapper { File = file };
+        return new() { File = file };
     }
 
     [Action("Create new form from translated HTML", Description = "Create a new form from translated HTML.")]
-    public FormDto SetFormFromHtml([ActionParameter] FileWrapper form, 
-        [ActionParameter] [DataSource(typeof(FolderDataHandler))] [Display("Folder")] string? folderId)
+    public FormDto SetFormFromHtml([ActionParameter] FileWrapper form,
+        [ActionParameter] [DataSource(typeof(FolderDataHandler))] [Display("Folder")]
+        string? folderId)
     {
         var jsonSerializerSettings = new JsonSerializerOptions(JsonSerializerDefaults.Web)
         {
@@ -102,13 +106,14 @@ public class FormActions : BaseActions
         var formBytes = _fileManagementClient.DownloadAsync(form.File).Result.GetByteData().Result;
         var html = Encoding.UTF8.GetString(formBytes);
         var (formDto, formFields) = HtmlToFormConverter.ConvertToForm(html, Credentials);
-        
+
         object folder;
 
         if (folderId != null)
         {
-            var getFolderRequest = new MarketoRequest($"/rest/asset/v1/folder/{folderId}.json", Method.Get, Credentials);
-            var folderDto = Client.ExecuteWithError<FolderInfoDto>(getFolderRequest).Result.First();
+            var getFolderRequest =
+                new MarketoRequest($"/rest/asset/v1/folder/{folderId}.json", Method.Get, Credentials);
+            var folderDto = Client.GetSingleEntity<FolderInfoDto>(getFolderRequest);
             folder = new
             {
                 Id = int.Parse(folderDto.FolderId.Id),
@@ -123,31 +128,33 @@ public class FormActions : BaseActions
                 Type = formDto.Folder.Type
             };
         }
-        
-        var cloneFormRequest = new MarketoRequest($"/rest/asset/v1/form/{formDto.Id}/clone.json", Method.Post, Credentials);
-        cloneFormRequest.AddParameter("name", Path.GetFileNameWithoutExtension(form.File.Name));
-        cloneFormRequest.AddParameter("folder", JsonSerializer.Serialize(folder, jsonSerializerSettings));
-        cloneFormRequest.AddParameter("description", formDto.Description);
-        
-        var clonedForm = Client.ExecuteWithError<FormDto>(cloneFormRequest).Result.First();
 
-        var updateSubmitButtonRequest = new MarketoRequest($"/rest/asset/v1/form/{clonedForm.Id}/submitButton.json", 
+        var cloneFormRequest =
+            new MarketoRequest($"/rest/asset/v1/form/{formDto.Id}/clone.json", Method.Post, Credentials)
+                .AddParameter("name", Path.GetFileNameWithoutExtension(form.File.Name))
+                .AddParameter("folder", JsonSerializer.Serialize(folder, jsonSerializerSettings))
+                .AddParameter("description", formDto.Description);
+
+        var clonedForm = Client.GetSingleEntity<FormDto>(cloneFormRequest);
+
+        var updateSubmitButtonRequest = new MarketoRequest($"/rest/asset/v1/form/{clonedForm.Id}/submitButton.json",
             Method.Post, Credentials);
         updateSubmitButtonRequest.AddParameter("label", formDto.ButtonLabel);
         updateSubmitButtonRequest.AddParameter("waitingLabel", formDto.WaitingLabel);
-        clonedForm = Client.ExecuteWithError<FormDto>(updateSubmitButtonRequest).Result.First();
-        
-        var updateThankYouListRequest = new MarketoRequest($"/rest/asset/v1/form/{clonedForm.Id}/thankYouPage.json", 
+        clonedForm = Client.GetSingleEntity<FormDto>(updateSubmitButtonRequest);
+
+        var updateThankYouListRequest = new MarketoRequest($"/rest/asset/v1/form/{clonedForm.Id}/thankYouPage.json",
             Method.Post, Credentials);
-        updateThankYouListRequest.AddParameter("thankyou", JsonSerializer.Serialize(formDto.ThankYouList, jsonSerializerSettings));
-        var updatedThankYouList = Client.ExecuteWithError<FormDto>(updateThankYouListRequest).Result.First();
+        updateThankYouListRequest.AddParameter("thankyou",
+            JsonSerializer.Serialize(formDto.ThankYouList, jsonSerializerSettings));
+        var updatedThankYouList = Client.GetSingleEntity<FormDto>(updateThankYouListRequest);
         clonedForm.ThankYouList = updatedThankYouList.ThankYouList;
 
         foreach (var field in formFields)
         {
-            var updateFieldRequest = new MarketoRequest($"/rest/asset/v1/form/{clonedForm.Id}/field/{field.Id}.json", 
+            var updateFieldRequest = new MarketoRequest($"/rest/asset/v1/form/{clonedForm.Id}/field/{field.Id}.json",
                 Method.Post, Credentials);
-            
+
             var fieldParameters = new Dictionary<string, object?>
             {
                 { "defaultValue", field.DefaultValue },
@@ -157,26 +164,29 @@ public class FormActions : BaseActions
                 { "validationMessage", field.ValidationMessage },
                 { "values", field.FieldMetaData?.Values }
             };
-            
+
             foreach (var parameter in fieldParameters)
             {
                 if (parameter.Value != null)
                 {
                     if (parameter.Key == "values")
-                        updateFieldRequest.AddParameter(parameter.Key, JsonSerializer.Serialize(parameter.Value, jsonSerializerSettings));
+                        updateFieldRequest.AddParameter(parameter.Key,
+                            JsonSerializer.Serialize(parameter.Value, jsonSerializerSettings));
                     else
                         updateFieldRequest.AddParameter(parameter.Key, parameter.Value.ToString());
                 }
             }
 
-            Client.ExecuteWithError(updateFieldRequest);
-            
-            var addFieldVisibilityRequest = new MarketoRequest($"/rest/asset/v1/form/{clonedForm.Id}/field/{field.Id}/visibility.json", 
+            Client.ExecuteWithErrorHandling(updateFieldRequest);
+
+            var addFieldVisibilityRequest = new MarketoRequest(
+                $"/rest/asset/v1/form/{clonedForm.Id}/field/{field.Id}/visibility.json",
                 Method.Post, Credentials);
 
             var visibilityRules = field.VisibilityRules;
             if (visibilityRules.Rules == null)
-                addFieldVisibilityRequest.AddParameter("visibilityRule", JsonSerializer.Serialize(new { ruleType = visibilityRules.RuleType }));
+                addFieldVisibilityRequest.AddParameter("visibilityRule",
+                    JsonSerializer.Serialize(new { ruleType = visibilityRules.RuleType }));
             else
             {
                 addFieldVisibilityRequest.AddParameter("visibilityRule", JsonSerializer.Serialize(new
@@ -192,9 +202,9 @@ public class FormActions : BaseActions
                 }, jsonSerializerSettings));
             }
 
-            Client.ExecuteWithError(addFieldVisibilityRequest);
+            Client.ExecuteWithErrorHandling(addFieldVisibilityRequest);
         }
-        
+
         return clonedForm;
     }
 }

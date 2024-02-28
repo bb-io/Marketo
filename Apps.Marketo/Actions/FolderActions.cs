@@ -1,4 +1,5 @@
 ﻿using Apps.Marketo.Dtos;
+using Apps.Marketo.Invocables;
 using Apps.Marketo.Models.Folder.Requests;
 using Apps.Marketo.Models.Folder.Responses;
 using Blackbird.Applications.Sdk.Common;
@@ -10,50 +11,54 @@ using RestSharp;
 namespace Apps.Marketo.Actions;
 
 [ActionList]
-public class FolderActions : BaseActions
+public class FolderActions : MarketoInvocable
 {
-    public FolderActions(InvocationContext invocationContext) : base(invocationContext) { }
+    public FolderActions(InvocationContext invocationContext) : base(invocationContext)
+    {
+    }
 
     [Action("List folders", Description = "List folders")]
     public ListFoldersResponse ListFolders([ActionParameter] ListFoldersRequest input)
     {
-        var request = new MarketoRequest("/rest/asset/v1/folders.json", Method.Get, Credentials);
-        request.AddQueryParameter("root", input.Root);
-        request.AddQueryParameter("maxReturn", input.MaxReturn ?? 200);
-        request.AddQueryParameter("maxDepth", input.MaxDepth ?? 10);
-        request.AddQueryParameter("offset", input.Offset ?? 0);
-        request.AddQueryParameter("workSpace", input.WorkSpace);
-        var response = Client.ExecuteWithError<FolderInfoDto>(request);
-        return new ListFoldersResponse() { Folders = response.Result};
+        var request = new MarketoRequest("/rest/asset/v1/folders.json", Method.Get, Credentials)
+            .AddQueryParameter("root", input.Root)
+            .AddQueryParameter("maxDepth", input.MaxDepth ?? 10)
+            .AddQueryParameter("workSpace", input.WorkSpace);
+
+        var response = Client.Paginate<FolderInfoDto>(request);
+        return new() { Folders = response };
     }
 
     [Action("Get folder info", Description = "Get folder info")]
     public FolderInfoDto GetFolderInfo([ActionParameter] GetFolderInfoRequest input)
     {
-        var request = new MarketoRequest($"/rest/asset/v1/folder/{input.FolderId}.json", Method.Get, Credentials);
-        var response = Client.ExecuteWithError<FolderInfoDto>(request);
-        return response.Result.First();
+        var endpoint = $"/rest/asset/v1/folder/{input.FolderId}.json";
+        var request = new MarketoRequest(endpoint, Method.Get, Credentials);
+
+        return Client.GetSingleEntity<FolderInfoDto>(request);
     }
 
     [Action("Create folder", Description = "Create folder")]
     public FolderInfoDto CreateFolder([ActionParameter] CreateFolderRequest input)
     {
-        var request = new MarketoRequest("/rest/asset/v1/folders.json", Method.Post, Credentials);
-        request.AddParameter("description", input.Description);
-        request.AddParameter("name", input.Name);
-        request.AddParameter("parent", JsonConvert.SerializeObject(new
-        {
-            id = int.Parse(input.FolderId),
-            type = input.Type ?? "Folder"
-        }));
-        var response = Client.ExecuteWithError<FolderInfoDto>(request);
-        return response.Result.First();
+        var request = new MarketoRequest("/rest/asset/v1/folders.json", Method.Post, Credentials)
+            .AddParameter("description", input.Description)
+            .AddParameter("name", input.Name)
+            .AddParameter("parent", JsonConvert.SerializeObject(new
+            {
+                id = int.Parse(input.FolderId),
+                type = input.Type ?? "Folder"
+            }));
+
+        return Client.GetSingleEntity<FolderInfoDto>(request);
     }
 
     [Action("Delete folder", Description = "Delete folder")]
     public void DeleteFolder([ActionParameter] GetFolderInfoRequest input)
     {
-        var request = new MarketoRequest($"/rest/asset/v1/folder/{input.FolderId}/delete.json", Method.Post, Credentials);
+        var endpoint = $"/rest/asset/v1/folder/{input.FolderId}/delete.json";
+        var request = new MarketoRequest(endpoint, Method.Post, Credentials);
+
         Client.ExecuteWithError<IdDto>(request);
     }
 }

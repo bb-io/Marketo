@@ -14,20 +14,20 @@ public class ConnectionValidator : IConnectionValidator
         {
             var client = new MarketoClient(authProviders);
             var request = new MarketoRequest("/rest/asset/v1/files.json", Method.Get, authProviders);
-            client.ExecuteWithError<FileInfoDto>(request);
+            client.ExecuteWithErrorHandling(request);
 
-            return new ValueTask<ConnectionValidationResponse>(Task.FromResult(new ConnectionValidationResponse()
+            return new(new ConnectionValidationResponse()
             {
                 IsValid = true,
-            }));
+            });
         }
         catch (Exception ex)
         {
-            return new ValueTask<ConnectionValidationResponse>(Task.FromResult(new ConnectionValidationResponse()
+            return new(new ConnectionValidationResponse()
             {
                 IsValid = false,
                 Message = ex.Message
-            }));
+            });
         }
     }
 }

@@ -1,4 +1,5 @@
 using Apps.Marketo.Dtos;
+using Apps.Marketo.Invocables;
 using Apps.Marketo.Models;
 using Apps.Marketo.Models.Tokens.Request;
 using Apps.Marketo.Models.Tokens.Response;
@@ -11,7 +12,7 @@ using RestSharp;
 namespace Apps.Marketo.Actions;
 
 [ActionList]
-public class TokenActions : BaseActions
+public class TokenActions : MarketoInvocable
 {
     public TokenActions(InvocationContext invocationContext) : base(invocationContext)
     {
@@ -23,10 +24,10 @@ public class TokenActions : BaseActions
         var endpoint = $"/rest/asset/v1/folder/{input.FolderId}/tokens.json"
             .SetQueryParameter("folderType", input.FolderType);
         var request = new MarketoRequest(endpoint, Method.Get, Credentials);
-        
-        return Client.ExecuteWithError<ListTokensResponse>(request).Result!.First();
+
+        return Client.GetSingleEntity<ListTokensResponse>(request);
     }
-    
+
     [Action("Create token", Description = "Create a new token")]
     public TokenDto CreateToken(
         [ActionParameter] FolderRequest folder,
@@ -38,10 +39,10 @@ public class TokenActions : BaseActions
             .AddParameter("type", input.Type)
             .AddParameter("value", input.Value)
             .AddParameter("folderType", folder.FolderType);
-        
-        return Client.ExecuteWithError<ListTokensResponse>(request).Result!.First().Tokens.First();
-    }    
-    
+
+        return Client.GetSingleEntity<ListTokensResponse>(request).Tokens.First();
+    }
+
     [Action("Delete token", Description = "Delete specific token")]
     public void DeleteToken(
         [ActionParameter] FolderRequest folder,
@@ -53,6 +54,6 @@ public class TokenActions : BaseActions
             .AddParameter("type", input.Type)
             .AddParameter("folderType", folder.FolderType);
 
-        Client.ExecuteWithError(request);
+        Client.ExecuteWithErrorHandling(request);
     }
 }

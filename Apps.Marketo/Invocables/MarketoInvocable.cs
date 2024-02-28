@@ -1,17 +1,17 @@
-﻿using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Invocation;
 
-namespace Apps.Marketo.Actions;
+namespace Apps.Marketo.Invocables;
 
-public abstract class BaseActions : BaseInvocable
+public class MarketoInvocable : BaseInvocable
 {
     protected readonly IEnumerable<AuthenticationCredentialsProvider> Credentials;
     protected readonly MarketoClient Client;
 
-    protected BaseActions(InvocationContext invocationContext) : base(invocationContext)
+    protected MarketoInvocable(InvocationContext invocationContext) : base(invocationContext)
     {
         Credentials = invocationContext.AuthenticationCredentialsProviders;
-        Client = new MarketoClient(Credentials);
+        Client = new(Credentials);
     }
 }
