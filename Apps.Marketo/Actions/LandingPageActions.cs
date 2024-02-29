@@ -155,7 +155,8 @@ public class LandingPageActions : MarketoInvocable
         {
             foreach (var item in landingContentResponse.LandingPageContentItems)
             {
-                if (IsJsonObject(item.Content.ToString()))
+                if (IsJsonObject(item.Content.ToString()) &&
+                    (item.Type == "HTML" || item.Type == "RichText"))
                 {
                     ConvertSectionToDynamicContent(getLandingPageInfoRequest.Id, item.Id, getSegmentationRequest.SegmentationId);
                 }
