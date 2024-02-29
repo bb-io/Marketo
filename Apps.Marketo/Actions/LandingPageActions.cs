@@ -263,8 +263,8 @@ public class LandingPageActions : MarketoInvocable
     {
         var result = new Dictionary<string, string>();
 
-        //var formBytes = _fileManagementClient.DownloadAsync(file).Result.GetByteData().Result;
-        var html = Encoding.UTF8.GetString(File.ReadAllBytes("C:\\Users\\Bogdan\\Downloads\\Test (1).html"));
+        var formBytes = _fileManagementClient.DownloadAsync(file).Result.GetByteData().Result;
+        var html = Encoding.UTF8.GetString(formBytes);
 
         var htmlDoc = new HtmlDocument();
         htmlDoc.LoadHtml(html);
