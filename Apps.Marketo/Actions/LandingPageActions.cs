@@ -155,7 +155,7 @@ public class LandingPageActions : MarketoInvocable
         {
             foreach (var item in landingContentResponse.LandingPageContentItems)
             {
-                if (IsJsonObject(item.Content.ToString()) &&
+                if (!IsJsonObject(item.Content.ToString()) &&
                     (item.Type == "HTML" || item.Type == "RichText"))
                 {
                     ConvertSectionToDynamicContent(getLandingPageInfoRequest.Id, item.Id, getSegmentationRequest.SegmentationId);
@@ -163,13 +163,19 @@ public class LandingPageActions : MarketoInvocable
             }
             landingContentResponse = GetLandingContent(getLandingPageInfoRequest);
         }
+        
         var translatedContent = ParseHtml(translateLandingWithHtmlRequest.File);
         foreach (var item in landingContentResponse.LandingPageContentItems)
         {
-            var landingPageContent = JsonConvert.DeserializeObject<LandingPageContentValueDto>(item.Content.ToString());
-            if (landingPageContent.ContentType != null && landingPageContent.ContentType == "DynamicContent")
+            if (IsJsonObject(item.Content.ToString()) &&
+                    (item.Type == "HTML" || item.Type == "RichText"))
             {
-                UpdateLandingDynamicContent(getLandingPageInfoRequest, getSegmentBySegmentationRequest, item.Content.ToString(), translatedContent[item.Id]);
+                var content = item.Content.ToString();
+                var landingPageContent = JsonConvert.DeserializeObject<LandingPageContentValueDto>(content);
+                if (landingPageContent.ContentType == "DynamicContent" && !string.IsNullOrWhiteSpace(content))
+                {
+                    UpdateLandingDynamicContent(getLandingPageInfoRequest, getSegmentBySegmentationRequest, landingPageContent.Content, item.Type, translatedContent[item.Id]);
+                }
             }
         }
     }
@@ -187,13 +193,14 @@ public class LandingPageActions : MarketoInvocable
         GetLandingInfoRequest getLandingPageInfoRequest,
         GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
         string dynamicContentId,
+        string contentType,
         string content)
     {
         var endpoint =
             $"/rest/asset/v1/landingPage/{getLandingPageInfoRequest.Id}/dynamicContent/{dynamicContentId}.json";
         var request = new MarketoRequest(endpoint, Method.Post, Credentials)
             .AddQueryParameter("segment", getSegmentBySegmentationRequest.Segment)
-            .AddQueryParameter("type", "HTML")
+            .AddQueryParameter("type", contentType)
             .AddQueryParameter("value", content);
 
         return Client.GetSingleEntity<IdDto>(request);
@@ -256,8 +263,8 @@ public class LandingPageActions : MarketoInvocable
     {
         var result = new Dictionary<string, string>();
 
-        var formBytes = _fileManagementClient.DownloadAsync(file).Result.GetByteData().Result;
-        var html = Encoding.UTF8.GetString(formBytes);
+        //var formBytes = _fileManagementClient.DownloadAsync(file).Result.GetByteData().Result;
+        var html = Encoding.UTF8.GetString(File.ReadAllBytes("C:\\Users\\Bogdan\\Downloads\\Test (1).html"));
 
         var htmlDoc = new HtmlDocument();
         htmlDoc.LoadHtml(html);
