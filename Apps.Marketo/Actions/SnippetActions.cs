@@ -17,7 +17,7 @@ public class SnippetActions : MarketoInvocable
     {
     }
 
-    [Action("List snippets", Description = "List all snippets")]
+    [Action("Search snippets", Description = "Search snippets")]
     public ListSnippetsResponse ListSnippets()
     {
         var request = new MarketoRequest("/rest/asset/v1/snippets.json", Method.Get, Credentials);

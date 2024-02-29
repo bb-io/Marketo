@@ -18,6 +18,7 @@ using System.Text;
 using Apps.Marketo.Models;
 using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Utils.Extensions.Files;
+using Apps.Marketo.HtmlHelpers;
 
 namespace Apps.Marketo.Actions;
 
@@ -33,7 +34,7 @@ public class EmailActions : MarketoInvocable
         _fileManagementClient = fileManagementClient;
     }
 
-    [Action("List emails", Description = "List all emails")]
+    [Action("Search emails", Description = "Search all emails")]
     public ListEmailsResponse ListEmails([ActionParameter] ListEmailsRequest input)
     {
         var request = new MarketoRequest($"/rest/asset/v1/emails.json", Method.Get, Credentials);
@@ -101,7 +102,7 @@ public class EmailActions : MarketoInvocable
             .ToDictionary(
                 x => x.HtmlId, 
                 y => GetEmailSectionContent(getEmailInfoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, y));
-        var resultHtml = GenerateHtml(sectionContent, emailInfo.Name, getSegmentBySegmentationRequest.Segment);
+        var resultHtml = HtmlContentBuilder.GenerateHtml(sectionContent, emailInfo.Name, getSegmentBySegmentationRequest.Segment);
         
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
         var file = await _fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html, $"{emailInfo.Name}.html");
@@ -129,7 +130,7 @@ public class EmailActions : MarketoInvocable
             }
             emailContentResponse = GetEmailContent(getEmailInfoRequest);
         }
-        var translatedContent = ParseHtml(translateEmailWithHtmlRequest.File);
+        var translatedContent = HtmlContentBuilder.ParseHtml(translateEmailWithHtmlRequest.File, _fileManagementClient);
         foreach (var item in emailContentResponse.EmailContentItems)
         {
             if (item.ContentType == "DynamicContent")
@@ -189,54 +190,6 @@ public class EmailActions : MarketoInvocable
         }
         return string.Empty;
     }
-
-    private string GenerateHtml(Dictionary<string, string> sections,
-        string title, string language)
-    {
-        var htmlDoc = new HtmlDocument();
-        var htmlNode = htmlDoc.CreateElement("html");
-        htmlDoc.DocumentNode.AppendChild(htmlNode);
-
-        var headNode = htmlDoc.CreateElement("head");
-        htmlNode.AppendChild(headNode);
-
-        var titleNode = htmlDoc.CreateElement("title");
-        headNode.AppendChild(titleNode);
-        titleNode.InnerHtml = title;
-
-        var bodyNode = htmlDoc.CreateElement("body");
-        htmlNode.AppendChild(bodyNode);
-
-        foreach(var section in sections)
-        {
-            if (!string.IsNullOrWhiteSpace(section.Value))
-            {
-                var sectionNode = htmlDoc.CreateElement("div");
-                sectionNode.SetAttributeValue(HtmlIdAttribute, section.Key);
-                sectionNode.InnerHtml = section.Value;
-                bodyNode.AppendChild(sectionNode);
-            }
-        }
-        return htmlDoc.DocumentNode.OuterHtml;
-    }
-
-    private Dictionary<string, string> ParseHtml(FileReference file)
-    {
-        var result = new Dictionary<string, string>();
-
-        var formBytes = _fileManagementClient.DownloadAsync(file).Result.GetByteData().Result;
-        var html = Encoding.UTF8.GetString(formBytes);
-
-        var htmlDoc = new HtmlDocument();
-        htmlDoc.LoadHtml(html);
-        var sections = htmlDoc.DocumentNode.SelectSingleNode("//body").ChildNodes;
-        foreach(var section in sections)
-        {
-            result.Add(section.Attributes[HtmlIdAttribute].Value, section.InnerHtml);
-        }
-        return result;
-    }
-
 
     // Actions for more general usage of dynamic content
 
