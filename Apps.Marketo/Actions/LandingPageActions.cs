@@ -1,20 +1,34 @@
 ﻿using Apps.Marketo.Dtos;
 using Apps.Marketo.Invocables;
+using Apps.Marketo.Models.Emails.Requests;
+using Apps.Marketo.Models.Emails.Responses;
+using Apps.Marketo.Models;
 using Apps.Marketo.Models.LandingPages.Requests;
 using Apps.Marketo.Models.LandingPages.Responses;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
+using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
+using HtmlAgilityPack;
 using Newtonsoft.Json;
 using RestSharp;
+using System.Net.Mime;
+using System.Text;
+using Newtonsoft.Json.Linq;
+using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 
 namespace Apps.Marketo.Actions;
 
 [ActionList]
 public class LandingPageActions : MarketoInvocable
 {
-    public LandingPageActions(InvocationContext invocationContext) : base(invocationContext)
+    private const string HtmlIdAttribute = "id";
+
+    private readonly IFileManagementClient _fileManagementClient;
+    public LandingPageActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : base(invocationContext)
     {
+        _fileManagementClient = fileManagementClient;
     }
 
     [Action("List landing pages", Description = "List landing pages")]
@@ -35,6 +49,14 @@ public class LandingPageActions : MarketoInvocable
     {
         var request = new MarketoRequest($"/rest/asset/v1/landingPage/{input.Id}.json", Method.Get, Credentials);
         return Client.GetSingleEntity<LandingPageDto>(request);
+    }
+
+    [Action("Get landing page content", Description = "Get landing page content")]
+    public LandingPageContentResponse GetLandingContent([ActionParameter] GetLandingInfoRequest input)
+    {
+        var request = new MarketoRequest($"/rest/asset/v1/landingPage/{input.Id}/content.json", Method.Get, Credentials);
+        var response = Client.ExecuteWithError<LandingPageContentDto>(request);
+        return new(response.Result);
     }
 
     [Action("Create landing page", Description = "Create landing page")]
@@ -97,12 +119,153 @@ public class LandingPageActions : MarketoInvocable
         Client.ExecuteWithError<IdDto>(request);
     }
 
-    [Action("Get landing page full content", Description = "Get landing page full content")]
-    public LandingPageContentDto GetLandingPageContent([ActionParameter] GetLandingInfoRequest input)
+    [Action("Get landing page as HTML for translation", Description = "Get landing page as HTML for translation")]
+    public async Task<FileWrapper> GetLandingPageAsHtml(
+        [ActionParameter] GetLandingInfoRequest getLandingPageInfoRequest,
+        [ActionParameter] GetSegmentationRequest getSegmentationRequest,
+        [ActionParameter] GetSegmentBySegmentationRequest getSegmentBySegmentationRequest)
     {
-        var endpoint = $"/rest/asset/v1/landingPage/{input.Id}/fullContent.json";
-        var request = new MarketoRequest(endpoint, Method.Get, Credentials);
+        var landingInfo = GetLandingInfo(getLandingPageInfoRequest);
+        var landingContentResponse = GetLandingContent(getLandingPageInfoRequest);
 
-        return Client.GetSingleEntity<LandingPageContentDto>(request);
+        var sectionContent = landingContentResponse.LandingPageContentItems!
+            .Where(x => x.Type == "HTML" || x.Type == "RichText")
+            .ToDictionary(
+                x => x.Id,
+                y => GetLandingSectionContent(getLandingPageInfoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, y));
+        var resultHtml = GenerateHtml(sectionContent, landingInfo.Name, getSegmentBySegmentationRequest.Segment);
+
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
+        var file = await _fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html, $"{landingInfo.Name}.html");
+        return new() { File = file };
+    }
+
+    [Action("Translate landing page from HTML file", Description = "Translate landing page from HTML file")]
+    public void TranslateLandingWithHtml(
+        [ActionParameter] GetLandingInfoRequest getLandingPageInfoRequest,
+        [ActionParameter] GetSegmentationRequest getSegmentationRequest,
+        [ActionParameter] GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
+        [ActionParameter] TranslateEmailWithHtmlRequest translateLandingWithHtmlRequest)
+    {
+        var landingContentResponse = GetLandingContent(getLandingPageInfoRequest);
+
+        if (!translateLandingWithHtmlRequest.TranslateOnlyDynamic.HasValue ||
+            !translateLandingWithHtmlRequest.TranslateOnlyDynamic.Value)
+        {
+            foreach (var item in landingContentResponse.LandingPageContentItems)
+            {
+                var sectionContentObj = JObject.Parse(item.Content.ToString());
+                if (sectionContentObj.Type != JTokenType.String)
+                {
+                    ConvertSectionToDynamicContent(getLandingPageInfoRequest.Id, item.Id, getSegmentationRequest.SegmentationId);
+                }
+            }
+            landingContentResponse = GetLandingContent(getLandingPageInfoRequest);
+        }
+        var translatedContent = ParseHtml(translateLandingWithHtmlRequest.File);
+        foreach (var item in landingContentResponse.LandingPageContentItems)
+        {
+            var landingPageContent = JsonConvert.DeserializeObject<LandingPageContentValueDto>(item.Content.ToString());
+            if (landingPageContent.ContentType != null && landingPageContent.ContentType == "DynamicContent")
+            {
+                UpdateLandingDynamicContent(getLandingPageInfoRequest, getSegmentBySegmentationRequest, item.Content.ToString(), translatedContent[item.Id]);
+            }
+        }
+    }
+
+    private IdDto ConvertSectionToDynamicContent(string landingId, string htmlId, string segmentationId)
+    {
+        var endpoint = $"/rest/asset/v1/landingPage/{landingId}/content/{htmlId}.json";
+        var request = new MarketoRequest(endpoint, Method.Post, Credentials)
+            .AddParameter("value", segmentationId)
+            .AddParameter("type", "DynamicContent");
+        return Client.ExecuteWithError<IdDto>(request).Result.FirstOrDefault();
+    }
+
+    private IdDto UpdateLandingDynamicContent(
+        GetLandingInfoRequest getLandingPageInfoRequest,
+        GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
+        string dynamicContentId,
+        string content)
+    {
+        var endpoint =
+            $"/rest/asset/v1/landingPage/{getLandingPageInfoRequest.Id}/dynamicContent/{dynamicContentId}.json";
+        var request = new MarketoRequest(endpoint, Method.Post, Credentials)
+            .AddQueryParameter("segment", getSegmentBySegmentationRequest.Segment)
+            .AddQueryParameter("type", "HTML")
+            .AddQueryParameter("value", content);
+
+        return Client.GetSingleEntity<IdDto>(request);
+    }
+
+    private string GetLandingSectionContent(
+        GetLandingInfoRequest getLandingInfoRequest,
+        GetSegmentationRequest getSegmentationRequest,
+        GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
+        LandingPageContentDto sectionContent)
+    {
+        var sectionContentObj = JObject.Parse(sectionContent.Content.ToString());
+        if (sectionContentObj.Type != JTokenType.String)
+        {
+            var landingPageContent = JsonConvert.DeserializeObject<LandingPageContentValueDto>(sectionContent.Content.ToString());
+            var requestSeg = new MarketoRequest(
+                    $"/rest/asset/v1/landingPage/{getLandingInfoRequest.Id}/dynamicContent/{landingPageContent.Content}.json",
+                    Method.Get, Credentials);
+
+            var responseSeg = Client.ExecuteWithError<DynamicContentDto>(requestSeg);
+            if (responseSeg.Result!.First().Segmentation.ToString() == getSegmentationRequest.SegmentationId)
+                return responseSeg.Result!.First().Content
+                    .Where(x => x.SegmentName == getSegmentBySegmentationRequest.Segment)
+                    .Select(x => new GetEmailDynamicContentResponse(x)
+                    { DynamicContentId = sectionContent.Content.ToString()! }).First().Content;
+        }
+        return sectionContent.Content.ToString();
+    }
+
+    private string GenerateHtml(Dictionary<string, string> sections,
+        string title, string language)
+    {
+        var htmlDoc = new HtmlDocument();
+        var htmlNode = htmlDoc.CreateElement("html");
+        htmlDoc.DocumentNode.AppendChild(htmlNode);
+
+        var headNode = htmlDoc.CreateElement("head");
+        htmlNode.AppendChild(headNode);
+
+        var titleNode = htmlDoc.CreateElement("title");
+        headNode.AppendChild(titleNode);
+        titleNode.InnerHtml = title;
+
+        var bodyNode = htmlDoc.CreateElement("body");
+        htmlNode.AppendChild(bodyNode);
+
+        foreach (var section in sections)
+        {
+            if (!string.IsNullOrWhiteSpace(section.Value))
+            {
+                var sectionNode = htmlDoc.CreateElement("div");
+                sectionNode.SetAttributeValue(HtmlIdAttribute, section.Key);
+                sectionNode.InnerHtml = section.Value;
+                bodyNode.AppendChild(sectionNode);
+            }
+        }
+        return htmlDoc.DocumentNode.OuterHtml;
+    }
+
+    private Dictionary<string, string> ParseHtml(FileReference file)
+    {
+        var result = new Dictionary<string, string>();
+
+        var formBytes = _fileManagementClient.DownloadAsync(file).Result.GetByteData().Result;
+        var html = Encoding.UTF8.GetString(formBytes);
+
+        var htmlDoc = new HtmlDocument();
+        htmlDoc.LoadHtml(html);
+        var sections = htmlDoc.DocumentNode.SelectSingleNode("//body").ChildNodes;
+        foreach (var section in sections)
+        {
+            result.Add(section.Attributes[HtmlIdAttribute].Value, section.InnerHtml);
+        }
+        return result;
     }
 }

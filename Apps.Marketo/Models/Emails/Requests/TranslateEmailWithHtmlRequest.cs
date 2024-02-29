@@ -14,6 +14,6 @@ namespace Apps.Marketo.Models.Emails.Requests
         public FileReference File {  get; set; }
 
         [Display("Translate only dynamic content")]
-        public bool TranslateOnlyDynamic { get; set; }
+        public bool? TranslateOnlyDynamic { get; set; }
     }
 }
