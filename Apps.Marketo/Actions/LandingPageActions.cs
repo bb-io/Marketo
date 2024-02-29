@@ -17,6 +17,7 @@ using System.Net.Mime;
 using System.Text;
 using Newtonsoft.Json.Linq;
 using Blackbird.Applications.Sdk.Utils.Extensions.Files;
+using Newtonsoft.Json.Schema;
 
 namespace Apps.Marketo.Actions;
 
@@ -154,8 +155,7 @@ public class LandingPageActions : MarketoInvocable
         {
             foreach (var item in landingContentResponse.LandingPageContentItems)
             {
-                var sectionContentObj = JObject.Parse(item.Content.ToString());
-                if (sectionContentObj.Type != JTokenType.String)
+                if (IsJsonObject(item.Content.ToString()))
                 {
                     ConvertSectionToDynamicContent(getLandingPageInfoRequest.Id, item.Id, getSegmentationRequest.SegmentationId);
                 }
@@ -204,20 +204,19 @@ public class LandingPageActions : MarketoInvocable
         GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
         LandingPageContentDto sectionContent)
     {
-        var sectionContentObj = JObject.Parse(sectionContent.Content.ToString());
-        if (sectionContentObj.Type != JTokenType.String)
+        if (IsJsonObject(sectionContent.Content.ToString()))
         {
             var landingPageContent = JsonConvert.DeserializeObject<LandingPageContentValueDto>(sectionContent.Content.ToString());
             var requestSeg = new MarketoRequest(
                     $"/rest/asset/v1/landingPage/{getLandingInfoRequest.Id}/dynamicContent/{landingPageContent.Content}.json",
                     Method.Get, Credentials);
 
-            var responseSeg = Client.ExecuteWithError<DynamicContentDto>(requestSeg);
+            var responseSeg = Client.ExecuteWithError<LandingDynamicContentDto>(requestSeg);
             if (responseSeg.Result!.First().Segmentation.ToString() == getSegmentationRequest.SegmentationId)
-                return responseSeg.Result!.First().Content
+                return responseSeg.Result!.First().Segments
                     .Where(x => x.SegmentName == getSegmentBySegmentationRequest.Segment)
                     .Select(x => new GetEmailDynamicContentResponse(x)
-                    { DynamicContentId = sectionContent.Content.ToString()! }).First().Content;
+                    { DynamicContentId = landingPageContent.Content }).First().Content;
         }
         return sectionContent.Content.ToString();
     }
@@ -267,5 +266,17 @@ public class LandingPageActions : MarketoInvocable
             result.Add(section.Attributes[HtmlIdAttribute].Value, section.InnerHtml);
         }
         return result;
+    }
+
+    private bool IsJsonObject(string content)
+    {
+        bool isObject = false;
+        try
+        {
+            JObject.Parse(content);
+            isObject = true;
+        }
+        catch (Exception _) { }
+        return isObject;
     }
 }
