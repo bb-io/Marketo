@@ -16,4 +16,10 @@ public class ListLandingPagesRequest
     [Display("Folder type")]
     [DataSource(typeof(FolderTypeDataHandler))]
     public string? Type { get; set; }
+
+    [Display("Start date")]
+    public DateTime? StartDate { get; set; }
+
+    [Display("End date")]
+    public DateTime? EndDate { get; set; }
 }

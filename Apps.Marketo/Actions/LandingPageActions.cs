@@ -18,21 +18,20 @@ using System.Text;
 using Newtonsoft.Json.Linq;
 using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using Newtonsoft.Json.Schema;
+using Apps.Marketo.HtmlHelpers;
 
 namespace Apps.Marketo.Actions;
 
 [ActionList]
 public class LandingPageActions : MarketoInvocable
 {
-    private const string HtmlIdAttribute = "id";
-
     private readonly IFileManagementClient _fileManagementClient;
     public LandingPageActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : base(invocationContext)
     {
         _fileManagementClient = fileManagementClient;
     }
 
-    [Action("List landing pages", Description = "List landing pages")]
+    [Action("Search landing pages", Description = "Search landing pages")]
     public ListLandingPagesResponse ListLandingPages([ActionParameter] ListLandingPagesRequest input)
     {
         var request = new MarketoRequest($"/rest/asset/v1/landingPages.json", Method.Get, Credentials);
@@ -42,6 +41,10 @@ public class LandingPageActions : MarketoInvocable
                 JsonConvert.SerializeObject(new { id = int.Parse(input.FolderId), type = input.Type ?? "Folder" }));
 
         var response = Client.Paginate<LandingPageDto>(request);
+        if (input.StartDate != null)
+            response = response.Where(x => x.UpdatedAt >= input.StartDate.Value).ToList();
+        if (input.EndDate != null)
+            response = response.Where(x => x.UpdatedAt <= input.EndDate.Value).ToList();
         return new() { LandingPages = response };
     }
 
@@ -134,7 +137,7 @@ public class LandingPageActions : MarketoInvocable
             .ToDictionary(
                 x => x.Id,
                 y => GetLandingSectionContent(getLandingPageInfoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, y));
-        var resultHtml = GenerateHtml(sectionContent, landingInfo.Name, getSegmentBySegmentationRequest.Segment);
+        var resultHtml = HtmlContentBuilder.GenerateHtml(sectionContent, landingInfo.Name, getSegmentBySegmentationRequest.Segment);
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
         var file = await _fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html, $"{landingInfo.Name}.html");
@@ -164,7 +167,7 @@ public class LandingPageActions : MarketoInvocable
             landingContentResponse = GetLandingContent(getLandingPageInfoRequest);
         }
         
-        var translatedContent = ParseHtml(translateLandingWithHtmlRequest.File);
+        var translatedContent = HtmlContentBuilder.ParseHtml(translateLandingWithHtmlRequest.File, _fileManagementClient);
         foreach (var item in landingContentResponse.LandingPageContentItems)
         {
             if (IsJsonObject(item.Content.ToString()) &&
@@ -227,53 +230,6 @@ public class LandingPageActions : MarketoInvocable
                     { DynamicContentId = landingPageContent.Content }).First().Content;
         }
         return sectionContent.Content.ToString();
-    }
-
-    private string GenerateHtml(Dictionary<string, string> sections,
-        string title, string language)
-    {
-        var htmlDoc = new HtmlDocument();
-        var htmlNode = htmlDoc.CreateElement("html");
-        htmlDoc.DocumentNode.AppendChild(htmlNode);
-
-        var headNode = htmlDoc.CreateElement("head");
-        htmlNode.AppendChild(headNode);
-
-        var titleNode = htmlDoc.CreateElement("title");
-        headNode.AppendChild(titleNode);
-        titleNode.InnerHtml = title;
-
-        var bodyNode = htmlDoc.CreateElement("body");
-        htmlNode.AppendChild(bodyNode);
-
-        foreach (var section in sections)
-        {
-            if (!string.IsNullOrWhiteSpace(section.Value))
-            {
-                var sectionNode = htmlDoc.CreateElement("div");
-                sectionNode.SetAttributeValue(HtmlIdAttribute, section.Key);
-                sectionNode.InnerHtml = section.Value;
-                bodyNode.AppendChild(sectionNode);
-            }
-        }
-        return htmlDoc.DocumentNode.OuterHtml;
-    }
-
-    private Dictionary<string, string> ParseHtml(FileReference file)
-    {
-        var result = new Dictionary<string, string>();
-
-        var formBytes = _fileManagementClient.DownloadAsync(file).Result.GetByteData().Result;
-        var html = Encoding.UTF8.GetString(formBytes);
-
-        var htmlDoc = new HtmlDocument();
-        htmlDoc.LoadHtml(html);
-        var sections = htmlDoc.DocumentNode.SelectSingleNode("//body").ChildNodes;
-        foreach (var section in sections)
-        {
-            result.Add(section.Attributes[HtmlIdAttribute].Value, section.InnerHtml);
-        }
-        return result;
     }
 
     private bool IsJsonObject(string content)

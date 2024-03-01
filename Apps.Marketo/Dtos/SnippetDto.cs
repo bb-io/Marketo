@@ -1,4 +1,5 @@
 using Blackbird.Applications.Sdk.Common;
+using System.Text.Json.Serialization;
 
 namespace Apps.Marketo.Dtos;
 
@@ -23,4 +24,12 @@ public class SnippetDto
 
     [Display("Workspace")]
     public string Workspace { get; set; }
+
+    [Display("Created at")]
+    [JsonConverter(typeof(DateTimeConverter))]
+    public DateTime CreatedAt { get; set; }
+
+    [Display("Updated at")]
+    [JsonConverter(typeof(DateTimeConverter))]
+    public DateTime UpdatedAt { get; set; }
 }

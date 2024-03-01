@@ -11,7 +11,8 @@ public class LandingPageDto
     public string ComputedUrl { get; set; }
 
     [Display("Created at")]
-    public string CreatedAt { get; set; }
+    [JsonConverter(typeof(DateTimeConverter))]
+    public DateTime CreatedAt { get; set; }
 
     [Display("Custom head HTML")]
     public string CustomHeadHTML { get; set; }
@@ -37,6 +38,7 @@ public class LandingPageDto
     public string Title { get; set; }
 
     [Display("Updated at")]
-    public string UpdatedAt { get; set; }
+    [JsonConverter(typeof(DateTimeConverter))]
+    public DateTime UpdatedAt { get; set; }
     public string Workspace { get; set; }
 }
