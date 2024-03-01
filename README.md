@@ -27,10 +27,12 @@ Before you can connect you need to make sure that:
 
 ### Emails
 
-- **List all emails**
+- **Search emails**
 - **Get email info**
 - **Get email content**
 - **Delete email**
+- **Get email as HTML for translation**
+- **Translate email from HTML file**
 
 ### Files
 
@@ -48,7 +50,7 @@ Before you can connect you need to make sure that:
 
 ### Landing pages
 
-- **List landing pages**
+- **Search landing pages**
 - **Get landing page info**
 - **Create landing page**
 - **Delete landing page**
@@ -56,15 +58,32 @@ Before you can connect you need to make sure that:
 - **Discard landing page draft**
 - **Unapprove landing page (back to draft)**
 - **Get landing page full content**
+- **Get landing page as HTML for translation**
+- **Translate landing page from HTML file**
+
+**Get landing page as HTML for translation** and **Translate landing page from HTML file** are intended to be used together in translation flow: you can retrieve a form as HTML file, put it into TMS, then retrieve a translated HTML file and put it back to Marketo. **Translate landing page from HTML file** expects the same HTML structure as the structure of the file retrieved with **Get landing page as HTML for translation**.
+
 
 ### Forms
 
 - **Get form**
-- **List forms created or updated in date range**
+- **Search forms created or updated in date range**
 - **Get form as HTML for translation**
 - **Create new form from translated HTML**
 
 **Get form as HTML for translation** and **Create new form from translated HTML** are intended to be used together in translation flow: you can retrieve a form as HTML file, put it into TMS, then retrieve a translated HTML file and put it back to Marketo. **Create new form from translated HTML** expects the same HTML structure as the structure of the file retrieved with **Get form as HTML for translation**.
+
+### Translation functionality (dynamic content)
+- Translation functionality is based on dynamic content in Marketo. This type of translation is available for emails and landing pages (last two actions specified in email and landing page sections above)
+- In your Marketo you must have a segmentation which contains segments named as language codes or language names (as you wish). Both actions must use the same segmentation but different segments (because segments are simply different languages).
+- Blackbird will automatically convert all text fields (HTML or rich text) to dynamic content during a translation action. If you want to prevent this you can set "Translate only dynamic content" in translation actions to "true" and then only dynamic content fields will be changed (static text content will remain the same). Don't use this flag if you want to translate whole content.
+- Fields which are segmented manually from UI by different segmentation (not the one you specified in actions input) will be ignored.
+- If you need more control over dynamic content of individual sections of emails and landing pages - please contact us
+  
+![image](https://github.com/bb-io/Marketo/assets/127740895/ec77cf4a-9468-41b8-a5ee-3ca902183eeb)
+
+
+
 
 ## Missing features
 
