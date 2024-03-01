@@ -41,7 +41,7 @@ public class FormActions : MarketoInvocable
         return Client.GetSingleEntity<FormDto>(request);
     }
 
-    [Action("Search forms created or updated in date range", Description = "Search all forms that have been created or " +
+    [Action("Search forms", Description = "Search all forms that have been created or " +
                                                                          "updated in the specified date range. If end " +
                                                                          "date is not specified, it is set to current date.")]
     public ListFormsResponse ListRecentlyCreatedOrUpdatedForms([ActionParameter] ListFormsRequest input)

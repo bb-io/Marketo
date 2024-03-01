@@ -18,12 +18,19 @@ public class SnippetActions : MarketoInvocable
     }
 
     [Action("Search snippets", Description = "Search snippets")]
-    public ListSnippetsResponse ListSnippets()
+    public ListSnippetsResponse ListSnippets([ActionParameter] ListSnippetsRequest input)
     {
         var request = new MarketoRequest("/rest/asset/v1/snippets.json", Method.Get, Credentials);
+        if (input.Status != null) request.AddQueryParameter("status", input.Status);
+        var response = Client.Paginate<SnippetDto>(request);
+
+        if (input.StartDate != null)
+            response = response.Where(x => x.UpdatedAt >= input.StartDate.Value).ToList();
+        if (input.EndDate != null)
+            response = response.Where(x => x.UpdatedAt <= input.EndDate.Value).ToList();
         return new()
         {
-            Snippets = Client.Paginate<SnippetDto>(request)
+            Snippets = response
         };
     }
 

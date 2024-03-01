@@ -41,6 +41,10 @@ public class LandingPageActions : MarketoInvocable
                 JsonConvert.SerializeObject(new { id = int.Parse(input.FolderId), type = input.Type ?? "Folder" }));
 
         var response = Client.Paginate<LandingPageDto>(request);
+        if (input.StartDate != null)
+            response = response.Where(x => x.UpdatedAt >= input.StartDate.Value).ToList();
+        if (input.EndDate != null)
+            response = response.Where(x => x.UpdatedAt <= input.EndDate.Value).ToList();
         return new() { LandingPages = response };
     }
 
