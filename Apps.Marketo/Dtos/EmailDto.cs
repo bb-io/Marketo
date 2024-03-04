@@ -5,9 +5,9 @@ namespace Apps.Marketo.Dtos;
 
 public class EmailDto
 {
-    //[Display("Created at")]
+    [Display("Created at")]
     //[JsonConverter(typeof(DateTimeConverter))]
-    //public DateTime CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
     public Folder Folder { get; set; }
     public EmailHeaderField FromEmail { get; set; }
     public EmailHeaderField FromName { get; set; }
@@ -23,9 +23,9 @@ public class EmailDto
     public int Template { get; set; }
     public bool TextOnly { get; set; }
 
-    //[Display("Created at")]
+    [Display("Updated at")]
     //[JsonConverter(typeof(DateTimeConverter))]
-    //public DateTime UpdatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
     public string Url { get; set; }
     public int Version { get; set; }
     public bool WebView { get; set; }
