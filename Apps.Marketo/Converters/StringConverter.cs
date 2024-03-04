@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using Microsoft.Extensions.Primitives;
+using System.Text.Json;
 
 namespace Apps.Marketo;
 
@@ -6,8 +7,11 @@ public class StringConverter : System.Text.Json.Serialization.JsonConverter<stri
 {
     public override string Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-
-        if (reader.TokenType == JsonTokenType.Number)
+        if (reader.TokenType == JsonTokenType.Null)
+        {
+            return string.Empty;
+        }
+        else if (reader.TokenType == JsonTokenType.Number)
         {
             var stringValue = reader.GetInt32();
             return stringValue.ToString();
