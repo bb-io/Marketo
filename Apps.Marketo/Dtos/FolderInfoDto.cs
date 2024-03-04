@@ -1,16 +1,17 @@
 ﻿using Blackbird.Applications.Sdk.Common;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace Apps.Marketo.Dtos;
 
 public class FolderInfoDto
 {
-    [JsonConverter(typeof(StringConverter))]
+    
     [Display("Access zone ID")]
     public string AccessZoneId { get; set; }
 
     [Display("Created at")]
-    public string CreatedAt { get; set; }
+    [JsonConverter(typeof(DateTimeConverter))]
+    public DateTime CreatedAt { get; set; }
     public string Description { get; set; }
 
     [Display("Folder")]
@@ -19,7 +20,7 @@ public class FolderInfoDto
     [Display("Folder type")]
     public string FolderType { get; set; }
 
-    [JsonConverter(typeof(StringConverter))]
+    
     public string Id { get; set; }
 
     [Display("Is archive")]
@@ -38,7 +39,7 @@ public class FolderInfoDto
 }
 
 public class Folder {
-    [JsonConverter(typeof(StringConverter))]
+    
     public string Id { get; set; }
     public string Type { get; set; }
 }

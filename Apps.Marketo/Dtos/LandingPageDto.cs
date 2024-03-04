@@ -1,5 +1,6 @@
 ﻿using Blackbird.Applications.Sdk.Common;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
+
 
 namespace Apps.Marketo.Dtos;
 
@@ -25,7 +26,7 @@ public class LandingPageDto
     [Display("Form prefill")]
     public bool FormPrefill { get; set; }
 
-    [JsonConverter(typeof(StringConverter))]
+    
     public string Id { get; set; }
     public string Keywords { get; set; }
 

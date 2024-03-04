@@ -1,5 +1,5 @@
 ﻿using Blackbird.Applications.Sdk.Common;
-using System.Text.Json.Serialization;
+
 
 namespace Apps.Marketo.Dtos;
 
@@ -13,7 +13,7 @@ public class LandingPageTemplateDto
     public bool EnableMunchkin { get; set; }
     public Folder Folder { get; set; }
 
-    [JsonConverter(typeof(StringConverter))]
+    
     public string Id { get; set; }
     public string Name { get; set; }
     public string Status { get; set; }
