@@ -20,7 +20,9 @@ public class EmailDto
     public EmailHeaderField ReplyEmail { get; set; }
     public string Status { get; set; }
     public EmailHeaderField Subject { get; set; }
-    public int Template { get; set; }
+
+    [JsonConverter(typeof(StringConverter))]
+    public string Template { get; set; }
     public bool TextOnly { get; set; }
 
     [Display("Updated at")]
