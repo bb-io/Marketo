@@ -1,5 +1,5 @@
-﻿using System.Text.Json.Serialization;
-using Blackbird.Applications.Sdk.Common;
+﻿using Blackbird.Applications.Sdk.Common;
+using Newtonsoft.Json;
 
 namespace Apps.Marketo.Dtos;
 
@@ -80,7 +80,7 @@ public class ThankYouListDto
     
     [Display("Followup value")]
     [JsonConverter(typeof(FollowupValueConverter))]
-    public object FollowupValue { get; set; }
+    public string FollowupValue { get; set; }
     
     public bool Default { get; set; }
     

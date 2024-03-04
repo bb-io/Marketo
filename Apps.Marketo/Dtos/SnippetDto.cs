@@ -1,5 +1,6 @@
 using Blackbird.Applications.Sdk.Common;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
+
 
 namespace Apps.Marketo.Dtos;
 

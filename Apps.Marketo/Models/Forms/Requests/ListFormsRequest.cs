@@ -17,6 +17,6 @@ public class ListFormsRequest
     public string? Status { get; set; }
     
     [Display("Folder", Description = "Folders list with \"Landing Page Form\" type")]
-    [DataSource(typeof(FolderDataHandler))]
+    [DataSource(typeof(FormFolderDataHandler))]
     public string? FolderId { get; set; }
 }
