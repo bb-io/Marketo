@@ -1,4 +1,5 @@
 ﻿using Apps.Marketo.DataSourceHandlers;
+using Apps.Marketo.DataSourceHandlers.FolderDataHandlers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 
@@ -9,13 +10,9 @@ public class ListEmailsRequest
     [DataSource(typeof(StatusDataHandler))]
     public string? Status { get; set; }
 
-    [Display("Folder")]
-    [DataSource(typeof(FolderDataHandler))]
+    [Display("Folder", Description = "Folders list with \"Email\" type")]
+    [DataSource(typeof(EmailFolderDataHandler))]
     public string? FolderId { get; set; }
-
-    [Display("Folder type")]
-    [DataSource(typeof(FolderTypeDataHandler))]
-    public string? Type { get; set; }
 
     [Display("Earliest updated at")]
     public DateTime? EarliestUpdatedAt { get; set; }

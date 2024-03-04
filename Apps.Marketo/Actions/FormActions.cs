@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Apps.Marketo.DataSourceHandlers;
 using Apps.Marketo.Dtos;
 using Apps.Marketo.HtmlHelpers.Forms;
 using Apps.Marketo.Invocables;
@@ -18,6 +17,7 @@ using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using RestSharp;
 using JsonSerializer = System.Text.Json.JsonSerializer;
+using Apps.Marketo.DataSourceHandlers.FolderDataHandlers;
 
 namespace Apps.Marketo.Actions;
 
@@ -46,29 +46,33 @@ public class FormActions : MarketoInvocable
                                                                          "date is not specified, it is set to current date.")]
     public ListFormsResponse ListRecentlyCreatedOrUpdatedForms([ActionParameter] ListFormsRequest input)
     {
-        var endDateTime = input.EndDate ?? DateTime.Now.ToUniversalTime();
-        var startDateTime = input.StartDate.ToUniversalTime();
-        var offset = 0;
-        var maxReturn = 200;
-        var forms = new List<FormDto>();
-        BaseResponseDto<FormDto> response;
+        var request = new MarketoRequest($"/rest/asset/v1/forms.json", Method.Get, Credentials);
+        if (input.FolderId != null)
+            request.AddQueryParameter("folder", int.Parse(input.FolderId));
+        var forms = Client.Paginate<FormDto>(request);
+        //var endDateTime = input.EndDate ?? DateTime.Now.ToUniversalTime();
+        //var startDateTime = input.StartDate.ToUniversalTime();
+        //var offset = 0;
+        //var maxReturn = 200;
+        //var forms = new List<FormDto>();
+        //BaseResponseDto<FormDto> response;
 
-        do
-        {
-            var request = new MarketoRequest($"/rest/asset/v1/forms.json?maxReturn={maxReturn}&offset={offset}",
-                Method.Get, Credentials);
-            response = Client.ExecuteWithError<FormDto>(request);
-            var updatedForms = response.Result.Where(form => form.UpdatedAt >= startDateTime
-                                                             && form.UpdatedAt <= endDateTime
-                                                             && (input.FolderId == null
-                                                                 || form.Folder.Value == int.Parse(input.FolderId)));
+        //do
+        //{
+        //    var request = new MarketoRequest($"/rest/asset/v1/forms.json?maxReturn={maxReturn}&offset={offset}",
+        //        Method.Get, Credentials);
+        //    response = Client.ExecuteWithError<FormDto>(request);
+        //    var updatedForms = response.Result.Where(form => form.UpdatedAt >= startDateTime
+        //                                                     && form.UpdatedAt <= endDateTime
+        //                                                     && (input.FolderId == null
+        //                                                         || form.Folder.Value == int.Parse(input.FolderId)));
 
-            if (input.Status != null)
-                updatedForms = updatedForms.Where(form => form.Status == input.Status);
+        //    if (input.Status != null)
+        //        updatedForms = updatedForms.Where(form => form.Status == input.Status);
 
-            forms.AddRange(updatedForms);
-            offset += maxReturn;
-        } while (response.Result.Count == maxReturn);
+        //    forms.AddRange(updatedForms);
+        //    offset += maxReturn;
+        //} while (response.Result.Count == maxReturn);
 
         return new() { Forms = forms };
     }

@@ -1,4 +1,5 @@
 ﻿using Apps.Marketo.DataSourceHandlers;
+using Apps.Marketo.DataSourceHandlers.FolderDataHandlers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using System;
@@ -14,10 +15,14 @@ namespace Apps.Marketo.Models.Snippets.Request
         [DataSource(typeof(StatusDataHandler))]
         public string? Status { get; set; }
 
-        [Display("Start date")]
-        public DateTime? StartDate { get; set; }
+        [Display("Folder", Description = "Folders list with \"Snippet\" type")]
+        [DataSource(typeof(SnippetFolderDataHandler))]
+        public string? FolderId { get; set; }
 
-        [Display("End date")]
-        public DateTime? EndDate { get; set; }
+        [Display("Earliest updated at")]
+        public DateTime? EarliestUpdatedAt { get; set; }
+
+        [Display("Latest updated at")]
+        public DateTime? LatestUpdatedAt { get; set; }
     }
 }

@@ -24,10 +24,10 @@ public class SnippetActions : MarketoInvocable
         if (input.Status != null) request.AddQueryParameter("status", input.Status);
         var response = Client.Paginate<SnippetDto>(request);
 
-        if (input.StartDate != null)
-            response = response.Where(x => x.UpdatedAt >= input.StartDate.Value).ToList();
-        if (input.EndDate != null)
-            response = response.Where(x => x.UpdatedAt <= input.EndDate.Value).ToList();
+        if (input.EarliestUpdatedAt != null)
+            response = response.Where(x => x.UpdatedAt >= input.EarliestUpdatedAt.Value).ToList();
+        if (input.LatestUpdatedAt != null)
+            response = response.Where(x => x.UpdatedAt <= input.LatestUpdatedAt.Value).ToList();
         return new()
         {
             Snippets = response
