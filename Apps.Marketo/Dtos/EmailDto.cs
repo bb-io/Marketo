@@ -7,7 +7,7 @@ public class EmailDto
 {
     [Display("Created at")]
     //[JsonConverter(typeof(DateTimeConverter))]
-    public DateTime CreatedAt { get; set; }
+    public string CreatedAt { get; set; }
     public Folder Folder { get; set; }
     public EmailHeaderField FromEmail { get; set; }
     public EmailHeaderField FromName { get; set; }
@@ -25,7 +25,7 @@ public class EmailDto
 
     [Display("Updated at")]
     //[JsonConverter(typeof(DateTimeConverter))]
-    public DateTime UpdatedAt { get; set; }
+    public string UpdatedAt { get; set; }
     public string Url { get; set; }
     public int Version { get; set; }
     public bool WebView { get; set; }
