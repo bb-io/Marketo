@@ -19,6 +19,6 @@ public class FolderDataHandler : BaseInvocable, IAsyncDataSourceHandler
         request.AddQueryParameter("maxReturn", 200);
         request.AddQueryParameter("maxDepth", 10);
         var response = client.Get<BaseResponseDto<FolderInfoDto>>(request);
-        return response.Result.Where(str => str.Name.Contains(context.SearchString)).ToDictionary(k => k.Id.ToString(), v => v.Name);
+        return response.Result.DistinctBy(x => x.Id).Where(str => str.Name.Contains(context.SearchString)).ToDictionary(k => k.Id.ToString(), v => v.Name);
     }
 }
