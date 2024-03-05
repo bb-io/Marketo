@@ -80,7 +80,7 @@ public class ThankYouListDto
     
     [Display("Followup value")]
     [JsonConverter(typeof(FollowupValueConverter))]
-    public string FollowupValue { get; set; }
+    public object FollowupValue { get; set; }
     
     public bool Default { get; set; }
     
