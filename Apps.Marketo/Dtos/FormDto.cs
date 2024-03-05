@@ -79,8 +79,8 @@ public class ThankYouListDto
     public string FollowupType { get; set; }
     
     [Display("Followup value")]
-    [JsonConverter(typeof(FollowupValueConverter))]
-    public string FollowupValue { get; set; }
+    [System.Text.Json.Serialization.JsonConverter(typeof(FollowupValueConverter))]
+    public object FollowupValue { get; set; }
     
     public bool Default { get; set; }
     

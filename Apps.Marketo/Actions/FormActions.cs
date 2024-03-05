@@ -42,39 +42,19 @@ public class FormActions : MarketoInvocable
         return Client.GetSingleEntity<FormDto>(request);
     }
 
-    [Action("Search forms", Description = "Search all forms that have been created or " +
-                                                                         "updated in the specified date range. If end " +
-                                                                         "date is not specified, it is set to current date.")]
+    [Action("Search forms", Description = "Search all forms")]
     public ListFormsResponse ListRecentlyCreatedOrUpdatedForms([ActionParameter] ListFormsRequest input)
     {
         var request = new MarketoRequest($"/rest/asset/v1/forms.json", Method.Get, Credentials);
         if (input.FolderId != null)
             request.AddQueryParameter("folder", int.Parse(input.FolderId));
+        if (input.Status != null) 
+            request.AddQueryParameter("status", input.Status);
         var forms = Client.Paginate<FormDto>(request);
-        //var endDateTime = input.EndDate ?? DateTime.Now.ToUniversalTime();
-        //var startDateTime = input.StartDate.ToUniversalTime();
-        //var offset = 0;
-        //var maxReturn = 200;
-        //var forms = new List<FormDto>();
-        //BaseResponseDto<FormDto> response;
-
-        //do
-        //{
-        //    var request = new MarketoRequest($"/rest/asset/v1/forms.json?maxReturn={maxReturn}&offset={offset}",
-        //        Method.Get, Credentials);
-        //    response = Client.ExecuteWithError<FormDto>(request);
-        //    var updatedForms = response.Result.Where(form => form.UpdatedAt >= startDateTime
-        //                                                     && form.UpdatedAt <= endDateTime
-        //                                                     && (input.FolderId == null
-        //                                                         || form.Folder.Value == int.Parse(input.FolderId)));
-
-        //    if (input.Status != null)
-        //        updatedForms = updatedForms.Where(form => form.Status == input.Status);
-
-        //    forms.AddRange(updatedForms);
-        //    offset += maxReturn;
-        //} while (response.Result.Count == maxReturn);
-
+        if (input.EarliestUpdatedAt != null)
+            forms = forms.Where(x => x.UpdatedAt >= input.EarliestUpdatedAt.Value).ToList();
+        if (input.LatestUpdatedAt != null)
+            forms = forms.Where(x => x.UpdatedAt <= input.LatestUpdatedAt.Value).ToList();
         return new() { Forms = forms };
     }
 
