@@ -40,7 +40,17 @@ public class EmailActions : MarketoInvocable
         var request = new MarketoRequest($"/rest/asset/v1/emails.json", Method.Get, Credentials);
         if (input.Status != null) request.AddQueryParameter("status", input.Status);
         if (input.FolderId != null)
-            request.AddQueryParameter("folder", int.Parse(input.FolderId));
+        {
+            if(input.FolderId.Contains("_Folder"))
+                request.AddQueryParameter("folder", int.Parse(input.FolderId.Replace("_Folder", "")));
+            else if(input.FolderId.Contains("_Program"))
+                request.AddQueryParameter("folder", JsonConvert.SerializeObject(new
+                {
+                    id = int.Parse(input.FolderId.Replace("_Program", "")),
+                    type = "Program"
+                }));
+        }
+           
         if (input.EarliestUpdatedAt != null)
             request.AddQueryParameter("earliestUpdatedAt",
                 ((DateTime)input.EarliestUpdatedAt).ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture));

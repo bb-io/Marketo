@@ -27,7 +27,7 @@ namespace Apps.Marketo.DataSourceHandlers.FolderDataHandlers
                 .DistinctBy(x => x.Id)
                 .Where(x => x.FolderType == "Landing Page Form" || x.FolderId.Type == "Program")
                 .Where(str => str.Name.Contains(context.SearchString))
-                .ToDictionary(k => k.Id.ToString(), v => v.Name);
+                .ToDictionary(k => $"{k.Id.ToString()}_{k.FolderId.Type}", v => v.Name);
         }
     }
 }

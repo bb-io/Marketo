@@ -37,7 +37,16 @@ public class LandingPageActions : MarketoInvocable
         var request = new MarketoRequest($"/rest/asset/v1/landingPages.json", Method.Get, Credentials);
         if (input.Status != null) request.AddQueryParameter("status", input.Status);
         if (input.FolderId != null)
-            request.AddQueryParameter("folder", int.Parse(input.FolderId));
+        {
+            if (input.FolderId.Contains("_Folder"))
+                request.AddQueryParameter("folder", int.Parse(input.FolderId.Replace("_Folder", "")));
+            else if (input.FolderId.Contains("_Program"))
+                request.AddQueryParameter("folder", JsonConvert.SerializeObject(new
+                {
+                    id = int.Parse(input.FolderId.Replace("_Program", "")),
+                    type = "Program"
+                }));
+        }
 
         var response = Client.Paginate<LandingPageDto>(request);
         if (input.EarliestUpdatedAt != null)

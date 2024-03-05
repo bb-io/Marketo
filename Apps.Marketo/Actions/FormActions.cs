@@ -19,6 +19,7 @@ using RestSharp;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 using Apps.Marketo.DataSourceHandlers.FolderDataHandlers;
 using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace Apps.Marketo.Actions;
 
@@ -47,7 +48,16 @@ public class FormActions : MarketoInvocable
     {
         var request = new MarketoRequest($"/rest/asset/v1/forms.json", Method.Get, Credentials);
         if (input.FolderId != null)
-            request.AddQueryParameter("folder", int.Parse(input.FolderId));
+        {
+            if (input.FolderId.Contains("_Folder"))
+                request.AddQueryParameter("folder", int.Parse(input.FolderId.Replace("_Folder", "")));
+            else if (input.FolderId.Contains("_Program"))
+                request.AddQueryParameter("folder", JsonConvert.SerializeObject(new
+                {
+                    id = int.Parse(input.FolderId.Replace("_Program", "")),
+                    type = "Program"
+                }));
+        }
         if (input.Status != null) 
             request.AddQueryParameter("status", input.Status);
         var forms = Client.Paginate<FormDto>(request);
