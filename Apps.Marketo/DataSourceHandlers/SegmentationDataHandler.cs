@@ -17,9 +17,8 @@ namespace Apps.Marketo.DataSourceHandlers
         {
             var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
             var request = new MarketoRequest($"/rest/asset/v1/segmentation.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
-            request.AddQueryParameter("maxReturn", 200);
-            var response = client.ExecuteWithError<SegmenationDto>(request);
-            return response.Result.Where(str => str.Name.Contains(context.SearchString)).ToDictionary(k => k.Id.ToString(), v => v.Name);
+            var response = client.Paginate<SegmenationDto>(request);
+            return response.Where(str => str.Name.Contains(context.SearchString)).ToDictionary(k => k.Id.ToString(), v => v.Name);
         }
     }
 }

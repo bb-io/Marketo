@@ -23,10 +23,9 @@ namespace Apps.Marketo.DataSourceHandlers
                 throw new ArgumentException("Please, specify an email first");
             var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
             var request = new MarketoRequest($"/rest/asset/v1/email/{EmailInfoRequest.EmailId}/content.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
-            request.AddQueryParameter("maxReturn", 200);
-            var response = client.ExecuteWithError<EmailContentDto>(request);
+            var response = client.Paginate<EmailContentDto>(request);
             
-            return response.Result.Where(e => e.ContentType == "DynamicContent").ToDictionary(k => k.Value.ToString()!, v => v.HtmlId);
+            return response.Where(e => e.ContentType == "DynamicContent").ToDictionary(k => k.Value.ToString()!, v => v.HtmlId);
         }
     }
 }

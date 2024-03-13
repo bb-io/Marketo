@@ -17,9 +17,8 @@ public class FormDataHandler : BaseInvocable, IDataSourceHandler
         var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
         var request = new MarketoRequest("/rest/asset/v1/forms.json", Method.Get, 
             InvocationContext.AuthenticationCredentialsProviders);
-        request.AddQueryParameter("maxReturn", 200);
-        var response = client.ExecuteWithError<FormDto>(request);
-        return response.Result.Where(form => context.SearchString == null || 
+        var response = client.Paginate<FormDto>(request);
+        return response.Where(form => context.SearchString == null || 
                                              form.Name.Contains(context.SearchString))
             .ToDictionary(form => form.Id.ToString(), form => form.Name);
     }
