@@ -29,10 +29,9 @@ namespace Apps.Marketo.DataSourceHandlers
 
             var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
             var request = new MarketoRequest($"/rest/asset/v1/email/{EmailInfoRequest.EmailId}/dynamicContent/{DynamicItemRequest.DynamicContentId}.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
-            request.AddQueryParameter("maxReturn", 200);
-            var response = client.ExecuteWithError<DynamicContentDto>(request);
+            var response = client.Paginate<DynamicContentDto>(request);
 
-            return response.Result.First().Content.Where(s => s.Type == "HTML").ToDictionary(k => k.SegmentName, v => v.SegmentName);
+            return response.First().Content.Where(s => s.Type == "HTML").ToDictionary(k => k.SegmentName, v => v.SegmentName);
         }
     }
 }
