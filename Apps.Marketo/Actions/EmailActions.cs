@@ -132,9 +132,9 @@ public class EmailActions : MarketoInvocable
         var translatedContent = HtmlContentBuilder.ParseHtml(translateEmailWithHtmlRequest.File, _fileManagementClient);
         foreach (var item in emailContentResponse.EmailContentItems)
         {
-            if (item.ContentType == "DynamicContent")
+            if (item.ContentType == "DynamicContent" && translatedContent.TryGetValue(item.HtmlId, out var translatedContentItem))
             {
-                UpdateEmailDynamicContent(getEmailInfoRequest, getSegmentBySegmentationRequest, item.Value.ToString(), translatedContent[item.HtmlId]);
+                UpdateEmailDynamicContent(getEmailInfoRequest, getSegmentBySegmentationRequest, item.Value.ToString(), translatedContentItem);
             }
         }
     }
