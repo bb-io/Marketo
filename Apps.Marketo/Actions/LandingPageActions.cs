@@ -173,9 +173,11 @@ public class LandingPageActions : MarketoInvocable
             {
                 var content = item.Content.ToString();
                 var landingPageContent = JsonConvert.DeserializeObject<LandingPageContentValueDto>(content);
-                if (landingPageContent.ContentType == "DynamicContent" && !string.IsNullOrWhiteSpace(content))
+                if (landingPageContent.ContentType == "DynamicContent" && 
+                    !string.IsNullOrWhiteSpace(content) && 
+                    translatedContent.TryGetValue(item.Id, out var translatedContentItem))
                 {
-                    UpdateLandingDynamicContent(getLandingPageInfoRequest, getSegmentBySegmentationRequest, landingPageContent.Content, item.Type, translatedContent[item.Id]);
+                    UpdateLandingDynamicContent(getLandingPageInfoRequest, getSegmentBySegmentationRequest, landingPageContent.Content, item.Type, translatedContentItem);
                 }
             }
         }
