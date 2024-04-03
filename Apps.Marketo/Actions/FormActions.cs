@@ -117,7 +117,8 @@ public class FormActions : MarketoInvocable
 
         var cloneFormRequest =
             new MarketoRequest($"/rest/asset/v1/form/{formDto.Id}/clone.json", Method.Post, Credentials)
-                .AddParameter("name", Path.GetFileNameWithoutExtension(form.File.Name))
+                .AddParameter("name", string.IsNullOrWhiteSpace(updateFormRequest.FormName) 
+                ? Path.GetFileNameWithoutExtension(form.File.Name) : updateFormRequest.FormName)
                 .AddParameter("folder", JsonSerializer.Serialize(folder, jsonSerializerSettings))
                 .AddParameter("description", formDto.Description);
 
