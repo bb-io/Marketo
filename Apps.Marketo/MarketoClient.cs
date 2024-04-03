@@ -67,6 +67,11 @@ public class MarketoClient : RestClient
 
         if (errors.Errors.Any())
         {
+            if(errors.Errors.Count() == 1 && errors.Errors.First().Code == "709")
+            {
+                throw new BusinessRuleViolationException(709, errors.Errors.First().Message);
+            }
+
             if (errors.Errors.Any(error => error.Code == "606"))
             {
                 Thread.Sleep(TimeSpan.FromSeconds(20));

@@ -77,10 +77,10 @@ public class FormActions : MarketoInvocable
         return new() { File = file };
     }
 
-    [Action("Create new form from translated HTML", Description = "Create a new form from translated HTML.")]
+    [Action("Create or update form from translated HTML", Description = "Create or update form from translated HTML.")]
     public FormDto SetFormFromHtml([ActionParameter] FileWrapper form,
-        [ActionParameter] [DataSource(typeof(FolderDataHandler))] [Display("Folder")]
-        string? folderId)
+        [ActionParameter] [DataSource(typeof(FolderDataHandler))] [Display("Folder")] string? folderId,
+        [ActionParameter] UpdateFormRequest updateFormRequest)
     {
         var jsonSerializerSettings = new JsonSerializerOptions(JsonSerializerDefaults.Web)
         {
@@ -92,7 +92,7 @@ public class FormActions : MarketoInvocable
         var formBytes = _fileManagementClient.DownloadAsync(form.File).Result.GetByteData().Result;
         var html = Encoding.UTF8.GetString(formBytes);
         var (formDto, formFields) = HtmlToFormConverter.ConvertToForm(html, Credentials);
-
+        
         object folder;
 
         if (folderId != null)
@@ -117,11 +117,28 @@ public class FormActions : MarketoInvocable
 
         var cloneFormRequest =
             new MarketoRequest($"/rest/asset/v1/form/{formDto.Id}/clone.json", Method.Post, Credentials)
-                .AddParameter("name", Path.GetFileNameWithoutExtension(form.File.Name))
+                .AddParameter("name", string.IsNullOrWhiteSpace(updateFormRequest.FormName) 
+                ? Path.GetFileNameWithoutExtension(form.File.Name) : updateFormRequest.FormName)
                 .AddParameter("folder", JsonSerializer.Serialize(folder, jsonSerializerSettings))
                 .AddParameter("description", formDto.Description);
 
-        var clonedForm = Client.GetSingleEntity<FormDto>(cloneFormRequest);
+        FormDto clonedForm = null;
+        try
+        {
+            clonedForm = Client.GetSingleEntity<FormDto>(cloneFormRequest);
+        }
+        catch (BusinessRuleViolationException ex)
+        {
+            if(ex.Message == "Form name already exists")
+            {
+                DeleteFormWithExistingName(Path.GetFileNameWithoutExtension(form.File.Name));
+                clonedForm = Client.GetSingleEntity<FormDto>(cloneFormRequest);
+            }
+            else
+            {
+                throw ex;
+            }
+        }
 
         var updateSubmitButtonRequest = new MarketoRequest($"/rest/asset/v1/form/{clonedForm.Id}/submitButton.json",
             Method.Post, Credentials);
@@ -192,5 +209,14 @@ public class FormActions : MarketoInvocable
         }
 
         return clonedForm;
+    }
+
+    private void DeleteFormWithExistingName(string formName)
+    {
+        var getFormByNameRequest = new MarketoRequest($"/rest/asset/v1/form/byName.json", Method.Get, Credentials)
+                    .AddParameter("name", formName);
+        var getFormByNameResponse = Client.GetSingleEntity<FormDto>(getFormByNameRequest);
+        var deleteFormRequest = new MarketoRequest($"/rest/asset/v1/form/{getFormByNameResponse.Id}/delete.json", Method.Post, Credentials);
+        Client.ExecuteWithErrorHandling(deleteFormRequest);
     }
 }
