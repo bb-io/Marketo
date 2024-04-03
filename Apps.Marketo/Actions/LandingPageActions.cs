@@ -100,7 +100,8 @@ public class LandingPageActions : MarketoInvocable
         var endpoint = $"/rest/asset/v1/landingPage/{input.Id}/approveDraft.json";
         var request = new MarketoRequest(endpoint, Method.Post, Credentials);
 
-        Client.ExecuteWithError<IdDto>(request);
+        try { Client.ExecuteWithError<IdDto>(request); }
+        catch (BusinessRuleViolationException _) { }
     }
 
     [Action("Discard landing page draft", Description = "Discard landing page draft")]
@@ -109,7 +110,8 @@ public class LandingPageActions : MarketoInvocable
         var endpoint = $"/rest/asset/v1/landingPage/{input.Id}/discardDraft.json";
         var request = new MarketoRequest(endpoint, Method.Post, Credentials);
 
-        Client.ExecuteWithError<IdDto>(request);
+        try { Client.ExecuteWithError<IdDto>(request); }
+        catch (BusinessRuleViolationException _) {}
     }
 
     [Action("Unapprove landing page (back to draft)", Description = "Unapprove landing page (back to draft)")]
@@ -118,7 +120,8 @@ public class LandingPageActions : MarketoInvocable
         var endpoint = $"/rest/asset/v1/landingPage/{input.Id}/unapprove.json";
         var request = new MarketoRequest(endpoint, Method.Post, Credentials);
 
-        Client.ExecuteWithError<IdDto>(request);
+        try{ Client.ExecuteWithError<IdDto>(request); }
+        catch (BusinessRuleViolationException _) { }
     }
 
     [Action("Get landing page as HTML for translation", Description = "Get landing page as HTML for translation")]
