@@ -43,7 +43,9 @@ public class SnippetActions : MarketoInvocable
             response = response.Where(x => x.UpdatedAt <= input.LatestUpdatedAt.Value).ToList();
         return new()
         {
-            Snippets = response
+            Snippets = string.IsNullOrEmpty(input.FolderId) ? 
+                        response : 
+                        response.Where(x => x.Folder.Value.ToString() == input.FolderId).ToList()
         };
     }
 
