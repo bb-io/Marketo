@@ -78,8 +78,8 @@ public class LandingPageActions : MarketoInvocable
         if (input.Workspace != null) request.AddParameter("workspace", input.Workspace);
         request.AddParameter("folder", JsonConvert.SerializeObject(new
         {
-            id = int.Parse(input.FolderId),
-            type = input.Type ?? "Folder"
+            id = int.Parse(input.FolderId.Split("_").First()),
+            type = input.FolderId.Split("_").Last()
         }));
         request.AddParameter("name", input.Name);
         return Client.GetSingleEntity<LandingPageDto>(request);

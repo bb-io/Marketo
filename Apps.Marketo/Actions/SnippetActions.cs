@@ -45,7 +45,7 @@ public class SnippetActions : MarketoInvocable
         {
             Snippets = string.IsNullOrEmpty(input.FolderId) ? 
                         response : 
-                        response.Where(x => x.Folder.Value.ToString() == input.FolderId).ToList()
+                        response.Where(x => x.Folder.Value.ToString() == input.FolderId.Split("_").First()).ToList()
         };
     }
 
@@ -79,8 +79,8 @@ public class SnippetActions : MarketoInvocable
             .AddParameter("description", snippetRequest.Description)
             .AddParameter("folder", JsonConvert.SerializeObject(new
             {
-                id = snippetRequest.FolderId,
-                type = snippetRequest.FolderType
+                id = snippetRequest.FolderId.Split("_").First(),
+                type = snippetRequest.FolderId.Split("_").Last()
             }));
 
         return Client.GetSingleEntity<SnippetDto>(request);

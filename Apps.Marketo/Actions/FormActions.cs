@@ -79,7 +79,7 @@ public class FormActions : MarketoInvocable
 
     [Action("Create or update form from translated HTML", Description = "Create or update form from translated HTML.")]
     public FormDto SetFormFromHtml([ActionParameter] FileWrapper form,
-        [ActionParameter] [DataSource(typeof(FolderDataHandler))] [Display("Folder")] string? folderId,
+        [ActionParameter] [DataSource(typeof(FormFolderDataHandler))] [Display("Folder")] string? folderId,
         [ActionParameter] UpdateFormRequest updateFormRequest)
     {
         var jsonSerializerSettings = new JsonSerializerOptions(JsonSerializerDefaults.Web)
@@ -97,13 +97,10 @@ public class FormActions : MarketoInvocable
 
         if (folderId != null)
         {
-            var getFolderRequest =
-                new MarketoRequest($"/rest/asset/v1/folder/{folderId}.json", Method.Get, Credentials);
-            var folderDto = Client.GetSingleEntity<FolderInfoDto>(getFolderRequest);
             folder = new
             {
-                Id = int.Parse(folderDto.FolderId.Id),
-                Type = folderDto.FolderId.Type
+                Id = int.Parse(folderId.Split("_").First()),
+                Type = folderId.Split("_").Last(),
             };
         }
         else
