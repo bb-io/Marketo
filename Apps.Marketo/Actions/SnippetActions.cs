@@ -187,6 +187,7 @@ public class SnippetActions : MarketoInvocable
             return responseSeg.Result!.First().Content
                 .Where(x => x.SegmentName == getSegmentBySegmentationRequest.Segment)
                 .ToList();
-        throw new ArgumentException("Segmentation does not match!");
+        throw new ArgumentException("Segmentation does not match! " +
+            "Looks like you choosed one segmentation, but your snippet already is segmented by another segmentation");
     }
 }
