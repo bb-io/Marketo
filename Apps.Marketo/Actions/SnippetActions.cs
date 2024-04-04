@@ -170,8 +170,12 @@ public class SnippetActions : MarketoInvocable
         var request = new MarketoRequest(endpoint, Method.Post, Credentials)
             .AddQueryParameter("type", contentType)
             .AddQueryParameter("value", content);
-
-        return Client.GetSingleEntity<IdDto>(request);
+        try
+        {
+            return Client.GetSingleEntity<IdDto>(request);
+        }
+        catch (Exception ex) { }
+        return default;
     }
 
     private List<SnippetSegmentDto> GetSnippetDynamicContent(

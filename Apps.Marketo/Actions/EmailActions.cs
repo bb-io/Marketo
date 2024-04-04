@@ -67,7 +67,6 @@ public class EmailActions : MarketoInvocable
         return new(response.Result);
     }
 
-
     [Action("Update email content", Description = "Update content of a specific email")]
     public void UpdateEmailContent(
         [ActionParameter] GetEmailInfoRequest emailRequest,
@@ -160,8 +159,12 @@ public class EmailActions : MarketoInvocable
             .AddQueryParameter("segment", getSegmentBySegmentationRequest.Segment)
             .AddQueryParameter("type", "HTML")
             .AddQueryParameter("value", content);
-
-        return Client.GetSingleEntity<IdDto>(request);
+        try
+        {
+            return Client.GetSingleEntity<IdDto>(request);
+        }
+        catch (Exception ex) { }
+        return default;
     }
 
     private string GetEmailSectionContent(
