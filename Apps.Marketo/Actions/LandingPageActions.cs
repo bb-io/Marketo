@@ -208,8 +208,12 @@ public class LandingPageActions : MarketoInvocable
             .AddQueryParameter("segment", getSegmentBySegmentationRequest.Segment)
             .AddQueryParameter("type", contentType)
             .AddQueryParameter("value", content);
-
-        return Client.GetSingleEntity<IdDto>(request);
+        try
+        {
+            return Client.GetSingleEntity<IdDto>(request);
+        }
+        catch (Exception ex) { }
+        return default;
     }
 
     private string GetLandingSectionContent(
@@ -231,6 +235,7 @@ public class LandingPageActions : MarketoInvocable
                     .Where(x => x.SegmentName == getSegmentBySegmentationRequest.Segment)
                     .Select(x => new GetEmailDynamicContentResponse(x)
                     { DynamicContentId = landingPageContent.Content }).First().Content;
+            return string.Empty;
         }
         return sectionContent.Content.ToString();
     }
