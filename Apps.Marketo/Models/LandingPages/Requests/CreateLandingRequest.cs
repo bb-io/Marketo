@@ -15,12 +15,9 @@ public class CreateLandingRequest
     public string? FacebookOgTags { get; set; }
 
     [Display("Folder")]
-    [DataSource(typeof(FolderDataHandler))]
+    [DataSource(typeof(LandingPageFolderDataHandler))]
     public string FolderId { get; set; }
 
-    [Display("Folder type")]
-    [DataSource(typeof(FolderTypeDataHandler))]
-    public string Type { get; set; }
     public string? Keywords { get; set; }
 
     [Display("Mobile enabled")]
