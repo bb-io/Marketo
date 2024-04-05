@@ -50,7 +50,7 @@ public static class HtmlToFormConverter
                 case "thankYouList":
                     var thankYouPagesDivs = div.ChildNodes;
                     var originalFormThankYouListCounter = 0;
-                    var originalFormThankYouList = originalForm.ThankYouList.ToArray();
+                    var originalFormThankYouList = originalForm.ThankYouList.Where(x => x.FollowupType != "none").ToArray();
 
                     foreach (var pageDiv in thankYouPagesDivs)
                     {
