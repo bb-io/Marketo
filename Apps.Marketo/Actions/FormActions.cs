@@ -89,7 +89,7 @@ public class FormActions : MarketoInvocable
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
         };
 
-        var formBytes = _fileManagementClient.DownloadAsync(form.File).Result.GetByteData().Result;
+        var formBytes = File.ReadAllBytes("C:\\Users\\Bogdan\\Desktop\\Shane's_Form(ger-DE).html");//_fileManagementClient.DownloadAsync(form.File).Result.GetByteData().Result;
         var html = Encoding.UTF8.GetString(formBytes);
         var (formDto, formFields) = HtmlToFormConverter.ConvertToForm(html, Credentials);
         
@@ -128,7 +128,7 @@ public class FormActions : MarketoInvocable
         {
             if(ex.Message == "Form name already exists")
             {
-                DeleteFormWithExistingName(Path.GetFileNameWithoutExtension(form.File.Name));
+                DeleteFormWithExistingName(string.IsNullOrWhiteSpace(updateFormRequest.FormName) ? Path.GetFileNameWithoutExtension("Shane's_Form(ger-DE).html") : updateFormRequest.FormName);
                 clonedForm = Client.GetSingleEntity<FormDto>(cloneFormRequest);
             }
             else
