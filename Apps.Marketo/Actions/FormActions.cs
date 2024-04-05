@@ -143,12 +143,15 @@ public class FormActions : MarketoInvocable
         updateSubmitButtonRequest.AddParameter("waitingLabel", formDto.WaitingLabel);
         clonedForm = Client.GetSingleEntity<FormDto>(updateSubmitButtonRequest);
 
-        var updateThankYouListRequest = new MarketoRequest($"/rest/asset/v1/form/{clonedForm.Id}/thankYouPage.json",
+        if (formDto.ThankYouList.Any())
+        {
+            var updateThankYouListRequest = new MarketoRequest($"/rest/asset/v1/form/{clonedForm.Id}/thankYouPage.json",
             Method.Post, Credentials);
-        updateThankYouListRequest.AddParameter("thankyou",
-            JsonSerializer.Serialize(formDto.ThankYouList, jsonSerializerSettings));
-        var updatedThankYouList = Client.GetSingleEntity<FormDto>(updateThankYouListRequest);
-        clonedForm.ThankYouList = updatedThankYouList.ThankYouList;
+            updateThankYouListRequest.AddParameter("thankyou",
+                JsonSerializer.Serialize(formDto.ThankYouList, jsonSerializerSettings));
+            var updatedThankYouList = Client.GetSingleEntity<FormDto>(updateThankYouListRequest);
+            clonedForm.ThankYouList = updatedThankYouList.ThankYouList;
+        }
 
         foreach (var field in formFields)
         {
@@ -184,25 +187,27 @@ public class FormActions : MarketoInvocable
                 Method.Post, Credentials);
 
             var visibilityRules = field.VisibilityRules;
-            if (visibilityRules.Rules == null)
-                addFieldVisibilityRequest.AddParameter("visibilityRule",
-                    JsonSerializer.Serialize(new { ruleType = visibilityRules.RuleType }));
-            else
+            if (visibilityRules != null)
             {
-                addFieldVisibilityRequest.AddParameter("visibilityRule", JsonSerializer.Serialize(new
+                if (visibilityRules.Rules == null)
+                    addFieldVisibilityRequest.AddParameter("visibilityRule",
+                        JsonSerializer.Serialize(new { ruleType = visibilityRules.RuleType }));
+                else
                 {
-                    ruleType = visibilityRules.RuleType,
-                    rules = visibilityRules.Rules.Select(rule => new
+                    addFieldVisibilityRequest.AddParameter("visibilityRule", JsonSerializer.Serialize(new
                     {
-                        rule.AltLabel,
-                        rule.Operator,
-                        rule.SubjectField,
-                        rule.Values
-                    })
-                }, jsonSerializerSettings));
+                        ruleType = visibilityRules.RuleType,
+                        rules = visibilityRules.Rules.Select(rule => new
+                        {
+                            rule.AltLabel,
+                            rule.Operator,
+                            rule.SubjectField,
+                            rule.Values
+                        })
+                    }, jsonSerializerSettings));
+                }
+                Client.ExecuteWithErrorHandling(addFieldVisibilityRequest);
             }
-
-            Client.ExecuteWithErrorHandling(addFieldVisibilityRequest);
         }
 
         return clonedForm;
