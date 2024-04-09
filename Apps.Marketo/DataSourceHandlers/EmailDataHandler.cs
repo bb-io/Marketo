@@ -17,8 +17,7 @@ public class EmailDataHandler : BaseInvocable, IAsyncDataSourceHandler
     {
         var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
         var request = new MarketoRequest($"/rest/asset/v1/emails.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
-        request.AddQueryParameter("maxReturn", 200);
-        var response = client.Execute<BaseResponseDto<EmailDto>>(request);
-        return response.Data.Result.Where(str => str.Name.Contains(context.SearchString)).ToDictionary(k => k.Id.ToString(), v => v.Name);
+        var response = client.Paginate<EmailDto>(request);
+        return response.Where(str => str.Name.Contains(context.SearchString)).ToDictionary(k => k.Id.ToString(), v => v.Name);
     }
 }

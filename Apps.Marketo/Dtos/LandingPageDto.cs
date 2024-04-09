@@ -1,5 +1,6 @@
 ﻿using Blackbird.Applications.Sdk.Common;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
+
 
 namespace Apps.Marketo.Dtos;
 
@@ -11,7 +12,8 @@ public class LandingPageDto
     public string ComputedUrl { get; set; }
 
     [Display("Created at")]
-    public string CreatedAt { get; set; }
+    [JsonConverter(typeof(DateTimeConverter))]
+    public DateTime CreatedAt { get; set; }
 
     [Display("Custom head HTML")]
     public string CustomHeadHTML { get; set; }
@@ -24,7 +26,7 @@ public class LandingPageDto
     [Display("Form prefill")]
     public bool FormPrefill { get; set; }
 
-    [JsonConverter(typeof(StringConverter))]
+    
     public string Id { get; set; }
     public string Keywords { get; set; }
 
@@ -37,6 +39,7 @@ public class LandingPageDto
     public string Title { get; set; }
 
     [Display("Updated at")]
-    public string UpdatedAt { get; set; }
+    [JsonConverter(typeof(DateTimeConverter))]
+    public DateTime UpdatedAt { get; set; }
     public string Workspace { get; set; }
 }

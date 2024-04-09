@@ -1,13 +1,13 @@
-﻿using System.Text.Json.Serialization;
+﻿
+using Newtonsoft.Json;
 
 namespace Apps.Marketo.Dtos;
 
 public class FileInfoDto
 {
-    public string CreatedAt { get; set; }
+    [JsonConverter(typeof(DateTimeConverter))]
+    public DateTime CreatedAt { get; set; }
     public string Description { get; set; }
-
-    [JsonConverter(typeof(StringConverter))]
     public string Id { get; set; }
     public string MimeType { get; set; }
     public string Name { get; set; }
@@ -25,7 +25,7 @@ public class Error
 
 public class FileFolder
 {
-    [JsonConverter(typeof(StringConverter))]
+    
     public string Id { get; set; }
     public string Name { get; set; }
     public string Type { get; set; }

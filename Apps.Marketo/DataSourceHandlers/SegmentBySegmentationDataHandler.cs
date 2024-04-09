@@ -22,9 +22,8 @@ namespace Apps.Marketo.DataSourceHandlers
                 throw new ArgumentException("Please, specify segmentation first");
             var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
             var request = new MarketoRequest($"/rest/asset/v1/segmentation/{SegmentationRequest.SegmentationId}/segments.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
-            request.AddQueryParameter("maxReturn", 200);
-            var response = client.ExecuteWithError<SegmentDto>(request);
-            return response.Result.Where(str => str.Name.Contains(context.SearchString)).ToDictionary(k => k.Name, v => v.Name);
+            var response = client.Paginate<SegmentDto>(request);
+            return response.Where(str => str.Name.Contains(context.SearchString)).ToDictionary(k => k.Name, v => v.Name);
         }
     }
 }

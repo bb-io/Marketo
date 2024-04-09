@@ -1,4 +1,5 @@
 using Apps.Marketo.DataSourceHandlers;
+using Apps.Marketo.DataSourceHandlers.FolderDataHandlers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 
@@ -9,12 +10,8 @@ public class CreateSnippetRequest
     public string Name { get; set; }
     
     [Display("Folder")]
-    [DataSource(typeof(FolderDataHandler))]
+    [DataSource(typeof(SnippetFolderDataHandler))]
     public string FolderId { get; set; }
-
-    [Display("Folder type")]
-    [DataSource(typeof(FolderTypeDataHandler))]
-    public string FolderType { get; set; }
     
     public string? Description { get; set; }
 }

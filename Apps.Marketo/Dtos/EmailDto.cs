@@ -1,15 +1,18 @@
-﻿using System.Text.Json.Serialization;
+﻿using Blackbird.Applications.Sdk.Common;
+using Newtonsoft.Json;
 
 namespace Apps.Marketo.Dtos;
 
 public class EmailDto
 {
-    public string CreatedAt { get; set; }
+    [Display("Created at")]
+    [JsonConverter(typeof(DateTimeConverter))]
+    public DateTime CreatedAt { get; set; }
     public Folder Folder { get; set; }
     public EmailHeaderField FromEmail { get; set; }
     public EmailHeaderField FromName { get; set; }
 
-    [JsonConverter(typeof(StringConverter))]
+    
     public string Id { get; set; }
     public string Name { get; set; }
     public bool Operational { get; set; }
@@ -17,9 +20,14 @@ public class EmailDto
     public EmailHeaderField ReplyEmail { get; set; }
     public string Status { get; set; }
     public EmailHeaderField Subject { get; set; }
-    public int Template { get; set; }
+
+    
+    public string Template { get; set; }
     public bool TextOnly { get; set; }
-    public string UpdatedAt { get; set; }
+
+    [Display("Updated at")]
+    [JsonConverter(typeof(DateTimeConverter))]
+    public DateTime UpdatedAt { get; set; }
     public string Url { get; set; }
     public int Version { get; set; }
     public bool WebView { get; set; }
