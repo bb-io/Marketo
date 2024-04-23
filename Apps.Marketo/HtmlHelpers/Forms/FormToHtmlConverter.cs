@@ -69,7 +69,7 @@ public static class FormToHtmlConverter
         if (field.DefaultValue != null)
             htmlField.Append($"<div {dataFieldDataAttribute}=\"{nameof(field.DefaultValue)}\">{field.DefaultValue}</div>");
         
-        if (field.ValidationMessage != null && !ignoreVisibilityRulesContent)
+        if (field.ValidationMessage != null)
             htmlField.Append($"<div {dataFieldDataAttribute}=\"{nameof(field.ValidationMessage)}\">{field.ValidationMessage}</div>");
             
         if (field.HintText != null)
@@ -78,7 +78,7 @@ public static class FormToHtmlConverter
         if (field.Text != null)
             htmlField.Append($"<div {dataFieldDataAttribute}=\"{nameof(field.Text)}\">{field.Text}</div>");
 
-        if (field.VisibilityRules != null)
+        if (field.VisibilityRules != null && !ignoreVisibilityRulesContent)
         {
             htmlField.Append($"<div {dataFieldDataAttribute}=\"{nameof(field.VisibilityRules)}\">");
         
