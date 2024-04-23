@@ -77,7 +77,7 @@ public static class HtmlToFormConverter
                     {
                         if(div.ChildNodes.Any(x => x.Attributes[formElementFieldId].Value == origField.Id))
                         {
-                            UnwrapFieldFromDiv(div.ChildNodes.First(x => x.Id == origField.Id), origField);
+                            UnwrapFieldFromDiv(div.ChildNodes.First(x => x.Attributes[formElementFieldId].Value == origField.Id), origField);
                         }
                     }
                     break;
