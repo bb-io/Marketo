@@ -44,7 +44,7 @@ public static class FormToHtmlConverter
             {
                 continue;
             }
-            var htmlField = WrapFieldInDiv(field);
+            var htmlField = WrapFieldInDiv(field, ignoreFieldsRequest.IgnoreVisibilityRules ?? false);
             html.Append(htmlField);
         }
 
@@ -53,7 +53,7 @@ public static class FormToHtmlConverter
         return html.ToString();
     }
     
-    private static string WrapFieldInDiv(FormFieldDto field)
+    private static string WrapFieldInDiv(FormFieldDto field, bool ignoreVisibilityRulesContent)
     {
         const string dataFieldDataAttribute = "data-marketo-field-data";
         var htmlField = new StringBuilder();
@@ -69,7 +69,7 @@ public static class FormToHtmlConverter
         if (field.DefaultValue != null)
             htmlField.Append($"<div {dataFieldDataAttribute}=\"{nameof(field.DefaultValue)}\">{field.DefaultValue}</div>");
         
-        if (field.ValidationMessage != null)
+        if (field.ValidationMessage != null && !ignoreVisibilityRulesContent)
             htmlField.Append($"<div {dataFieldDataAttribute}=\"{nameof(field.ValidationMessage)}\">{field.ValidationMessage}</div>");
             
         if (field.HintText != null)
