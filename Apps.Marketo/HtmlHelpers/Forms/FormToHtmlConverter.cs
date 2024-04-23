@@ -1,11 +1,13 @@
-﻿using System.Text;
+﻿using System.Linq;
+using System.Text;
 using Apps.Marketo.Dtos;
+using Apps.Marketo.Models.Forms.Requests;
 
 namespace Apps.Marketo.HtmlHelpers.Forms;
 
 public static class FormToHtmlConverter
 {
-    public static string ConvertToHtml(FormDto formDto, IEnumerable<FormFieldDto> formData)
+    public static string ConvertToHtml(FormDto formDto, IEnumerable<FormFieldDto> formData, IgnoreFieldsRequest ignoreFieldsRequest)
     {
         const string formElementAttribute = "data-marketo-form-element";
         
@@ -38,6 +40,10 @@ public static class FormToHtmlConverter
         
         foreach (var field in formData)
         {
+            if(ignoreFieldsRequest.IgnoreFields != null && ignoreFieldsRequest.IgnoreFields.Contains(field.Id))
+            {
+                continue;
+            }
             var htmlField = WrapFieldInDiv(field);
             html.Append(htmlField);
         }

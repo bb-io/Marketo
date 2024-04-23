@@ -60,7 +60,8 @@ public class FormActions : MarketoInvocable
     }
 
     [Action("Get form as HTML for translation", Description = "Retrieve a form as HTML file for translation.")]
-    public async Task<FileWrapper> GetFormAsHtml([ActionParameter] GetFormRequest input)
+    public async Task<FileWrapper> GetFormAsHtml([ActionParameter] GetFormRequest input,
+        [ActionParameter] IgnoreFieldsRequest ignoreFieldsRequest)
     {
         var getFormRequest = new MarketoRequest($"/rest/asset/v1/form/{input.FormId}.json", Method.Get, Credentials);
         var form = Client.GetSingleEntity<FormDto>(getFormRequest);
@@ -68,7 +69,7 @@ public class FormActions : MarketoInvocable
         var getFieldsRequest =
             new MarketoRequest($"/rest/asset/v1/form/{input.FormId}/fields.json", Method.Get, Credentials);
         var formFields = Client.ExecuteWithError<FormFieldDto>(getFieldsRequest);
-        var fieldsHtml = FormToHtmlConverter.ConvertToHtml(form, formFields.Result);
+        var fieldsHtml = FormToHtmlConverter.ConvertToHtml(form, formFields.Result, ignoreFieldsRequest);
         var resultHtml = $"<html><body>{fieldsHtml}</body></html>";
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));

@@ -72,13 +72,13 @@ public static class HtmlToFormConverter
                     break;
                 
                 case "fields":
-                    foreach (var fieldNode in div.ChildNodes)
+                    foreach (var origField in originalFields)
                     {
-                        var fieldId = fieldNode.Attributes["data-marketo-Id"].Value;
-                        var originalField = originalFields.Single(f => f.Id == fieldId);
-                        UnwrapFieldFromDiv(fieldNode, originalField);
+                        if(div.ChildNodes.Any(x => x.Id == origField.Id))
+                        {
+                            UnwrapFieldFromDiv(div.ChildNodes.First(x => x.Id == origField.Id), origField);
+                        }
                     }
-                    
                     break;
             }
         }
