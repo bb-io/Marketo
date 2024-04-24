@@ -30,8 +30,8 @@ namespace Apps.Marketo.DataSourceHandlers
             var request = new MarketoRequest("/rest/asset/v1/tagType/byName.json", Method.Get,
                 InvocationContext.AuthenticationCredentialsProviders);
             request.AddQueryParameter("name", GetTagTypeRequest.TagType);
-            var items = client.Paginate<TagValueDto>(request);
-            var tagValues = items.SelectMany(x => x.AllowableValues.Substring(1, x.AllowableValues.Length - 2).Split(", ")).ToList();
+            var items = client.ExecuteWithError<TagValueDto>(request);
+            var tagValues = items.Result.SelectMany(x => x.AllowableValues.Substring(1, x.AllowableValues.Length - 2).Split(", ")).ToList();
             return tagValues
                 .Where(str =>
                     context.SearchString is null ||
