@@ -19,7 +19,7 @@ public class FormDataHandler : BaseInvocable, IDataSourceHandler
             InvocationContext.AuthenticationCredentialsProviders);
         var response = client.Paginate<FormDto>(request);
         return response.Where(form => context.SearchString == null || 
-                                             form.Name.Contains(context.SearchString))
+                                             form.Name.Contains(context.SearchString, StringComparison.OrdinalIgnoreCase))
             .ToDictionary(form => form.Id.ToString(), form => form.Name);
     }
 }

@@ -18,6 +18,6 @@ public class FolderDataHandler : BaseInvocable, IAsyncDataSourceHandler
         var request = new MarketoRequest($"/rest/asset/v1/folders.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
         request.AddQueryParameter("maxDepth", 10);
         var response = client.Paginate<FolderInfoDto>(request);
-        return response.DistinctBy(x => x.Id).Where(str => str.Name.Contains(context.SearchString)).ToDictionary(k => k.Id.ToString(), v => v.Name);
+        return response.DistinctBy(x => x.Id).Where(str => context.SearchString is null || str.Name.Contains(context.SearchString, StringComparison.OrdinalIgnoreCase)).ToDictionary(k => k.Id.ToString(), v => v.Name);
     }
 }

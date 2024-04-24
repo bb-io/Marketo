@@ -31,7 +31,7 @@ namespace Apps.Marketo.DataSourceHandlers
             var getFieldsRequest = new MarketoRequest($"/rest/asset/v1/form/{GetFormRequest.FormId}/fields.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
             var formFields = client.ExecuteWithError<FormFieldDto>(getFieldsRequest);
             return formFields.Result.Where(formField => context.SearchString == null ||
-                                                 formField.Label.Contains(context.SearchString))
+                                                 formField.Label.Contains(context.SearchString, StringComparison.OrdinalIgnoreCase))
                 .ToDictionary(formField => formField.Id, formField => formField.Label ?? "");
         }
     }

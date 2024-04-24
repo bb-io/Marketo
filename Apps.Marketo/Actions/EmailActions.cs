@@ -187,6 +187,7 @@ public class EmailActions : MarketoInvocable
         return new(response.Result);
     }
 
+    // Deprecated
     // Actions for more general usage of dynamic content
 
     //[Action("Update email dynamic content", Description = "Update email dynamic content")]

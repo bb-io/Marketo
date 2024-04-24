@@ -86,19 +86,6 @@ public class SnippetActions : MarketoInvocable
         return Client.GetSingleEntity<SnippetDto>(request);
     }
 
-    [Action("Update snippet content", Description = "Update content of a specific snippet")]
-    public void UpdateSnippetContent(
-        [ActionParameter] SnippetRequest snippetRequest,
-        [ActionParameter] UpdateContentRequest input)
-    {
-        var request = new MarketoRequest($"/rest/asset/v1/snippet/{snippetRequest.SnippetId}/content.json", Method.Post,
-                Credentials)
-            .AddParameter("type", input.Type)
-            .AddParameter("content", input.Content);
-
-        Client.ExecuteWithErrorHandling(request);
-    }
-
     [Action("Get snippet as HTML for translation", Description = "Get snippet as HTML for translation")]
     public async Task<FileWrapper> GetSnippetAsHtml(
         [ActionParameter] SnippetRequest getSnippetRequest,
@@ -194,4 +181,18 @@ public class SnippetActions : MarketoInvocable
         throw new ArgumentException("Segmentation does not match! " +
             "Looks like you choosed one segmentation, but your snippet already is segmented by another segmentation");
     }
+
+    //Deprecated
+    //[Action("Update snippet content", Description = "Update content of a specific snippet")]
+    //public void UpdateSnippetContent(
+    //    [ActionParameter] SnippetRequest snippetRequest,
+    //    [ActionParameter] UpdateContentRequest input)
+    //{
+    //    var request = new MarketoRequest($"/rest/asset/v1/snippet/{snippetRequest.SnippetId}/content.json", Method.Post,
+    //            Credentials)
+    //        .AddParameter("type", input.Type)
+    //        .AddParameter("content", input.Content);
+
+    //    Client.ExecuteWithErrorHandling(request);
+    //}
 }
