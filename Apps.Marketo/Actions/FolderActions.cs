@@ -64,13 +64,21 @@ public class FolderActions : MarketoInvocable
         Client.ExecuteWithError<IdDto>(request);
     }
 
-    [Action("Add tag to program", Description = "Add tag to program")]
+    [Action("Add tags to program", Description = "Add tags to program")]
     public void AddTagToFolder([ActionParameter] GetProgramRequest programRequest,
         [ActionParameter] GetTagTypeRequest tagTypeRequest,
         [ActionParameter] GetTagValueRequest tagValueRequest)
     {
-        var endpoint = $"/rest/asset/v1/program/{programRequest.ProgramId}/tag/{tagTypeRequest.TagType}.json?tagValue={tagValueRequest.TagValue}";
+        var endpoint = $"/rest/asset/v1/program/{programRequest.ProgramId}.json";
         var request = new MarketoRequest(endpoint, Method.Post, Credentials);
+        request.AddJsonBody(new
+        {
+            tags = tagValueRequest.TagValues.Select(x => new 
+            { 
+                tagType = tagTypeRequest.TagType,
+                tagValue = x
+            })
+        });
         Client.ExecuteWithError<IdDto>(request);
     }
 }
