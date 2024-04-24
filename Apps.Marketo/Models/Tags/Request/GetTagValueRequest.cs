@@ -11,8 +11,8 @@ namespace Apps.Marketo.Models.Tags.Request
 {
     public class GetTagValueRequest
     {
-        [Display("Tag values")]
+        [Display("Tag value")]
         [DataSource(typeof(TagValueDataHandler))]
-        public List<string> TagValues { get; set; }
+        public string TagValue { get; set; }
     }
 }

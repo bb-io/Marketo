@@ -71,14 +71,14 @@ public class FolderActions : MarketoInvocable
     {
         var endpoint = $"/rest/asset/v1/program/{programRequest.ProgramId}.json";
         var request = new MarketoRequest(endpoint, Method.Post, Credentials);
-        request.AddJsonBody(new
+        request.AddQueryParameter("tags", JsonConvert.SerializeObject(new[]
         {
-            tags = tagValueRequest.TagValues.Select(x => new 
-            { 
+            new
+            {
                 tagType = tagTypeRequest.TagType,
-                tagValue = x
-            })
-        });
+                tagValue = tagValueRequest.TagValue
+            }
+        }));
         Client.ExecuteWithError<IdDto>(request);
     }
 }
