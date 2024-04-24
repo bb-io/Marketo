@@ -60,24 +60,11 @@ public class EmailActions : MarketoInvocable
     }
 
     [Action("Get email content", Description = "Get email content")]
-    public EmailContentResponse GetEmailContent([ActionParameter] GetEmailInfoRequest input)
+    public EmailContentUserFriendlyResponse GetEmailContent([ActionParameter] GetEmailInfoRequest input)
     {
         var request = new MarketoRequest($"/rest/asset/v1/email/{input.EmailId}/content.json", Method.Get, Credentials);
         var response = Client.ExecuteWithError<EmailContentDto>(request);
         return new(response.Result);
-    }
-
-    [Action("Update email content", Description = "Update content of a specific email")]
-    public void UpdateEmailContent(
-        [ActionParameter] GetEmailInfoRequest emailRequest,
-        [ActionParameter] UpdateContentRequest input)
-    {
-        var request = new MarketoRequest($"/rest/asset/v1/email/{emailRequest.EmailId}/content.json", Method.Post,
-                Credentials)
-            .AddParameter("type", input.Type)
-            .AddParameter("content", input.Content);
-
-        Client.ExecuteWithErrorHandling(request);
     }
 
     [Action("Delete email", Description = "Delete email")]
@@ -94,7 +81,7 @@ public class EmailActions : MarketoInvocable
         [ActionParameter] GetSegmentBySegmentationRequest getSegmentBySegmentationRequest)
     {
         var emailInfo = GetEmailInfo(getEmailInfoRequest);
-        var emailContentResponse = GetEmailContent(getEmailInfoRequest);
+        var emailContentResponse = GetEmailContentAll(getEmailInfoRequest);
         var sectionContent = emailContentResponse.EmailContentItems!
             .Where(x => x.ContentType == "DynamicContent" || x.ContentType == "Text")
             .ToDictionary(
@@ -114,7 +101,7 @@ public class EmailActions : MarketoInvocable
         [ActionParameter] GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
         [ActionParameter] TranslateEmailWithHtmlRequest translateEmailWithHtmlRequest)
     {
-        var emailContentResponse = GetEmailContent(getEmailInfoRequest);
+        var emailContentResponse = GetEmailContentAll(getEmailInfoRequest);
 
         if (!translateEmailWithHtmlRequest.TranslateOnlyDynamic.HasValue || 
             !translateEmailWithHtmlRequest.TranslateOnlyDynamic.Value)
@@ -126,7 +113,7 @@ public class EmailActions : MarketoInvocable
                     ConvertSectionToDynamicContent(getEmailInfoRequest.EmailId, item.HtmlId, getSegmentationRequest.SegmentationId);
                 }
             }
-            emailContentResponse = GetEmailContent(getEmailInfoRequest);
+            emailContentResponse = GetEmailContentAll(getEmailInfoRequest);
         }
         var translatedContent = HtmlContentBuilder.ParseHtml(translateEmailWithHtmlRequest.File, _fileManagementClient);
         foreach (var item in emailContentResponse.EmailContentItems)
@@ -191,6 +178,13 @@ public class EmailActions : MarketoInvocable
             return JsonConvert.DeserializeObject<List<EmailContentValueDto>>(sectionContent.Value.ToString()).First(x => x.Type == "HTML").Value;
         }
         return string.Empty;
+    }
+
+    private EmailContentResponse GetEmailContentAll([ActionParameter] GetEmailInfoRequest input)
+    {
+        var request = new MarketoRequest($"/rest/asset/v1/email/{input.EmailId}/content.json", Method.Get, Credentials);
+        var response = Client.ExecuteWithError<EmailContentDto>(request);
+        return new(response.Result);
     }
 
     // Actions for more general usage of dynamic content
@@ -259,5 +253,18 @@ public class EmailActions : MarketoInvocable
     //                    { DynamicContentId = dynamicContentInfo.Value.ToString()! }).FirstOrDefault()!);
     //    }
     //    return new() { EmailDynamicContentList = result };
+    //}
+
+    //[Action("Update email content", Description = "Update content of a specific email")]
+    //public void UpdateEmailContent(
+    //    [ActionParameter] GetEmailInfoRequest emailRequest,
+    //    [ActionParameter] UpdateContentRequest input)
+    //{
+    //    var request = new MarketoRequest($"/rest/asset/v1/email/{emailRequest.EmailId}/content.json", Method.Post,
+    //            Credentials)
+    //        .AddParameter("type", input.Type)
+    //        .AddParameter("content", input.Content);
+
+    //    Client.ExecuteWithErrorHandling(request);
     //}
 }
