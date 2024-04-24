@@ -2,6 +2,8 @@
 using Apps.Marketo.Invocables;
 using Apps.Marketo.Models.Folder.Requests;
 using Apps.Marketo.Models.Folder.Responses;
+using Apps.Marketo.Models.Program.Request;
+using Apps.Marketo.Models.Tags.Request;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Invocation;
@@ -59,6 +61,24 @@ public class FolderActions : MarketoInvocable
         var endpoint = $"/rest/asset/v1/folder/{input.FolderId}/delete.json";
         var request = new MarketoRequest(endpoint, Method.Post, Credentials);
 
+        Client.ExecuteWithError<IdDto>(request);
+    }
+
+    [Action("Add tags to program", Description = "Add tags to program")]
+    public void AddTagToFolder([ActionParameter] GetProgramRequest programRequest,
+        [ActionParameter] GetTagTypeRequest tagTypeRequest,
+        [ActionParameter] GetTagValueRequest tagValueRequest)
+    {
+        var endpoint = $"/rest/asset/v1/program/{programRequest.ProgramId}.json";
+        var request = new MarketoRequest(endpoint, Method.Post, Credentials);
+        request.AddQueryParameter("tags", JsonConvert.SerializeObject(new[]
+        {
+            new
+            {
+                tagType = tagTypeRequest.TagType,
+                tagValue = tagValueRequest.TagValue
+            }
+        }));
         Client.ExecuteWithError<IdDto>(request);
     }
 }

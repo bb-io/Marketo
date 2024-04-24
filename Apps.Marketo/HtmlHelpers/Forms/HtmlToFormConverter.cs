@@ -24,6 +24,7 @@ public static class HtmlToFormConverter
         var originalFields = client.ExecuteWithError<FormFieldDto>(getFieldsRequest).Result;
 
         const string formElementAttribute = "data-marketo-form-element";
+        const string formElementFieldId = "data-marketo-Id";
         var innerDivs = outerDiv.ChildNodes;
 
         foreach (var div in innerDivs)
@@ -72,13 +73,13 @@ public static class HtmlToFormConverter
                     break;
                 
                 case "fields":
-                    foreach (var fieldNode in div.ChildNodes)
+                    foreach (var origField in originalFields)
                     {
-                        var fieldId = fieldNode.Attributes["data-marketo-Id"].Value;
-                        var originalField = originalFields.Single(f => f.Id == fieldId);
-                        UnwrapFieldFromDiv(fieldNode, originalField);
+                        if(div.ChildNodes.Any(x => x.Attributes[formElementFieldId].Value == origField.Id))
+                        {
+                            UnwrapFieldFromDiv(div.ChildNodes.First(x => x.Attributes[formElementFieldId].Value == origField.Id), origField);
+                        }
                     }
-                    
                     break;
             }
         }

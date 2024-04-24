@@ -1,11 +1,13 @@
-﻿using System.Text;
+﻿using System.Linq;
+using System.Text;
 using Apps.Marketo.Dtos;
+using Apps.Marketo.Models.Forms.Requests;
 
 namespace Apps.Marketo.HtmlHelpers.Forms;
 
 public static class FormToHtmlConverter
 {
-    public static string ConvertToHtml(FormDto formDto, IEnumerable<FormFieldDto> formData)
+    public static string ConvertToHtml(FormDto formDto, IEnumerable<FormFieldDto> formData, IgnoreFieldsRequest ignoreFieldsRequest)
     {
         const string formElementAttribute = "data-marketo-form-element";
         
@@ -38,7 +40,11 @@ public static class FormToHtmlConverter
         
         foreach (var field in formData)
         {
-            var htmlField = WrapFieldInDiv(field);
+            if(ignoreFieldsRequest.IgnoreFields != null && ignoreFieldsRequest.IgnoreFields.Contains(field.Id))
+            {
+                continue;
+            }
+            var htmlField = WrapFieldInDiv(field, ignoreFieldsRequest.IgnoreVisibilityRules ?? false);
             html.Append(htmlField);
         }
 
@@ -47,7 +53,7 @@ public static class FormToHtmlConverter
         return html.ToString();
     }
     
-    private static string WrapFieldInDiv(FormFieldDto field)
+    private static string WrapFieldInDiv(FormFieldDto field, bool ignoreVisibilityRulesContent)
     {
         const string dataFieldDataAttribute = "data-marketo-field-data";
         var htmlField = new StringBuilder();
@@ -72,7 +78,7 @@ public static class FormToHtmlConverter
         if (field.Text != null)
             htmlField.Append($"<div {dataFieldDataAttribute}=\"{nameof(field.Text)}\">{field.Text}</div>");
 
-        if (field.VisibilityRules != null)
+        if (field.VisibilityRules != null && !ignoreVisibilityRulesContent)
         {
             htmlField.Append($"<div {dataFieldDataAttribute}=\"{nameof(field.VisibilityRules)}\">");
         
