@@ -2,6 +2,7 @@ using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Microsoft.Extensions.FileSystemGlobbing;
+using Microsoft.Extensions.FileSystemGlobbing.Internal;
 using Newtonsoft.Json;
 using RestSharp;
 using System.Text.RegularExpressions;
@@ -37,13 +38,13 @@ public class MarketoInvocable : BaseInvocable
     protected bool IsFilePathMatchingPattern(List<string> patterns, string filePath, bool exclude)
     {
         var matcher = new Matcher();
-        foreach(var pattern in patterns)
+        if (exclude)
+            matcher.AddExcludePatterns(patterns);
+        else
         {
-            if(exclude)
-                matcher.AddExclude(pattern);
-            else
-                matcher.AddInclude(pattern);
-        }
+            matcher.AddInclude("*");
+            matcher.AddIncludePatterns(patterns);
+        }           
         return matcher.Match(filePath).HasMatches;
     }
 }
