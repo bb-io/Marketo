@@ -19,4 +19,7 @@ public class ListFormsRequest
     [Display("Folder", Description = "Folders list with \"Landing Page Form\" type")]
     [DataSource(typeof(FormFolderDataHandler))]
     public string? FolderId { get; set; }
+
+    [Display("Name pattern", Description = "Use '*' to represent wildcards in name")]
+    public string? NamePattern { get; set; }
 }

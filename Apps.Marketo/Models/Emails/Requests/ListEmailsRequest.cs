@@ -19,4 +19,7 @@ public class ListEmailsRequest
 
     [Display("Latest updated at")]
     public DateTime? LatestUpdatedAt { get; set; }
+
+    [Display("Name pattern", Description = "Use '*' to represent wildcards in name")]
+    public string? NamePattern { get; set; }
 }

@@ -56,6 +56,8 @@ public class FormActions : MarketoInvocable
             forms = forms.Where(x => x.UpdatedAt >= input.EarliestUpdatedAt.Value).ToList();
         if (input.LatestUpdatedAt != null)
             forms = forms.Where(x => x.UpdatedAt <= input.LatestUpdatedAt.Value).ToList();
+
+        forms = !string.IsNullOrWhiteSpace(input.NamePattern) ? forms.Where(x => IsFilePathMatchingPattern(input.NamePattern, x.Name)).ToList() : forms;
         return new() { Forms = forms };
     }
 

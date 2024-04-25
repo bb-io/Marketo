@@ -12,5 +12,6 @@ namespace Apps.Marketo.Models.Tokens.Request
     {
         [DataSource(typeof(TokenFolderDataHandler))]
         public string FolderId { get; set; }
+
     }
 }
