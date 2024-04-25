@@ -39,10 +39,12 @@ public class MarketoInvocable : BaseInvocable
     {
         var matcher = new Matcher();
         if (exclude)
-            matcher.AddExcludePatterns(patterns);
-        else
         {
             matcher.AddInclude("*");
+            matcher.AddExcludePatterns(patterns);
+        }
+        else
+        {
             matcher.AddIncludePatterns(patterns);
         }           
         return matcher.Match(filePath).HasMatches;
