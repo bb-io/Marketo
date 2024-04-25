@@ -42,7 +42,7 @@ public class SnippetActions : MarketoInvocable
         if (input.LatestUpdatedAt != null)
             response = response.Where(x => x.UpdatedAt <= input.LatestUpdatedAt.Value).ToList();
 
-        response = !string.IsNullOrWhiteSpace(input.NamePattern) ? response.Where(x => IsFilePathMatchingPattern(input.NamePattern, x.Name)).ToList() : response;
+        response = input.NamePatterns != null ? response.Where(x => IsFilePathMatchingPattern(input.NamePatterns, x.Name, input.ExcludeMatched ?? false)).ToList() : response;
         return new()
         {
             Snippets = string.IsNullOrEmpty(input.FolderId) ? 

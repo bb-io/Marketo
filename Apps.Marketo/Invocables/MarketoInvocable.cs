@@ -34,10 +34,16 @@ public class MarketoInvocable : BaseInvocable
         }
     }
 
-    protected bool IsFilePathMatchingPattern(string pattern, string filePath)
+    protected bool IsFilePathMatchingPattern(List<string> patterns, string filePath, bool exclude)
     {
         var matcher = new Matcher();
-        matcher.AddInclude(pattern);
+        foreach(var pattern in patterns)
+        {
+            if(exclude)
+                matcher.AddExclude(pattern);
+            else
+                matcher.AddInclude(pattern);
+        }
         return matcher.Match(filePath).HasMatches;
     }
 }

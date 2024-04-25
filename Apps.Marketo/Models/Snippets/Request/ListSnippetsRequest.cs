@@ -25,7 +25,10 @@ namespace Apps.Marketo.Models.Snippets.Request
         [Display("Latest updated at")]
         public DateTime? LatestUpdatedAt { get; set; }
 
-        [Display("Name pattern", Description = "Use '*' to represent wildcards in name")]
-        public string? NamePattern { get; set; }
+        [Display("Name patterns", Description = "Use '*' to represent wildcards in name")]
+        public List<string>? NamePatterns { get; set; }
+
+        [Display("Exclude assets matched by patterns", Description = "Exclude assets matched by patterns")]
+        public bool? ExcludeMatched { get; set; }
     }
 }

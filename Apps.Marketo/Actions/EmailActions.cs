@@ -49,7 +49,7 @@ public class EmailActions : MarketoInvocable
                 ((DateTime)input.LatestUpdatedAt).ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture));
 
         var response = Client.Paginate<EmailDto>(request);
-        response = !string.IsNullOrWhiteSpace(input.NamePattern) ? response.Where(x => IsFilePathMatchingPattern(input.NamePattern, x.Name)).ToList() : response;
+        response = input.NamePatterns != null ? response.Where(x => IsFilePathMatchingPattern(input.NamePatterns, x.Name, input.ExcludeMatched ?? false)).ToList() : response;
         return new() { Emails = response };
     }
 
