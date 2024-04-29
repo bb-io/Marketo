@@ -61,6 +61,14 @@ public class FormActions : MarketoInvocable
         return new() { Forms = forms };
     }
 
+    [Action("List forms fields", Description = "List forms fields")]
+    public ListFormFieldsResponse ListFormsFields(
+        [ActionParameter] GetMultipleFormsRequest getMultipleFormsRequest, 
+        [ActionParameter] ListFormFieldsRequest listFormFields)
+    {
+        return new ListFormFieldsResponse() { FormFieldsIds = listFormFields.FormFields };
+    }
+
     [Action("Get form as HTML for translation", Description = "Retrieve a form as HTML file for translation.")]
     public async Task<FileWrapper> GetFormAsHtml([ActionParameter] GetFormRequest input,
         [ActionParameter] IgnoreFieldsRequest ignoreFieldsRequest)

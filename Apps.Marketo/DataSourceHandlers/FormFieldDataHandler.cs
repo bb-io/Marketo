@@ -25,37 +25,36 @@ namespace Apps.Marketo.DataSourceHandlers
         public Dictionary<string, string> GetData(DataSourceContext context)
         {
             var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
-            var formFields = new List<FormFieldDto>();
             if (!string.IsNullOrWhiteSpace(GetFormRequest.FormId))
-                formFields = GetFormFieldsFromSingleForm(client, GetFormRequest.FormId.ToString());
-            else
-                formFields = GetFormFieldsFromAllForms(client);
+                throw new ArgumentException("Specify form first or set the output of \"List form fields\" action here");
+
+            var formFields = GetFormFieldsFromSingleForm(client, GetFormRequest.FormId.ToString());
 
             return formFields.Where(formField => context.SearchString == null ||
                                                  (!string.IsNullOrEmpty(formField.Label) && formField.Label.Contains(context.SearchString, StringComparison.OrdinalIgnoreCase)))
                 .ToDictionary(formField => formField.Id, formField => formField.Label ?? $"Empty label (id: {formField.Id})");
         }
 
-        private List<FormFieldDto> GetFormFieldsFromAllForms(MarketoClient client)
-        {
-            var request = new MarketoRequest($"/rest/asset/v1/forms.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
-            var forms = client.Paginate<FormDto>(request);
-            var allFormFields = new List<FormFieldDto>();
-            foreach(var form in forms)
-            {
-                var getFieldsRequest = new MarketoRequest($"/rest/asset/v1/form/{form.Id}/fields.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
-                var formFields = GetFormFieldsFromSingleForm(client, form.Id.ToString());
-                if (formFields != null)
-                {
-                    foreach(var field in formFields)
-                    {
-                        field.Label = $"{field.Label ?? $"Empty label (id: {field.Id})"} - {form.Name}";
-                        allFormFields.Add(field);
-                    }
-                }
-            }
-            return allFormFields;
-        }
+        //private List<FormFieldDto> GetFormFieldsFromAllForms(MarketoClient client)
+        //{
+        //    var request = new MarketoRequest($"/rest/asset/v1/forms.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
+        //    var forms = client.Paginate<FormDto>(request);
+        //    var allFormFields = new List<FormFieldDto>();
+        //    foreach(var form in forms)
+        //    {
+        //        var getFieldsRequest = new MarketoRequest($"/rest/asset/v1/form/{form.Id}/fields.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
+        //        var formFields = GetFormFieldsFromSingleForm(client, form.Id.ToString());
+        //        if (formFields != null)
+        //        {
+        //            foreach(var field in formFields)
+        //            {
+        //                field.Label = $"{field.Label ?? $"Empty label (id: {field.Id})"} - {form.Name}";
+        //                allFormFields.Add(field);
+        //            }
+        //        }
+        //    }
+        //    return allFormFields;
+        //}
 
         private List<FormFieldDto>? GetFormFieldsFromSingleForm(MarketoClient client, string formId)
         {
