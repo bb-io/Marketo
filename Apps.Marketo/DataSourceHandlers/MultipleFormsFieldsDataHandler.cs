@@ -48,6 +48,7 @@ namespace Apps.Marketo.DataSourceHandlers
                     foreach (var field in formFields)
                     {
                         field.Label = $"{field.Label ?? $"Empty label (id: {field.Id})"} - {form.Name}";
+                        field.Id = $"{field.Id} {form.Id.ToString()}";
                         allFormFields.Add(field);
                     }
                 }

@@ -66,7 +66,7 @@ public class FormActions : MarketoInvocable
         [ActionParameter] GetMultipleFormsRequest getMultipleFormsRequest, 
         [ActionParameter] ListFormFieldsRequest listFormFields)
     {
-        return new ListFormFieldsResponse() { FormFieldsIds = listFormFields.FormFields };
+        return new ListFormFieldsResponse() { FormFieldsIds = listFormFields.FormFields.Select(x => x.Split(' ').First()).ToList() };
     }
 
     [Action("Get form as HTML for translation", Description = "Retrieve a form as HTML file for translation.")]

@@ -25,7 +25,7 @@ namespace Apps.Marketo.DataSourceHandlers
         public Dictionary<string, string> GetData(DataSourceContext context)
         {
             var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
-            if (!string.IsNullOrWhiteSpace(GetFormRequest.FormId))
+            if (GetFormRequest == null || string.IsNullOrWhiteSpace(GetFormRequest.FormId))
                 throw new ArgumentException("Specify form first or set the output of \"List form fields\" action here");
 
             var formFields = GetFormFieldsFromSingleForm(client, GetFormRequest.FormId.ToString());
