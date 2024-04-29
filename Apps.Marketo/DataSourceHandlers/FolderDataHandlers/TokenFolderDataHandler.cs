@@ -11,9 +11,9 @@ using System.Threading.Tasks;
 
 namespace Apps.Marketo.DataSourceHandlers.FolderDataHandlers
 {
-    public class SnippetFolderDataHandler : BaseInvocable, IAsyncDataSourceHandler
+    public class TokenFolderDataHandler : BaseInvocable, IAsyncDataSourceHandler
     {
-        public SnippetFolderDataHandler(InvocationContext invocationContext) : base(invocationContext)
+        public TokenFolderDataHandler(InvocationContext invocationContext) : base(invocationContext)
         {
         }
         public async Task<Dictionary<string, string>> GetDataAsync(DataSourceContext context,
@@ -25,7 +25,7 @@ namespace Apps.Marketo.DataSourceHandlers.FolderDataHandlers
             var response = client.Paginate<FolderInfoDto>(request);
             return response
                 .DistinctBy(x => x.Id)
-                .Where(x => x.FolderType == "Snippet")
+                .Where(x => x.FolderType == "Marketing Folder" || x.FolderType == "Marketing Program")
                 .Where(str => context.SearchString is null || str.Name.Contains(context.SearchString, StringComparison.OrdinalIgnoreCase))
                 .ToDictionary(k => $"{k.Id.ToString()}_{k.FolderId.Type}", v => v.Name);
         }

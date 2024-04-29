@@ -41,6 +41,8 @@ public class SnippetActions : MarketoInvocable
             response = response.Where(x => x.UpdatedAt >= input.EarliestUpdatedAt.Value).ToList();
         if (input.LatestUpdatedAt != null)
             response = response.Where(x => x.UpdatedAt <= input.LatestUpdatedAt.Value).ToList();
+
+        response = input.NamePatterns != null ? response.Where(x => IsFilePathMatchingPattern(input.NamePatterns, x.Name, input.ExcludeMatched ?? false)).ToList() : response;
         return new()
         {
             Snippets = string.IsNullOrEmpty(input.FolderId) ? 
@@ -84,19 +86,6 @@ public class SnippetActions : MarketoInvocable
             }));
 
         return Client.GetSingleEntity<SnippetDto>(request);
-    }
-
-    [Action("Update snippet content", Description = "Update content of a specific snippet")]
-    public void UpdateSnippetContent(
-        [ActionParameter] SnippetRequest snippetRequest,
-        [ActionParameter] UpdateContentRequest input)
-    {
-        var request = new MarketoRequest($"/rest/asset/v1/snippet/{snippetRequest.SnippetId}/content.json", Method.Post,
-                Credentials)
-            .AddParameter("type", input.Type)
-            .AddParameter("content", input.Content);
-
-        Client.ExecuteWithErrorHandling(request);
     }
 
     [Action("Get snippet as HTML for translation", Description = "Get snippet as HTML for translation")]
@@ -194,4 +183,18 @@ public class SnippetActions : MarketoInvocable
         throw new ArgumentException("Segmentation does not match! " +
             "Looks like you choosed one segmentation, but your snippet already is segmented by another segmentation");
     }
+
+    //Deprecated
+    //[Action("Update snippet content", Description = "Update content of a specific snippet")]
+    //public void UpdateSnippetContent(
+    //    [ActionParameter] SnippetRequest snippetRequest,
+    //    [ActionParameter] UpdateContentRequest input)
+    //{
+    //    var request = new MarketoRequest($"/rest/asset/v1/snippet/{snippetRequest.SnippetId}/content.json", Method.Post,
+    //            Credentials)
+    //        .AddParameter("type", input.Type)
+    //        .AddParameter("content", input.Content);
+
+    //    Client.ExecuteWithErrorHandling(request);
+    //}
 }

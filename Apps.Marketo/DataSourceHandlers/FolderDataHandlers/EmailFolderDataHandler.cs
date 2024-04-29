@@ -3,11 +3,6 @@ using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using RestSharp;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Apps.Marketo.DataSourceHandlers.FolderDataHandlers
 {
@@ -26,7 +21,7 @@ namespace Apps.Marketo.DataSourceHandlers.FolderDataHandlers
             return response
                 .DistinctBy(x => x.Id)
                 .Where(x => x.FolderType == "Email" || x.FolderId.Type == "Program")
-                .Where(str => str.Name.Contains(context.SearchString))
+                .Where(str => context.SearchString is null || str.Name.Contains(context.SearchString, StringComparison.OrdinalIgnoreCase))
                 .ToDictionary(k => $"{k.Id.ToString()}_{k.FolderId.Type}", v => v.Name);
         }
     }

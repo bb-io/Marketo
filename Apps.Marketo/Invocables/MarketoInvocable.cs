@@ -1,8 +1,11 @@
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Microsoft.Extensions.FileSystemGlobbing;
+using Microsoft.Extensions.FileSystemGlobbing.Internal;
 using Newtonsoft.Json;
 using RestSharp;
+using System.Text.RegularExpressions;
 
 namespace Apps.Marketo.Invocables;
 
@@ -30,5 +33,20 @@ public class MarketoInvocable : BaseInvocable
                     type = "Program"
                 }));
         }
+    }
+
+    protected bool IsFilePathMatchingPattern(List<string> patterns, string filePath, bool exclude)
+    {
+        var matcher = new Matcher();
+        if (exclude)
+        {
+            matcher.AddInclude("*");
+            matcher.AddExcludePatterns(patterns);
+        }
+        else
+        {
+            matcher.AddIncludePatterns(patterns);
+        }           
+        return matcher.Match(filePath).HasMatches;
     }
 }

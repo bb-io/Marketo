@@ -43,6 +43,8 @@ public class LandingPageActions : MarketoInvocable
             response = response.Where(x => x.UpdatedAt >= input.EarliestUpdatedAt.Value).ToList();
         if (input.LatestUpdatedAt != null)
             response = response.Where(x => x.UpdatedAt <= input.LatestUpdatedAt.Value).ToList();
+
+        response = input.NamePatterns != null ? response.Where(x => IsFilePathMatchingPattern(input.NamePatterns, x.Name, input.ExcludeMatched ?? false)).ToList() : response;
         return new() { LandingPages = response };
     }
 
