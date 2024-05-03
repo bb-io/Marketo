@@ -20,6 +20,7 @@ using JsonSerializer = System.Text.Json.JsonSerializer;
 using Apps.Marketo.DataSourceHandlers.FolderDataHandlers;
 using System.Text.Json.Serialization;
 using Newtonsoft.Json;
+using Apps.Marketo.Models.Emails.Requests;
 
 namespace Apps.Marketo.Actions;
 
@@ -67,6 +68,16 @@ public class FormActions : MarketoInvocable
         [ActionParameter] ListFormFieldsRequest listFormFields)
     {
         return new ListFormFieldsResponse() { FormFieldsIds = listFormFields.FormFields.Select(x => x.Split(' ').First()).ToList() };
+    }
+
+    [Action("Update form metadata", Description = "Update form metadata")]
+    public FormDto UpdateEmailMetadata(
+        [ActionParameter] GetFormRequest input,
+        [ActionParameter] UpdateFormMetadataRequest updateFormMetadata)
+    {
+        var request = new MarketoRequest($"/rest/asset/v1/form/{input.FormId}.json", Method.Post, Credentials);
+        request.AddJsonBody(updateFormMetadata);
+        return Client.GetSingleEntity<FormDto>(request);
     }
 
     [Action("Get form as HTML for translation", Description = "Retrieve a form as HTML file for translation.")]

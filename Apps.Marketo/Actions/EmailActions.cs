@@ -60,6 +60,16 @@ public class EmailActions : MarketoInvocable
         return Client.GetSingleEntity<EmailDto>(request);
     }
 
+    [Action("Update email metadata", Description = "Update email metadata")]
+    public EmailDto UpdateEmailMetadata(
+        [ActionParameter] GetEmailInfoRequest input,
+        [ActionParameter] UpdateEmailMetadataRequest updateEmailMetadata)
+    {
+        var request = new MarketoRequest($"/rest/asset/v1/email/{input.EmailId}.json", Method.Post, Credentials);
+        request.AddJsonBody(updateEmailMetadata);
+        return Client.GetSingleEntity<EmailDto>(request);
+    }
+
     [Action("Get email content", Description = "Get email content")]
     public EmailContentUserFriendlyResponse GetEmailContent([ActionParameter] GetEmailInfoRequest input)
     {

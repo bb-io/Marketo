@@ -88,6 +88,16 @@ public class SnippetActions : MarketoInvocable
         return Client.GetSingleEntity<SnippetDto>(request);
     }
 
+    [Action("Update snippet metadata", Description = "Update snippet metadata")]
+    public SnippetDto UpdateSnippetMetadata(
+        [ActionParameter] SnippetRequest input,
+        [ActionParameter] UpdateSnippetMetadataRequest updateSnippetMetadata)
+    {
+        var request = new MarketoRequest($"/rest/asset/v1/snippet/{input.SnippetId}.json", Method.Post, Credentials);
+        request.AddJsonBody(updateSnippetMetadata);
+        return Client.GetSingleEntity<SnippetDto>(request);
+    }
+
     [Action("Get snippet as HTML for translation", Description = "Get snippet as HTML for translation")]
     public async Task<FileWrapper> GetSnippetAsHtml(
         [ActionParameter] SnippetRequest getSnippetRequest,
