@@ -94,7 +94,10 @@ public class SnippetActions : MarketoInvocable
         [ActionParameter] UpdateSnippetMetadataRequest updateSnippetMetadata)
     {
         var request = new MarketoRequest($"/rest/asset/v1/snippet/{input.SnippetId}.json", Method.Post, Credentials);
-        request.AddJsonBody(updateSnippetMetadata);
+        if (string.IsNullOrEmpty(updateSnippetMetadata.Name))
+            request.AddParameter("name", updateSnippetMetadata.Name);
+        if (string.IsNullOrEmpty(updateSnippetMetadata.Description))
+            request.AddParameter("description", updateSnippetMetadata.Description);
         return Client.GetSingleEntity<SnippetDto>(request);
     }
 
