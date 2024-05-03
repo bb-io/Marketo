@@ -76,9 +76,9 @@ public class FormActions : MarketoInvocable
         [ActionParameter] UpdateFormMetadataRequest updateFormMetadata)
     {
         var request = new MarketoRequest($"/rest/asset/v1/form/{input.FormId}.json", Method.Post, Credentials);       
-        if(string.IsNullOrEmpty(updateFormMetadata.Name))
+        if(!string.IsNullOrEmpty(updateFormMetadata.Name))
             request.AddParameter("name", updateFormMetadata.Name);
-        if (string.IsNullOrEmpty(updateFormMetadata.Description))
+        if (!string.IsNullOrEmpty(updateFormMetadata.Description))
             request.AddParameter("description", updateFormMetadata.Description);
         return Client.GetSingleEntity<FormDto>(request);
     }
