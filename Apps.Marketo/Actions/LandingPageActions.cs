@@ -19,6 +19,7 @@ using Newtonsoft.Json.Linq;
 using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using Newtonsoft.Json.Schema;
 using Apps.Marketo.HtmlHelpers;
+using Apps.Marketo.Models.Forms.Requests;
 
 namespace Apps.Marketo.Actions;
 
@@ -61,6 +62,16 @@ public class LandingPageActions : MarketoInvocable
         var request = new MarketoRequest($"/rest/asset/v1/landingPage/{input.Id}/content.json", Method.Get, Credentials);
         var response = Client.ExecuteWithError<LandingPageContentDto>(request);
         return new(response.Result);
+    }
+
+    [Action("Update landing page metadata", Description = "Update landing page metadata")]
+    public LandingPageDto UpdateLandingPageMetadata(
+        [ActionParameter] GetLandingInfoRequest input,
+        [ActionParameter] UpdateLandingMetadataRequest updateLandingMetadata)
+    {
+        var request = new MarketoRequest($"/rest/asset/v1/landingPage/{input.Id}.json", Method.Post, Credentials);
+        request.AddJsonBody(updateLandingMetadata);
+        return Client.GetSingleEntity<LandingPageDto>(request);
     }
 
     [Action("Create landing page", Description = "Create landing page")]
