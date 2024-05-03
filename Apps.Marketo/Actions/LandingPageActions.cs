@@ -137,7 +137,11 @@ public class LandingPageActions : MarketoInvocable
         var request = new MarketoRequest(endpoint, Method.Post, Credentials);
 
         try{ Client.ExecuteWithError<IdDto>(request); }
-        catch (BusinessRuleViolationException _) { }
+        catch (BusinessRuleViolationException e) 
+        {
+            if (e.Message != $"{input.Id} Landing Page is not approved")
+                throw e;
+        }
     }
 
     [Action("Get landing page as HTML for translation", Description = "Get landing page as HTML for translation")]
