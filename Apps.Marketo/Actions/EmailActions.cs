@@ -66,7 +66,10 @@ public class EmailActions : MarketoInvocable
         [ActionParameter] UpdateEmailMetadataRequest updateEmailMetadata)
     {
         var request = new MarketoRequest($"/rest/asset/v1/email/{input.EmailId}.json", Method.Post, Credentials);
-        request.AddJsonBody(updateEmailMetadata);
+        if (string.IsNullOrEmpty(updateEmailMetadata.Name))
+            request.AddParameter("name", updateEmailMetadata.Name);
+        if (string.IsNullOrEmpty(updateEmailMetadata.Description))
+            request.AddParameter("description", updateEmailMetadata.Description);
         return Client.GetSingleEntity<EmailDto>(request);
     }
 

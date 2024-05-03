@@ -70,7 +70,10 @@ public class LandingPageActions : MarketoInvocable
         [ActionParameter] UpdateLandingMetadataRequest updateLandingMetadata)
     {
         var request = new MarketoRequest($"/rest/asset/v1/landingPage/{input.Id}.json", Method.Post, Credentials);
-        request.AddJsonBody(updateLandingMetadata);
+        if (string.IsNullOrEmpty(updateLandingMetadata.Name))
+            request.AddParameter("name", updateLandingMetadata.Name);
+        if (string.IsNullOrEmpty(updateLandingMetadata.Description))
+            request.AddParameter("description", updateLandingMetadata.Description);
         return Client.GetSingleEntity<LandingPageDto>(request);
     }
 
