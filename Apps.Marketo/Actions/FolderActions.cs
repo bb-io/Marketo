@@ -64,7 +64,7 @@ public class FolderActions : MarketoInvocable
         Client.ExecuteWithError<IdDto>(request);
     }
 
-    [Action("Add tags to program", Description = "Add tags to program")]
+    [Action("Add tag to program", Description = "Add tag to program")]
     public void AddTagToFolder([ActionParameter] GetProgramRequest programRequest,
         [ActionParameter] GetTagTypeRequest tagTypeRequest,
         [ActionParameter] GetTagValueRequest tagValueRequest)
