@@ -130,11 +130,13 @@ public class EmailActions : MarketoInvocable
             emailContentResponse = GetEmailContentAll(getEmailInfoRequest);
         }
         var translatedContent = HtmlContentBuilder.ParseHtml(translateEmailWithHtmlRequest.File, _fileManagementClient);
+        var modulesToIgnore = new List<string>();
         foreach (var item in emailContentResponse.EmailContentItems)
         {
-            if (item.ContentType == "DynamicContent" && translatedContent.TryGetValue(item.HtmlId, out var translatedContentItem))
+            if (item.ContentType == "DynamicContent" && !modulesToIgnore.Contains(item.ParentHtmlId) && translatedContent.TryGetValue(item.HtmlId, out var translatedContentItem))
             {
-                UpdateEmailDynamicContent(getEmailInfoRequest, getSegmentBySegmentationRequest, item.Value.ToString(), translatedContentItem);
+                var ignoreModule = UpdateEmailDynamicContent(getEmailInfoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, item, translatedContentItem, emailContentResponse.EmailContentItems, translatedContent, 0);
+                modulesToIgnore.Add(ignoreModule);
             }
         }
     }
@@ -148,24 +150,36 @@ public class EmailActions : MarketoInvocable
         return Client.ExecuteWithError<IdDto>(request).Result.FirstOrDefault();
     }
 
-    private IdDto UpdateEmailDynamicContent(
+    private string UpdateEmailDynamicContent(
         GetEmailInfoRequest getEmailInfoRequest,
+        GetSegmentationRequest getSegmentationRequest,
         GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
-        string dynamicContentId,
-        string content)
+        EmailContentDto dynamicContentItem,
+        string content,
+        List<EmailContentDto> emailContentItems,
+        Dictionary<string, string> translatedContent,
+        int tryNumber)
     {
         var endpoint =
-            $"/rest/asset/v1/email/{getEmailInfoRequest.EmailId}/dynamicContent/{dynamicContentId}.json";
+            $"/rest/asset/v1/email/{getEmailInfoRequest.EmailId}/dynamicContent/{dynamicContentItem.Value.ToString()}.json";
         var request = new MarketoRequest(endpoint, Method.Post, Credentials)
             .AddQueryParameter("segment", getSegmentBySegmentationRequest.Segment)
             .AddQueryParameter("type", "HTML")
             .AddQueryParameter("value", content);
         try
         {
-            return Client.GetSingleEntity<IdDto>(request);
+            Client.GetSingleEntity<IdDto>(request);
+            return string.Empty;
         }
-        catch (Exception ex) { }
-        return default;
+        catch (BusinessRuleViolationException ex) 
+        {
+            if(ex.ErrorCode == 611 && tryNumber == 0)
+            {
+                var ignoreModuleId = RecreateModuleWithIssue(getEmailInfoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, dynamicContentItem, emailContentItems, translatedContent, tryNumber);
+                return ignoreModuleId;
+            }
+            throw ex;
+        }
     }
 
     private string GetEmailSectionContent(
@@ -199,6 +213,48 @@ public class EmailActions : MarketoInvocable
         var request = new MarketoRequest($"/rest/asset/v1/email/{input.EmailId}/content.json", Method.Get, Credentials);
         var response = Client.ExecuteWithError<EmailContentDto>(request);
         return new(response.Result);
+    }
+
+    private string RecreateModuleWithIssue(
+        GetEmailInfoRequest getEmailInfoRequest,
+        GetSegmentationRequest getSegmentationRequest,
+        GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
+        EmailContentDto dynamicContentItem, 
+        List<EmailContentDto> emailContentItems,
+        Dictionary<string, string> translatedContent,
+        int tryNumber)
+    {
+        var parentModule = emailContentItems.FirstOrDefault(x => x.HtmlId == dynamicContentItem.ParentHtmlId);
+        var allOldTextItemsInModule = emailContentItems.Where(x => x.ParentHtmlId == dynamicContentItem.ParentHtmlId && x.ContentType == "Text").ToList();
+
+        var createDuplicateRequest = new MarketoRequest($"/rest/asset/v1/email/{getEmailInfoRequest.EmailId}/content/{dynamicContentItem.ParentHtmlId}/duplicate.json", Method.Post, Credentials);
+        var createDuplicateResponse = Client.GetSingleEntity<IdDto>(createDuplicateRequest);
+
+        var deleteOldDuplicateRequest = new MarketoRequest($"/rest/asset/v1/email/{getEmailInfoRequest.EmailId}/content/{dynamicContentItem.ParentHtmlId}/delete.json", Method.Post, Credentials);
+        var deleteOldDuplicateResponse = Client.GetSingleEntity<IdDto>(deleteOldDuplicateRequest);
+
+        
+        var emailContentResponse = GetEmailContentAll(getEmailInfoRequest);
+
+        var newModule = emailContentResponse.EmailContentItems.FirstOrDefault(x => x.Index == parentModule.Index);
+        var itemsInNewModule = emailContentResponse.EmailContentItems.Where(x => x.ParentHtmlId == newModule.HtmlId && x.ContentType == "Text").ToList();
+
+        foreach (var item in itemsInNewModule)
+        {
+            ConvertSectionToDynamicContent(getEmailInfoRequest.EmailId, item.HtmlId, getSegmentationRequest.SegmentationId);   
+        }
+
+        emailContentResponse = GetEmailContentAll(getEmailInfoRequest);
+        itemsInNewModule = emailContentResponse.EmailContentItems.Where(x => x.ParentHtmlId == newModule.HtmlId && x.ContentType == "Text").ToList();
+
+        int textItemsCounter = 0;
+        foreach(var dynamicItem in itemsInNewModule)
+        {
+            translatedContent.TryGetValue(allOldTextItemsInModule.ElementAt(textItemsCounter).HtmlId, out var translatedContentItem);
+            UpdateEmailDynamicContent(getEmailInfoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, dynamicItem, translatedContentItem, null, null, ++tryNumber);
+            ++textItemsCounter;
+        }
+        return parentModule.HtmlId;
     }
 
     // Deprecated
