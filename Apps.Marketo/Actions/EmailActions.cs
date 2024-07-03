@@ -100,7 +100,9 @@ public class EmailActions : MarketoInvocable
             .Where(x => x.ContentType == "DynamicContent" || x.ContentType == "Text")
             .ToDictionary(
                 x => x.HtmlId, 
-                y => GetEmailSectionContent(getEmailInfoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, y));
+                y => GetEmailSectionContent(getEmailInfoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, y))
+            .Where(x => !string.IsNullOrEmpty(x.Value))
+            .ToDictionary();
         var resultHtml = HtmlContentBuilder.GenerateHtml(sectionContent, emailInfo.Name, getSegmentBySegmentationRequest.Segment);
         
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
@@ -182,7 +184,7 @@ public class EmailActions : MarketoInvocable
         }
     }
 
-    private string GetEmailSectionContent(
+    private string? GetEmailSectionContent(
         GetEmailInfoRequest getEmailInfoRequest,
         GetSegmentationRequest getSegmentationRequest,
         GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
@@ -199,7 +201,7 @@ public class EmailActions : MarketoInvocable
                 return responseSeg.Result!.First().Content
                     .Where(x => x.Type == "HTML" && x.SegmentName == getSegmentBySegmentationRequest.Segment)
                     .Select(x => new GetEmailDynamicContentResponse(x)
-                    { DynamicContentId = sectionContent.Value.ToString()! }).First().Content;
+                    { DynamicContentId = sectionContent.Value.ToString()! }).FirstOrDefault()?.Content;
         }
         else if(sectionContent.ContentType == "Text")
         {
