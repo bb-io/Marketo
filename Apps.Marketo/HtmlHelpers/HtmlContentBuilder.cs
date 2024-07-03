@@ -46,8 +46,7 @@ namespace Apps.Marketo.HtmlHelpers
         {
             var result = new Dictionary<string, string>();
 
-            //var formBytes = fileManagementClient.DownloadAsync(file).Result.GetByteData().Result;
-            var formBytes = File.ReadAllBytes("C:\\Users\\bogdan\\Downloads\\Test Email 6 Customer 1_InTranslation.html");
+            var formBytes = fileManagementClient.DownloadAsync(file).Result.GetByteData().Result;
             var html = Encoding.UTF8.GetString(formBytes);
 
             var htmlDoc = new HtmlDocument();
