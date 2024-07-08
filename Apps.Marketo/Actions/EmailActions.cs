@@ -86,12 +86,14 @@ public class EmailActions : MarketoInvocable
     public async Task<FileWrapper> GetEmailAsHtml(
         [ActionParameter] GetEmailInfoRequest getEmailInfoRequest,
         [ActionParameter] GetSegmentationRequest getSegmentationRequest,
-        [ActionParameter] GetSegmentBySegmentationRequest getSegmentBySegmentationRequest)
+        [ActionParameter] GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
+        [ActionParameter] GetEmailAsHtmlRequest getEmailAsHtmlRequest)
     {
         var emailInfo = GetEmailInfo(getEmailInfoRequest);
         var emailContentResponse = GetEmailContentAll(getEmailInfoRequest);
+        var onlyDynamic = getEmailAsHtmlRequest.GetOnlyDynamicContent.HasValue && getEmailAsHtmlRequest.GetOnlyDynamicContent.Value;
         var sectionContent = emailContentResponse.EmailContentItems!
-            .Where(x => x.ContentType == "DynamicContent" || x.ContentType == "Text")
+            .Where(x => x.ContentType == "DynamicContent" || (!onlyDynamic && x.ContentType == "Text"))
             .ToDictionary(
                 x => x.HtmlId, 
                 y => GetEmailSectionContent(getEmailInfoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, y))
