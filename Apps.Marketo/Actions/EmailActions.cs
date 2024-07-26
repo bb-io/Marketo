@@ -143,6 +143,7 @@ public class EmailActions : MarketoInvocable
         return new TranslateEmailWithHtmlResponse()
         {
             RecreateModules = modulesToIgnore.Where(x => !string.IsNullOrEmpty(x)).ToList(),
+            Errors = modulesToIgnore.Where(x => !string.IsNullOrEmpty(x)).ToList(),
         };
     }
 
@@ -184,7 +185,12 @@ public class EmailActions : MarketoInvocable
                 var ignoreModuleId = RecreateModuleWithIssue(getEmailInfoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, dynamicContentItem, emailContentItems, translatedContent, tryNumber);
                 return ignoreModuleId;
             }
-            throw ex;
+            //throw ex;
+            return $"BusinessRuleViolationException, {ex.Message}, Error code: {ex.ErrorCode}, ContentId: {dynamicContentItem.Value.ToString()}, Content: {content}";
+        }
+        catch(Exception ex)
+        {
+            return $"{ex.Message}, ContentId: {dynamicContentItem.Value.ToString()}, Content: {content}";
         }
     }
 
