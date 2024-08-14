@@ -1,7 +1,5 @@
 ﻿using Apps.Marketo.Dtos;
 using Apps.Marketo.Invocables;
-using Apps.Marketo.Models.Emails.Requests;
-using Apps.Marketo.Models.Emails.Responses;
 using Apps.Marketo.Models.EmailTemplates.Requests;
 using Apps.Marketo.Models.EmailTemplates.Response;
 using Blackbird.Applications.Sdk.Common;
@@ -10,7 +8,7 @@ using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Newtonsoft.Json;
 using RestSharp;
-using System.Globalization;
+using System.Text;
 
 namespace Apps.Marketo.Actions
 {
@@ -55,7 +53,7 @@ namespace Apps.Marketo.Actions
             var request = new MarketoRequest($"/rest/asset/v1/emailTemplates.json", Method.Post, Credentials);
 
             request.AddParameter("name", input.Name);
-            request.AddParameter("content", input.Content);
+            request.AddFile("content", Encoding.UTF8.GetBytes(input.Content), "content");
             if (input.Description != null) request.AddParameter("description", input.Description);
             request.AddParameter("folder", JsonConvert.SerializeObject(new
             {
@@ -72,7 +70,7 @@ namespace Apps.Marketo.Actions
             [ActionParameter] UpdateEmailTemplateContentRequest emailTemplateContentRequest)
         {
             var request = new MarketoRequest($"/rest/asset/v1/emailTemplate/{input.EmailTemplateId}/content.json", Method.Post, Credentials);
-            request.AddParameter("content", emailTemplateContentRequest.Content);
+            request.AddFile("content", Encoding.UTF8.GetBytes(emailTemplateContentRequest.Content), "content");
             Client.ExecuteWithError<IdDto>(request);
         }
 
@@ -81,6 +79,13 @@ namespace Apps.Marketo.Actions
         {
             var request = new MarketoRequest($"/rest/asset/v1/emailTemplate/{input.EmailTemplateId}/delete.json", Method.Post, Credentials);
             Client.ExecuteWithError<IdDto>(request);
+        }
+
+        [Action("Approve email template draft", Description = "Approve email template draft")]
+        public EmailTemplateDto ApproveEmailTemplateDraft([ActionParameter] GetEmailTemplateRequest input)
+        {
+            var request = new MarketoRequest($"/rest/asset/v1/emailTemplate/{input.EmailTemplateId}/approveDraft.json", Method.Post, Credentials);
+            return Client.GetSingleEntity<EmailTemplateDto>(request);
         }
     }
 }
