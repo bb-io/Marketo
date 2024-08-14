@@ -2,7 +2,6 @@
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
-
 using Apps.Marketo.Dtos;
 using Apps.Marketo.HtmlHelpers.Forms;
 using Apps.Marketo.Invocables;
@@ -19,8 +18,6 @@ using RestSharp;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 using Apps.Marketo.DataSourceHandlers.FolderDataHandlers;
 using System.Text.Json.Serialization;
-using Newtonsoft.Json;
-using Apps.Marketo.Models.Emails.Requests;
 
 namespace Apps.Marketo.Actions;
 

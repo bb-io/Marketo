@@ -8,16 +8,10 @@ using Newtonsoft.Json;
 using RestSharp;
 using System.Globalization;
 using Apps.Marketo.Invocables;
-using Apps.Marketo.Models.Snippets.Request;
-using HtmlAgilityPack;
-using Newtonsoft.Json.Linq;
-using System.Web;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using System.Net.Mime;
 using System.Text;
 using Apps.Marketo.Models;
-using Blackbird.Applications.Sdk.Common.Files;
-using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using Apps.Marketo.HtmlHelpers;
 
 namespace Apps.Marketo.Actions;
