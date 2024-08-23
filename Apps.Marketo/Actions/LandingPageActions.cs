@@ -137,7 +137,11 @@ public class LandingPageActions : MarketoInvocable
         var request = new MarketoRequest(endpoint, Method.Post, Credentials);
 
         try{ Client.ExecuteWithError<IdDto>(request); }
-        catch (BusinessRuleViolationException _) { }
+        catch (BusinessRuleViolationException e) 
+        {
+            if (e.Message != $"{input.Id} Landing Page is not approved")
+                throw e;
+        }
     }
 
     [Action("Get landing page as HTML for translation", Description = "Get landing page as HTML for translation")]
@@ -165,7 +169,7 @@ public class LandingPageActions : MarketoInvocable
     }
 
     [Action("Translate landing page from HTML file", Description = "Translate landing page from HTML file")]
-    public void TranslateLandingWithHtml(
+    public TranslateLandingWithHtmlResponse TranslateLandingWithHtml(
         [ActionParameter] GetLandingInfoRequest getLandingPageInfoRequest,
         [ActionParameter] GetSegmentationRequest getSegmentationRequest,
         [ActionParameter] GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
@@ -188,6 +192,7 @@ public class LandingPageActions : MarketoInvocable
         }
         
         var translatedContent = HtmlContentBuilder.ParseHtml(translateLandingWithHtmlRequest.File, _fileManagementClient);
+        var errors = new List<string>();
         foreach (var item in landingContentResponse.LandingPageContentItems)
         {
             if (IsJsonObject(item.Content.ToString()) &&
@@ -199,10 +204,16 @@ public class LandingPageActions : MarketoInvocable
                     !string.IsNullOrWhiteSpace(content) && 
                     translatedContent.TryGetValue(item.Id, out var translatedContentItem))
                 {
-                    UpdateLandingDynamicContent(getLandingPageInfoRequest, getSegmentBySegmentationRequest, landingPageContent.Content, item.Type, translatedContentItem);
+                    var result = UpdateLandingDynamicContent(getLandingPageInfoRequest, getSegmentBySegmentationRequest, landingPageContent.Content, item.Type, translatedContentItem);
+                    if(!string.IsNullOrEmpty(result))
+                        errors.Add(result);
                 }
             }
         }
+        return new()
+        {
+            Errors = errors
+        };
     }
 
     private IdDto ConvertSectionToDynamicContent(string landingId, string htmlId, string segmentationId)
@@ -214,7 +225,7 @@ public class LandingPageActions : MarketoInvocable
         return Client.ExecuteWithError<IdDto>(request).Result.FirstOrDefault();
     }
 
-    private IdDto UpdateLandingDynamicContent(
+    private string UpdateLandingDynamicContent(
         GetLandingInfoRequest getLandingPageInfoRequest,
         GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
         string dynamicContentId,
@@ -229,10 +240,13 @@ public class LandingPageActions : MarketoInvocable
             .AddQueryParameter("value", content);
         try
         {
-            return Client.GetSingleEntity<IdDto>(request);
+            Client.GetSingleEntity<IdDto>(request);
+            return null;
         }
-        catch (Exception ex) { }
-        return default;
+        catch (Exception ex) 
+        {
+            return $"{ex.Message}, ContentId: {dynamicContentId}, Content: {content}";
+        }
     }
 
     private string GetLandingSectionContent(
