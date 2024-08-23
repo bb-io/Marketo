@@ -89,7 +89,7 @@ public class MarketoClient : RestClient
                 return retryResponse;
             }
 
-            throw new ArgumentException(errors.Errors.First().Message);
+            throw new ArgumentException($"Error message: {errors.Errors.First().Message}, Error code: {errors.Errors.First().Code}");
         }
 
         return response;
