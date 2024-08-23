@@ -148,13 +148,16 @@ public class LandingPageActions : MarketoInvocable
     public async Task<FileWrapper> GetLandingPageAsHtml(
         [ActionParameter] GetLandingInfoRequest getLandingPageInfoRequest,
         [ActionParameter] GetSegmentationRequest getSegmentationRequest,
-        [ActionParameter] GetSegmentBySegmentationRequest getSegmentBySegmentationRequest)
+        [ActionParameter] GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
+        [ActionParameter] GetLandingPageAsHtmlRequest getLandingPageAsHtmlRequest)
     {
         var landingInfo = GetLandingInfo(getLandingPageInfoRequest);
         var landingContentResponse = GetLandingContent(getLandingPageInfoRequest);
+        var onlyDynamic = getLandingPageAsHtmlRequest.GetOnlyDynamicContent.HasValue && getLandingPageAsHtmlRequest.GetOnlyDynamicContent.Value;
 
         var sectionContent = landingContentResponse.LandingPageContentItems!
-            .Where(x => x.Type == "HTML" || x.Type == "RichText")
+            .Where(x => (x.Type == "HTML" || x.Type == "RichText") && 
+            ((onlyDynamic && IsJsonObject(x.Content.ToString())) || !onlyDynamic))
             .ToDictionary(
                 x => x.Id,
                 y => GetLandingSectionContent(getLandingPageInfoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, y));
