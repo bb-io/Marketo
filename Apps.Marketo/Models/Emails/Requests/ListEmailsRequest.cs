@@ -7,6 +7,10 @@ namespace Apps.Marketo.Models.Emails.Requests;
 
 public class ListEmailsRequest
 {
+    public ListEmailsRequest()
+    {
+
+    }
     public ListEmailsRequest(ListEmailsRequest listEmailsRequest, string folderId)
     {
         Status = listEmailsRequest.Status;
