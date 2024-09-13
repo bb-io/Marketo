@@ -19,7 +19,6 @@ public class ListEmailsRequest
         LatestUpdatedAt = listEmailsRequest.LatestUpdatedAt;
         NamePatterns = listEmailsRequest.NamePatterns;
         ExcludeMatched = listEmailsRequest.ExcludeMatched;
-        IsRecursive = listEmailsRequest.IsRecursive;
     }
 
     [DataSource(typeof(StatusDataHandler))]
