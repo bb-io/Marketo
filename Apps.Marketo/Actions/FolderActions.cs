@@ -28,6 +28,8 @@ public class FolderActions : MarketoInvocable
             .AddQueryParameter("workSpace", input.WorkSpace);
 
         var response = Client.Paginate<FolderInfoDto>(request);
+        if (input.Root != null)
+            response = response.Where(x => x.Id != input.Root).ToList();
         return new() { Folders = response };
     }
 
