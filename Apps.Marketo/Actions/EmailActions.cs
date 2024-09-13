@@ -13,6 +13,7 @@ using System.Net.Mime;
 using System.Text;
 using Apps.Marketo.Models;
 using Apps.Marketo.HtmlHelpers;
+using System.Collections.Generic;
 
 namespace Apps.Marketo.Actions;
 
@@ -32,7 +33,7 @@ public class EmailActions : MarketoInvocable
     public ListEmailsResponse ListEmails([ActionParameter] ListEmailsRequest input)
     {
         var request = new MarketoRequest($"/rest/asset/v1/emails.json", Method.Get, Credentials);
-        AddFolderParameter(request, input.FolderId);
+        var subfolders = AddFolderParameter(request, input.FolderId, input.IsRecursive ?? false);
 
         if (input.Status != null) request.AddQueryParameter("status", input.Status);   
         if (input.EarliestUpdatedAt != null)
@@ -44,6 +45,14 @@ public class EmailActions : MarketoInvocable
 
         var response = Client.Paginate<EmailDto>(request);
         response = input.NamePatterns != null ? response.Where(x => IsFilePathMatchingPattern(input.NamePatterns, x.Name, input.ExcludeMatched ?? false)).ToList() : response;
+        
+        if(subfolders != null && subfolders.Any())
+        {
+            foreach (var subfolder in subfolders)
+            {
+                response.AddRange(ListEmails(new(input, subfolder)).Emails);
+            }
+        }
         return new() { Emails = response };
     }
 
