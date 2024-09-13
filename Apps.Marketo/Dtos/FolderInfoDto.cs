@@ -36,6 +36,9 @@ public class FolderInfoDto
     public string UpdatedAt { get; set; }
     public string Url { get; set; }
     public string Workspace { get; set; }
+
+    [Display("Search ID", Description = "Pass this ID in \"Search\" action")]
+    public string SearchId { get; set; }
 }
 
 public class Folder {

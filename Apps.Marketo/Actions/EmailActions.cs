@@ -46,7 +46,7 @@ public class EmailActions : MarketoInvocable
         var response = Client.Paginate<EmailDto>(request);
         response = input.NamePatterns != null ? response.Where(x => IsFilePathMatchingPattern(input.NamePatterns, x.Name, input.ExcludeMatched ?? false)).ToList() : response;
         
-        if(subfolders != null && subfolders.Any())
+        if(subfolders != null && subfolders.Any() && input.FolderId != null)
         {
             foreach (var subfolder in subfolders)
             {
