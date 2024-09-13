@@ -33,7 +33,7 @@ public class EmailActions : MarketoInvocable
     public ListEmailsResponse ListEmails([ActionParameter] ListEmailsRequest input)
     {
         var request = new MarketoRequest($"/rest/asset/v1/emails.json", Method.Get, Credentials);
-        var subfolders = AddFolderParameter(request, input.FolderId, input.IsRecursive ?? false);
+        var subfolders = AddFolderParameter(request, input.FolderId);
 
         if (input.Status != null) request.AddQueryParameter("status", input.Status);   
         if (input.EarliestUpdatedAt != null)
@@ -45,14 +45,6 @@ public class EmailActions : MarketoInvocable
 
         var response = Client.Paginate<EmailDto>(request);
         response = input.NamePatterns != null ? response.Where(x => IsFilePathMatchingPattern(input.NamePatterns, x.Name, input.ExcludeMatched ?? false)).ToList() : response;
-        
-        if(subfolders != null && subfolders.Any() && input.FolderId != null)
-        {
-            foreach (var subfolder in subfolders)
-            {
-                response.AddRange(ListEmails(new(input, subfolder)).Emails);
-            }
-        }
         return new() { Emails = response };
     }
 
