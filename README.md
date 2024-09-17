@@ -32,6 +32,10 @@ Before you can connect you need to make sure that:
 - **Get email content**
 - **Delete email**
 - **Get email as HTML for translation**
+  <br>Useful input parameters:
+  * "Include images" - if set to true will include images to your exported HTML (default - false)
+  * "Get only dynamic content" - if set to true will include only dynamic content from your email (other types of content will be skipped)
+  
 - **Translate email from HTML file**
 
 ### Files
@@ -87,9 +91,6 @@ Before you can connect you need to make sure that:
 
 ## Missing features
 
-- Email templates
-- Programs
-- Segments
 - Smart lists/campaigns
 - Tags and tokens
 
