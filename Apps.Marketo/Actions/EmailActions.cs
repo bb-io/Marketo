@@ -94,7 +94,7 @@ public class EmailActions : MarketoInvocable
         var emailContentResponse = GetEmailContentAll(getEmailInfoRequest);
         var onlyDynamic = getEmailAsHtmlRequest.GetOnlyDynamicContent.HasValue && getEmailAsHtmlRequest.GetOnlyDynamicContent.Value;
         var sectionContent = emailContentResponse.EmailContentItems!
-            .Where(x => x.ContentType == "DynamicContent" || (!onlyDynamic && x.ContentType == "Text"))
+            .Where(x => x.ContentType == "DynamicContent" || (!onlyDynamic && x.ContentType == "Text") || (getEmailAsHtmlRequest.IncludeImages.HasValue && getEmailAsHtmlRequest.IncludeImages.Value && x.ContentType == "Image"))
             .ToDictionary(
                 x => x.HtmlId, 
                 y => GetEmailSectionContent(getEmailInfoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, y))
@@ -217,6 +217,11 @@ public class EmailActions : MarketoInvocable
         else if(sectionContent.ContentType == "Text")
         {
             return JsonConvert.DeserializeObject<List<EmailContentValueDto>>(sectionContent.Value.ToString()).First(x => x.Type == "HTML").Value;
+        }
+        else if(sectionContent.ContentType == "Image")
+        {
+            var imageDto = JsonConvert.DeserializeObject<ImageDto>(sectionContent.Value.ToString());
+            return $"<img src=\"{imageDto.ContentUrl}\" style=\"{imageDto.Style}\">";
         }
         return string.Empty;
     }
