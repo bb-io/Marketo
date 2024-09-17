@@ -6,5 +6,8 @@ namespace Apps.Marketo.Models.Emails.Requests
     {
         [Display("Get only dynamic content")]
         public bool? GetOnlyDynamicContent { get; set; }
+
+        [Display("Include images")]
+        public bool? IncludeImages { get; set; }
     }
 }
