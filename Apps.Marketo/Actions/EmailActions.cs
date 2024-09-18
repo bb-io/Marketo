@@ -221,7 +221,8 @@ public class EmailActions : MarketoInvocable
         else if(sectionContent.ContentType == "Image")
         {
             var imageDto = JsonConvert.DeserializeObject<ImageDto>(sectionContent.Value.ToString());
-            return $"<img src=\"{imageDto.ContentUrl}\" style=\"{imageDto.Style}\">";
+            var imageUrl = string.IsNullOrWhiteSpace(imageDto.ContentUrl) ? imageDto.Value : imageDto.ContentUrl;
+            return $"<img src=\"{imageUrl}\" style=\"{imageDto.Style}\">";
         }
         return string.Empty;
     }
