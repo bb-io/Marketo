@@ -71,6 +71,10 @@ public class MarketoClient : RestClient
             {
                 throw new BusinessRuleViolationException(709, errors.Errors.First().Message);
             }
+            if(errors.Errors.Count() == 1 && errors.Errors.First().Code == "611")
+            {
+                throw new BusinessRuleViolationException(611, errors.Errors.First().Message);
+            }
 
             if (errors.Errors.Any(error => error.Code == "606"))
             {
@@ -85,7 +89,7 @@ public class MarketoClient : RestClient
                 return retryResponse;
             }
 
-            throw new ArgumentException(errors.Errors.First().Message);
+            throw new ArgumentException($"Error message: {errors.Errors.First().Message}, Error code: {errors.Errors.First().Code}");
         }
 
         return response;

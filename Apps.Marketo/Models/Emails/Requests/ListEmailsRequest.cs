@@ -7,6 +7,20 @@ namespace Apps.Marketo.Models.Emails.Requests;
 
 public class ListEmailsRequest
 {
+    public ListEmailsRequest()
+    {
+
+    }
+    public ListEmailsRequest(ListEmailsRequest listEmailsRequest, string folderId)
+    {
+        Status = listEmailsRequest.Status;
+        FolderId = folderId;
+        EarliestUpdatedAt = listEmailsRequest.EarliestUpdatedAt;
+        LatestUpdatedAt = listEmailsRequest.LatestUpdatedAt;
+        NamePatterns = listEmailsRequest.NamePatterns;
+        ExcludeMatched = listEmailsRequest.ExcludeMatched;
+    }
+
     [DataSource(typeof(StatusDataHandler))]
     public string? Status { get; set; }
 

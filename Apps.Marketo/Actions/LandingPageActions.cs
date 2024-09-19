@@ -148,13 +148,16 @@ public class LandingPageActions : MarketoInvocable
     public async Task<FileWrapper> GetLandingPageAsHtml(
         [ActionParameter] GetLandingInfoRequest getLandingPageInfoRequest,
         [ActionParameter] GetSegmentationRequest getSegmentationRequest,
-        [ActionParameter] GetSegmentBySegmentationRequest getSegmentBySegmentationRequest)
+        [ActionParameter] GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
+        [ActionParameter] GetLandingPageAsHtmlRequest getLandingPageAsHtmlRequest)
     {
         var landingInfo = GetLandingInfo(getLandingPageInfoRequest);
         var landingContentResponse = GetLandingContent(getLandingPageInfoRequest);
+        var onlyDynamic = getLandingPageAsHtmlRequest.GetOnlyDynamicContent.HasValue && getLandingPageAsHtmlRequest.GetOnlyDynamicContent.Value;
 
         var sectionContent = landingContentResponse.LandingPageContentItems!
-            .Where(x => x.Type == "HTML" || x.Type == "RichText")
+            .Where(x => (x.Type == "HTML" || x.Type == "RichText") && 
+            ((onlyDynamic && IsJsonObject(x.Content.ToString())) || !onlyDynamic))
             .ToDictionary(
                 x => x.Id,
                 y => GetLandingSectionContent(getLandingPageInfoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, y));
@@ -166,7 +169,7 @@ public class LandingPageActions : MarketoInvocable
     }
 
     [Action("Translate landing page from HTML file", Description = "Translate landing page from HTML file")]
-    public void TranslateLandingWithHtml(
+    public TranslateLandingWithHtmlResponse TranslateLandingWithHtml(
         [ActionParameter] GetLandingInfoRequest getLandingPageInfoRequest,
         [ActionParameter] GetSegmentationRequest getSegmentationRequest,
         [ActionParameter] GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
@@ -189,6 +192,7 @@ public class LandingPageActions : MarketoInvocable
         }
         
         var translatedContent = HtmlContentBuilder.ParseHtml(translateLandingWithHtmlRequest.File, _fileManagementClient);
+        var errors = new List<string>();
         foreach (var item in landingContentResponse.LandingPageContentItems)
         {
             if (IsJsonObject(item.Content.ToString()) &&
@@ -200,10 +204,16 @@ public class LandingPageActions : MarketoInvocable
                     !string.IsNullOrWhiteSpace(content) && 
                     translatedContent.TryGetValue(item.Id, out var translatedContentItem))
                 {
-                    UpdateLandingDynamicContent(getLandingPageInfoRequest, getSegmentBySegmentationRequest, landingPageContent.Content, item.Type, translatedContentItem);
+                    var result = UpdateLandingDynamicContent(getLandingPageInfoRequest, getSegmentBySegmentationRequest, landingPageContent.Content, item.Type, translatedContentItem);
+                    if(!string.IsNullOrEmpty(result))
+                        errors.Add(result);
                 }
             }
         }
+        return new()
+        {
+            Errors = errors
+        };
     }
 
     private IdDto ConvertSectionToDynamicContent(string landingId, string htmlId, string segmentationId)
@@ -215,7 +225,7 @@ public class LandingPageActions : MarketoInvocable
         return Client.ExecuteWithError<IdDto>(request).Result.FirstOrDefault();
     }
 
-    private IdDto UpdateLandingDynamicContent(
+    private string UpdateLandingDynamicContent(
         GetLandingInfoRequest getLandingPageInfoRequest,
         GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
         string dynamicContentId,
@@ -230,10 +240,13 @@ public class LandingPageActions : MarketoInvocable
             .AddQueryParameter("value", content);
         try
         {
-            return Client.GetSingleEntity<IdDto>(request);
+            Client.GetSingleEntity<IdDto>(request);
+            return null;
         }
-        catch (Exception ex) { }
-        return default;
+        catch (Exception ex) 
+        {
+            return $"{ex.Message}, ContentId: {dynamicContentId}, Content: {content}";
+        }
     }
 
     private string GetLandingSectionContent(
