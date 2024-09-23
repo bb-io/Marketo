@@ -21,6 +21,7 @@ namespace Apps.Marketo.Actions;
 public class EmailActions : MarketoInvocable
 {
     private const string HtmlIdAttribute = "id";
+    private const string ContextImageAttribute = " data-blackbird=\"context-image\"";
 
     private readonly IFileManagementClient _fileManagementClient;
 
@@ -133,7 +134,10 @@ public class EmailActions : MarketoInvocable
         var modulesToIgnore = new List<string>();
         foreach (var item in emailContentResponse.EmailContentItems)
         {
-            if (item.ContentType == "DynamicContent" && !modulesToIgnore.Contains(item.ParentHtmlId) && translatedContent.TryGetValue(item.HtmlId, out var translatedContentItem))
+            if (item.ContentType == "DynamicContent" && 
+                !modulesToIgnore.Contains(item.ParentHtmlId) && 
+                translatedContent.TryGetValue(item.HtmlId, out var translatedContentItem) &&
+                !translatedContentItem.Contains(ContextImageAttribute))
             {
                 var ignoreModule = UpdateEmailDynamicContent(
                     getEmailInfoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, item, 
@@ -216,7 +220,7 @@ public class EmailActions : MarketoInvocable
                 if (imageSegment != null && imageSegment.Type == "File" && includeImages)
                 {
                     var altTextAttribute = string.IsNullOrWhiteSpace(imageSegment.AltText) ? "" : $" alt=\"{imageSegment.AltText}\"";
-                    return $"<img src=\"{imageSegment.ContentUrl}\" style=\"{imageSegment.Style}\"{altTextAttribute}>";
+                    return $"<img src=\"{imageSegment.ContentUrl}\" style=\"{imageSegment.Style}\"{altTextAttribute}{ContextImageAttribute}>";
                 }
                 else 
                 {
@@ -237,7 +241,7 @@ public class EmailActions : MarketoInvocable
             var imageDto = JsonConvert.DeserializeObject<ImageDto>(sectionContent.Value.ToString());
             var imageUrl = string.IsNullOrWhiteSpace(imageDto.ContentUrl) ? imageDto.Value : imageDto.ContentUrl;
             var altTextAttribute = string.IsNullOrWhiteSpace(imageDto.AltText) ? "" : $" alt=\"{imageDto.AltText}\"";
-            return $"<img src=\"{imageUrl}\" style=\"{imageDto.Style}\"{altTextAttribute}>";
+            return $"<img src=\"{imageUrl}\" style=\"{imageDto.Style}\"{altTextAttribute}{ContextImageAttribute}>";
         }
         return string.Empty;
     }
