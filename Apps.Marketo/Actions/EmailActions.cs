@@ -22,7 +22,7 @@ namespace Apps.Marketo.Actions;
 public class EmailActions : MarketoInvocable
 {
     private const string HtmlIdAttribute = "id";
-    private const string ContextImageAttribute = " data-blackbird=\"context-image\"";
+    private const string ContextImageAttribute = "data-blackbird-image";
 
     private readonly IFileManagementClient _fileManagementClient;
 
@@ -189,11 +189,15 @@ public class EmailActions : MarketoInvocable
             var htmlSnippet = new HtmlDocument();
             htmlSnippet.LoadHtml(content);
             var altTextAttribute = htmlSnippet.DocumentNode.FirstChild.Attributes["alt"];
+            if (altTextAttribute == null)
+                return string.Empty;
+            var imageIdAttribute = htmlSnippet.DocumentNode.FirstChild.Attributes[ContextImageAttribute];
 
             request = new MarketoRequest(endpoint, Method.Post, Credentials)
             .AddQueryParameter("segment", getSegmentBySegmentationRequest.Segment)
-            .AddQueryParameter("type", "File")
-            .AddQueryParameter("altText", altTextAttribute.Value);
+            .AddQueryParameter("type", "Image")
+            .AddQueryParameter("altText", altTextAttribute.Value)
+            .AddQueryParameter("value", imageIdAttribute.Value);
         }
 
         
@@ -238,7 +242,8 @@ public class EmailActions : MarketoInvocable
                 if (imageSegment != null && imageSegment.Type == "File" && includeImages)
                 {
                     var altTextAttribute = string.IsNullOrWhiteSpace(imageSegment.AltText) ? "" : $" alt=\"{imageSegment.AltText}\"";
-                    return $"<img src=\"{imageSegment.ContentUrl}\" style=\"{imageSegment.Style}\"{altTextAttribute}{ContextImageAttribute}>";
+                    var imageIdAttribute = $" {ContextImageAttribute}=\"{imageSegment.Content}\"";
+                    return $"<img src=\"{imageSegment.ContentUrl}\" style=\"{imageSegment.Style}\"{altTextAttribute}{imageIdAttribute}>";
                 }
                 else 
                 {
@@ -250,16 +255,16 @@ public class EmailActions : MarketoInvocable
             }
                 
         }
-        else if(sectionContent.ContentType == "Text")
+        else if(sectionContent.ContentType == "Text") // Static text
         {
             return JsonConvert.DeserializeObject<List<EmailContentValueDto>>(sectionContent.Value.ToString()).First(x => x.Type == "HTML").Value;
         }
-        else if(sectionContent.ContentType == "Image")
+        else if(sectionContent.ContentType == "Image") // Static images
         {
             var imageDto = JsonConvert.DeserializeObject<ImageDto>(sectionContent.Value.ToString());
             var imageUrl = string.IsNullOrWhiteSpace(imageDto.ContentUrl) ? imageDto.Value : imageDto.ContentUrl;
             var altTextAttribute = string.IsNullOrWhiteSpace(imageDto.AltText) ? "" : $" alt=\"{imageDto.AltText}\"";
-            return $"<img src=\"{imageUrl}\" style=\"{imageDto.Style}\"{altTextAttribute}{ContextImageAttribute}>";
+            return $"<img src=\"{imageUrl}\" style=\"{imageDto.Style}\"{altTextAttribute}>";
         }
         return string.Empty;
     }
