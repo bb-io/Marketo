@@ -14,6 +14,7 @@ using System.Text;
 using Apps.Marketo.Models;
 using Apps.Marketo.HtmlHelpers;
 using System.Collections.Generic;
+using HtmlAgilityPack;
 
 namespace Apps.Marketo.Actions;
 
@@ -136,8 +137,7 @@ public class EmailActions : MarketoInvocable
         {
             if (item.ContentType == "DynamicContent" && 
                 !modulesToIgnore.Contains(item.ParentHtmlId) && 
-                translatedContent.TryGetValue(item.HtmlId, out var translatedContentItem) &&
-                !translatedContentItem.Contains(ContextImageAttribute))
+                translatedContent.TryGetValue(item.HtmlId, out var translatedContentItem))
             {
                 var ignoreModule = UpdateEmailDynamicContent(
                     getEmailInfoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, item, 
@@ -175,10 +175,28 @@ public class EmailActions : MarketoInvocable
     {
         var endpoint =
             $"/rest/asset/v1/email/{getEmailInfoRequest.EmailId}/dynamicContent/{dynamicContentItem.Value.ToString()}.json";
-        var request = new MarketoRequest(endpoint, Method.Post, Credentials)
+
+        RestRequest request = null;
+        if (!content.Contains(ContextImageAttribute))
+        {
+            request = new MarketoRequest(endpoint, Method.Post, Credentials)
             .AddQueryParameter("segment", getSegmentBySegmentationRequest.Segment)
             .AddQueryParameter("type", "HTML")
             .AddQueryParameter("value", content);
+        }
+        else
+        {
+            var htmlSnippet = new HtmlDocument();
+            htmlSnippet.LoadHtml(content);
+            var altTextAttribute = htmlSnippet.DocumentNode.FirstChild.Attributes["alt"];
+
+            request = new MarketoRequest(endpoint, Method.Post, Credentials)
+            .AddQueryParameter("segment", getSegmentBySegmentationRequest.Segment)
+            .AddQueryParameter("type", "File")
+            .AddQueryParameter("altText", altTextAttribute.Value);
+        }
+
+        
         try
         {
             Client.GetSingleEntity<IdDto>(request);
