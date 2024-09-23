@@ -1,6 +1,6 @@
 ﻿namespace Apps.Marketo.Dtos
 {
-    public class EmailSegmentDto
+    public class EmailBaseSegmentDto
     {
         public string Id { get; set; }
 

@@ -5,7 +5,7 @@ namespace Apps.Marketo.Models.Emails.Responses
 {
     public class GetEmailDynamicContentResponse
     {
-        public GetEmailDynamicContentResponse(EmailSegmentDto input)
+        public GetEmailDynamicContentResponse(EmailBaseSegmentDto input)
         {
             Id = input.Id;
             Segment = input.SegmentName;
