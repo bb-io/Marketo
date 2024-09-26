@@ -2,8 +2,6 @@ using Apps.Marketo.Dtos;
 using Apps.Marketo.HtmlHelpers;
 using Apps.Marketo.Invocables;
 using Apps.Marketo.Models.Emails.Requests;
-using Apps.Marketo.Models.Emails.Responses;
-using Apps.Marketo.Models.LandingPages.Requests;
 using Apps.Marketo.Models;
 using Apps.Marketo.Models.Snippets.Request;
 using Apps.Marketo.Models.Snippets.Response;
@@ -12,11 +10,9 @@ using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using RestSharp;
 using System.Net.Mime;
 using System.Text;
-using System.Linq.Expressions;
 
 namespace Apps.Marketo.Actions;
 

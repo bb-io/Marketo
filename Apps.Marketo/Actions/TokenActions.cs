@@ -1,7 +1,5 @@
 using Apps.Marketo.Dtos;
 using Apps.Marketo.Invocables;
-using Apps.Marketo.Models;
-using Apps.Marketo.Models.Snippets.Request;
 using Apps.Marketo.Models.Tokens.Request;
 using Apps.Marketo.Models.Tokens.Response;
 using Blackbird.Applications.Sdk.Common;

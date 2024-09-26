@@ -13,7 +13,6 @@ using System.Net.Mime;
 using System.Text;
 using Apps.Marketo.Models;
 using Apps.Marketo.HtmlHelpers;
-using System.Collections.Generic;
 using HtmlAgilityPack;
 
 namespace Apps.Marketo.Actions;
