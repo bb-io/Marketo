@@ -3,10 +3,8 @@ using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Microsoft.Extensions.FileSystemGlobbing;
-using Microsoft.Extensions.FileSystemGlobbing.Internal;
 using Newtonsoft.Json;
 using RestSharp;
-using System.Text.RegularExpressions;
 
 namespace Apps.Marketo.Invocables;
 

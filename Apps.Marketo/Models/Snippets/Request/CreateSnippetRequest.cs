@@ -1,4 +1,3 @@
-using Apps.Marketo.DataSourceHandlers;
 using Apps.Marketo.DataSourceHandlers.FolderDataHandlers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;

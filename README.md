@@ -86,8 +86,13 @@ Before you can connect you need to make sure that:
   
 ![image](https://github.com/bb-io/Marketo/assets/127740895/ec77cf4a-9468-41b8-a5ee-3ca902183eeb)
 
+## Events
 
-
+- **On emails created or updated**
+- **On email templates created or updated**
+- **On snippets created or updated**
+- **On forms created or updated**
+- **On landing pages created or updated**
 
 ## Missing features
 
