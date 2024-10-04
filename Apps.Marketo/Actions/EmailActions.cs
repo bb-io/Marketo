@@ -173,7 +173,7 @@ public class EmailActions : MarketoInvocable
         bool reacreateCorruptedModules)
     {
         var endpoint =
-            $"/rest/asset/v1/email/{getEmailInfoRequest.EmailId}/dynamicContent/{dynamicContentItem.Value.ToString()}.json";
+            $"/rest/asset/v1/email/{getEmailInfoRequest.EmailId}/dynamicContent/{dynamicContentItem.Value}.json";
 
         RestRequest request = null;
         if (!content.Contains(ContextImageAttribute))
@@ -198,7 +198,6 @@ public class EmailActions : MarketoInvocable
             .AddQueryParameter("altText", altTextAttribute.Value)
             .AddQueryParameter("value", imageIdAttribute.Value);
         }
-
         
         try
         {
@@ -217,7 +216,7 @@ public class EmailActions : MarketoInvocable
         }
         catch(Exception ex)
         {
-            return $"{ex.Message}, ContentId: {dynamicContentItem.Value.ToString()}, Content: {content}";
+            return $"{ex.Message}, ContentId: {dynamicContentItem.Value}, Content: {content}";
         }
     }
 

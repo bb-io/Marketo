@@ -6,11 +6,9 @@ using RestSharp;
 
 namespace Apps.Marketo.DataSourceHandlers.FolderDataHandlers
 {
-    public class TokenFolderDataHandler : BaseInvocable, IAsyncDataSourceHandler
+    public class TokenFolderDataHandler(InvocationContext invocationContext)
+        : BaseInvocable(invocationContext), IAsyncDataSourceHandler
     {
-        public TokenFolderDataHandler(InvocationContext invocationContext) : base(invocationContext)
-        {
-        }
         public async Task<Dictionary<string, string>> GetDataAsync(DataSourceContext context,
             CancellationToken cancellationToken)
         {
