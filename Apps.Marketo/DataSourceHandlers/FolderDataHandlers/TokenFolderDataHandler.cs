@@ -3,19 +3,12 @@ using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using RestSharp;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Apps.Marketo.DataSourceHandlers.FolderDataHandlers
 {
-    public class TokenFolderDataHandler : BaseInvocable, IAsyncDataSourceHandler
+    public class TokenFolderDataHandler(InvocationContext invocationContext)
+        : BaseInvocable(invocationContext), IAsyncDataSourceHandler
     {
-        public TokenFolderDataHandler(InvocationContext invocationContext) : base(invocationContext)
-        {
-        }
         public async Task<Dictionary<string, string>> GetDataAsync(DataSourceContext context,
             CancellationToken cancellationToken)
         {

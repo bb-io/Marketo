@@ -1,7 +1,5 @@
 using Apps.Marketo.Dtos;
 using Apps.Marketo.Invocables;
-using Apps.Marketo.Models;
-using Apps.Marketo.Models.Snippets.Request;
 using Apps.Marketo.Models.Tokens.Request;
 using Apps.Marketo.Models.Tokens.Response;
 using Blackbird.Applications.Sdk.Common;
@@ -27,6 +25,16 @@ public class TokenActions : MarketoInvocable
         var request = new MarketoRequest(endpoint, Method.Get, Credentials);
 
         return Client.GetSingleEntity<ListTokensResponse>(request);
+    }
+
+    [Action("Get token", Description = "Get token by name")]
+    public TokenDto GetToken([ActionParameter] GetTokenRequest input)
+    {
+        var endpoint = $"/rest/asset/v1/folder/{input.FolderId.Split("_").First()}/tokens.json"
+            .SetQueryParameter("folderType", input.FolderId.Split("_").Last());
+        var request = new MarketoRequest(endpoint, Method.Get, Credentials);
+        var tokens = Client.GetSingleEntity<ListTokensResponse>(request);
+        return tokens.Tokens.FirstOrDefault(x => x.Name == input.TokenName) ?? new();
     }
 
     [Action("Create token", Description = "Create a new token")]

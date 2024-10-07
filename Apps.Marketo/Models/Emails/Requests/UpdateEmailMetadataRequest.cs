@@ -1,5 +1,4 @@
 ﻿using Blackbird.Applications.Sdk.Common;
-using Newtonsoft.Json;
 
 namespace Apps.Marketo.Models.Emails.Requests
 {

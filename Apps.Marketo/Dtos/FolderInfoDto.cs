@@ -29,7 +29,6 @@ public class FolderInfoDto
     [Display("Is system")]
     public bool IsSystem { get; set; }
     public string Name { get; set; }
-    public Folder Folder { get; set; }
     public string Path { get; set; }
 
     [Display("Updated at")]

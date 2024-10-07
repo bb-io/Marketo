@@ -29,7 +29,7 @@ namespace Apps.Marketo.DataSourceHandlers.Deprecated
 
             var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
             var request = new MarketoRequest($"/rest/asset/v1/email/{EmailInfoRequest.EmailId}/dynamicContent/{DynamicItemRequest.DynamicContentId}.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
-            var response = client.Paginate<DynamicContentDto>(request);
+            var response = client.Paginate<DynamicContentDto<EmailBaseSegmentDto>>(request);
 
             return response.First().Content.Where(s => s.Type == "HTML").ToDictionary(k => k.SegmentName, v => v.SegmentName);
         }

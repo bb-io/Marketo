@@ -7,19 +7,14 @@ using Apps.Marketo.Models.LandingPages.Requests;
 using Apps.Marketo.Models.LandingPages.Responses;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
-using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
-using HtmlAgilityPack;
 using Newtonsoft.Json;
 using RestSharp;
 using System.Net.Mime;
 using System.Text;
 using Newtonsoft.Json.Linq;
-using Blackbird.Applications.Sdk.Utils.Extensions.Files;
-using Newtonsoft.Json.Schema;
 using Apps.Marketo.HtmlHelpers;
-using Apps.Marketo.Models.Forms.Requests;
 
 namespace Apps.Marketo.Actions;
 

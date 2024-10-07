@@ -13,7 +13,7 @@ using System.Net.Mime;
 using System.Text;
 using Apps.Marketo.Models;
 using Apps.Marketo.HtmlHelpers;
-using System.Collections.Generic;
+using HtmlAgilityPack;
 
 namespace Apps.Marketo.Actions;
 
@@ -21,6 +21,7 @@ namespace Apps.Marketo.Actions;
 public class EmailActions : MarketoInvocable
 {
     private const string HtmlIdAttribute = "id";
+    private const string ContextImageAttribute = "data-blackbird-image";
 
     private readonly IFileManagementClient _fileManagementClient;
 
@@ -33,7 +34,7 @@ public class EmailActions : MarketoInvocable
     public ListEmailsResponse ListEmails([ActionParameter] ListEmailsRequest input)
     {
         var request = new MarketoRequest($"/rest/asset/v1/emails.json", Method.Get, Credentials);
-        var subfolders = AddFolderParameter(request, input.FolderId);
+        var subfolders = AddFolderParameter(request, input.FolderId)?.ToList();
 
         if (input.Status != null) request.AddQueryParameter("status", input.Status);   
         if (input.EarliestUpdatedAt != null)
@@ -93,13 +94,29 @@ public class EmailActions : MarketoInvocable
         var emailInfo = GetEmailInfo(getEmailInfoRequest);
         var emailContentResponse = GetEmailContentAll(getEmailInfoRequest);
         var onlyDynamic = getEmailAsHtmlRequest.GetOnlyDynamicContent.HasValue && getEmailAsHtmlRequest.GetOnlyDynamicContent.Value;
+        var includeImages = getEmailAsHtmlRequest.IncludeImages.HasValue && getEmailAsHtmlRequest.IncludeImages.Value;
         var sectionContent = emailContentResponse.EmailContentItems!
-            .Where(x => x.ContentType == "DynamicContent" || (!onlyDynamic && x.ContentType == "Text") || (getEmailAsHtmlRequest.IncludeImages.HasValue && getEmailAsHtmlRequest.IncludeImages.Value && x.ContentType == "Image"))
+            .Where(x => x.ContentType == "DynamicContent" || (!onlyDynamic && x.ContentType == "Text") || (includeImages && x.ContentType == "Image"))
             .ToDictionary(
                 x => x.HtmlId, 
-                y => GetEmailSectionContent(getEmailInfoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, y))
+                y => GetEmailSectionContent(getEmailInfoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, y, includeImages))
             .Where(x => !string.IsNullOrEmpty(x.Value))
             .ToDictionary();
+
+        if (emailInfo.Subject.Type == "Text")
+        {
+            sectionContent.Add("data-subject-value", emailInfo.Subject.Value);
+        }
+        else if (emailInfo.Subject.Type == "DynamicContent")
+        {
+            var subjectContent = GetEmailSectionContent(getEmailInfoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, new EmailContentDto()
+            {
+                ContentType = "DynamicContent",
+                Value = emailInfo.Subject.Value
+            }, includeImages);
+            sectionContent.Add("data-subject-value", subjectContent);
+        }
+        
         var resultHtml = HtmlContentBuilder.GenerateHtml(sectionContent, emailInfo.Name, getSegmentBySegmentationRequest.Segment);
         
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
@@ -129,10 +146,39 @@ public class EmailActions : MarketoInvocable
             emailContentResponse = GetEmailContentAll(getEmailInfoRequest);
         }
         var translatedContent = HtmlContentBuilder.ParseHtml(translateEmailWithHtmlRequest.File, _fileManagementClient);
+        
+        var updateEmailSubject = translateEmailWithHtmlRequest.UpdateEmailSubject.HasValue ? translateEmailWithHtmlRequest.UpdateEmailSubject.Value : true;
+        if(translatedContent.TryGetValue("data-subject-value", out var subjectContent) && updateEmailSubject)
+        {
+            var emailInfo = GetEmailInfo(getEmailInfoRequest);
+            if (emailInfo.Subject?.Type == "Text" && translateEmailWithHtmlRequest.TranslateOnlyDynamic.HasValue
+                                                  && !translateEmailWithHtmlRequest.TranslateOnlyDynamic.Value)
+            {
+                var subjectContentRequest = new MarketoRequest($"/rest/asset/v1/email/{getEmailInfoRequest.EmailId}/content.json", Method.Post, Credentials)
+                    .AddParameter("subject", JsonConvert.SerializeObject(new
+                    {
+                        type = "Text",
+                        value = subjectContent
+                    }));
+            
+                Client.GetSingleEntity<IdDto>(subjectContentRequest);
+            }
+            else if (emailInfo.Subject?.Type == "DynamicContent")
+            {
+                UpdateEmailDynamicContent(getEmailInfoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, new EmailContentDto()
+                {
+                    ContentType = "Text",
+                    Value = emailInfo.Subject.Value
+                }, subjectContent, emailContentResponse.EmailContentItems, translatedContent, 0, true, "Text");
+            }
+        }
+        
         var modulesToIgnore = new List<string>();
         foreach (var item in emailContentResponse.EmailContentItems)
         {
-            if (item.ContentType == "DynamicContent" && !modulesToIgnore.Contains(item.ParentHtmlId) && translatedContent.TryGetValue(item.HtmlId, out var translatedContentItem))
+            if (item.ContentType == "DynamicContent" && 
+                !modulesToIgnore.Contains(item.ParentHtmlId) && 
+                translatedContent.TryGetValue(item.HtmlId, out var translatedContentItem))
             {
                 var ignoreModule = UpdateEmailDynamicContent(
                     getEmailInfoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, item, 
@@ -166,14 +212,36 @@ public class EmailActions : MarketoInvocable
         List<EmailContentDto> emailContentItems,
         Dictionary<string, string> translatedContent,
         int tryNumber,
-        bool reacreateCorruptedModules)
+        bool reacreateCorruptedModules,
+        string? type = null)
     {
         var endpoint =
-            $"/rest/asset/v1/email/{getEmailInfoRequest.EmailId}/dynamicContent/{dynamicContentItem.Value.ToString()}.json";
-        var request = new MarketoRequest(endpoint, Method.Post, Credentials)
+            $"/rest/asset/v1/email/{getEmailInfoRequest.EmailId}/dynamicContent/{dynamicContentItem.Value}.json";
+
+        RestRequest request = null;
+        if (!content.Contains(ContextImageAttribute))
+        {
+            request = new MarketoRequest(endpoint, Method.Post, Credentials)
             .AddQueryParameter("segment", getSegmentBySegmentationRequest.Segment)
-            .AddQueryParameter("type", "HTML")
+            .AddQueryParameter("type", type ?? "HTML")
             .AddQueryParameter("value", content);
+        }
+        else
+        {
+            var htmlSnippet = new HtmlDocument();
+            htmlSnippet.LoadHtml(content);
+            var altTextAttribute = htmlSnippet.DocumentNode.FirstChild.Attributes["alt"];
+            if (altTextAttribute == null)
+                return string.Empty;
+            var imageIdAttribute = htmlSnippet.DocumentNode.FirstChild.Attributes[ContextImageAttribute];
+
+            request = new MarketoRequest(endpoint, Method.Post, Credentials)
+            .AddQueryParameter("segment", getSegmentBySegmentationRequest.Segment)
+            .AddQueryParameter("type", "Image")
+            .AddQueryParameter("altText", altTextAttribute.Value)
+            .AddQueryParameter("value", imageIdAttribute.Value);
+        }
+        
         try
         {
             Client.GetSingleEntity<IdDto>(request);
@@ -191,7 +259,7 @@ public class EmailActions : MarketoInvocable
         }
         catch(Exception ex)
         {
-            return $"{ex.Message}, ContentId: {dynamicContentItem.Value.ToString()}, Content: {content}";
+            return $"{ex.Message}, ContentId: {dynamicContentItem.Value}, Content: {content}";
         }
     }
 
@@ -199,30 +267,49 @@ public class EmailActions : MarketoInvocable
         GetEmailInfoRequest getEmailInfoRequest,
         GetSegmentationRequest getSegmentationRequest,
         GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
-        EmailContentDto sectionContent)
+        EmailContentDto sectionContent,
+        bool includeImages = false)
     {
         if (sectionContent.ContentType == "DynamicContent")
         {
             var requestSeg = new MarketoRequest(
-                    $"/rest/asset/v1/email/{getEmailInfoRequest.EmailId}/dynamicContent/{sectionContent.Value.ToString()}.json",
+                    $"/rest/asset/v1/email/{getEmailInfoRequest.EmailId}/dynamicContent/{sectionContent.Value}.json",
                     Method.Get, Credentials);
 
-            var responseSeg = Client.ExecuteWithError<DynamicContentDto>(requestSeg);
+            var responseSeg = Client.ExecuteWithError<DynamicContentDto<EmailImageSegmentDto>>(requestSeg);
             if (responseSeg.Result!.First().Segmentation.ToString() == getSegmentationRequest.SegmentationId)
-                return responseSeg.Result!.First().Content
+            {
+                var imageSegment = responseSeg.Result!.First().Content.Where(x => x.SegmentName == getSegmentBySegmentationRequest.Segment).FirstOrDefault();
+                if (imageSegment != null && imageSegment.Type == "File" && includeImages)
+                {
+                    var altTextAttribute = string.IsNullOrWhiteSpace(imageSegment.AltText) ? "" : $" alt=\"{imageSegment.AltText}\"";
+                    var imageIdAttribute = $" {ContextImageAttribute}=\"{imageSegment.Content}\"";
+                    return $"<img src=\"{imageSegment.ContentUrl}\" style=\"{imageSegment.Style}\"{altTextAttribute}{imageIdAttribute}>";
+                }
+                else if(imageSegment != null && imageSegment.Type == "Text")
+                {
+                    return imageSegment.Content;
+                }
+                else 
+                {
+                    return responseSeg.Result!.First().Content
                     .Where(x => x.Type == "HTML" && x.SegmentName == getSegmentBySegmentationRequest.Segment)
                     .Select(x => new GetEmailDynamicContentResponse(x)
                     { DynamicContentId = sectionContent.Value.ToString()! }).FirstOrDefault()?.Content;
+                }
+            }
+                
         }
-        else if(sectionContent.ContentType == "Text")
+        else if(sectionContent.ContentType == "Text") // Static text
         {
             return JsonConvert.DeserializeObject<List<EmailContentValueDto>>(sectionContent.Value.ToString()).First(x => x.Type == "HTML").Value;
         }
-        else if(sectionContent.ContentType == "Image")
+        else if(sectionContent.ContentType == "Image") // Static images
         {
             var imageDto = JsonConvert.DeserializeObject<ImageDto>(sectionContent.Value.ToString());
             var imageUrl = string.IsNullOrWhiteSpace(imageDto.ContentUrl) ? imageDto.Value : imageDto.ContentUrl;
-            return $"<img src=\"{imageUrl}\" style=\"{imageDto.Style}\">";
+            var altTextAttribute = string.IsNullOrWhiteSpace(imageDto.AltText) ? "" : $" alt=\"{imageDto.AltText}\"";
+            return $"<img src=\"{imageUrl}\" style=\"{imageDto.Style}\"{altTextAttribute}>";
         }
         return string.Empty;
     }
