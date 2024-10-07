@@ -23,7 +23,7 @@ public class FolderInfoDto
     [Display("Folder type")]
     public string FolderType { get; set; }
 
-    
+    [Display("ID")]
     public string Id { get; set; }
 
     [Display("Is archive")]
