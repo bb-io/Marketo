@@ -16,5 +16,8 @@ namespace Apps.Marketo.Models.Emails.Requests
         "Please be carefull, the ids of content section and the module itself will be changed! You can disable this feature by setting this parameter to false (default value is true).\n" +
         "You will see the list of recreated modules in action output. If list is empty - no corrupted modules were found.")]
         public bool? RecreateCorruptedModules { get; set; }
+        
+        [Display("Update email subject", Description = "If true, Blackbird will try to update email subject with translated text. If false, subject will be left as is. Default value is true.")]
+        public bool? UpdateEmailSubject { get; set; }
     }
 }
