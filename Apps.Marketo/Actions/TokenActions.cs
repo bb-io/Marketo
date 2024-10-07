@@ -30,11 +30,25 @@ public class TokenActions : MarketoInvocable
     [Action("Get token", Description = "Get token by name")]
     public TokenDto GetToken([ActionParameter] GetTokenRequest input)
     {
-        var endpoint = $"/rest/asset/v1/folder/{input.FolderId.Split("_").First()}/tokens.json"
-            .SetQueryParameter("folderType", input.FolderId.Split("_").Last());
+        var endpoint = $"/rest/asset/v1/folder/{input.FolderId}/tokens.json"
+            .SetQueryParameter("folderType", input.FolderType);
         var request = new MarketoRequest(endpoint, Method.Get, Credentials);
         var tokens = Client.GetSingleEntity<ListTokensResponse>(request);
-        return tokens.Tokens.FirstOrDefault(x => x.Name == input.TokenName) ?? new();
+
+        var token = tokens.Tokens.FirstOrDefault(x => x.Name == input.TokenName);
+
+        if (token == null && input.Recursive.HasValue && input.Recursive.Value)
+        {
+            var folderEndpoint = $"/rest/asset/v1/folder/{input.FolderId}.json".SetQueryParameter("type", input.FolderType);
+            var folderRequest = new MarketoRequest(folderEndpoint, Method.Get, Credentials);
+            var response = Client.GetSingleEntity<FolderInfoDto>(folderRequest);
+            if (response.Parent != null)
+            {
+                return GetToken(new GetTokenRequest { FolderId = response.Parent.Id, FolderType = response.Parent.Type, Recursive = true, TokenName = input.TokenName });
+            }
+        }
+
+        return token ?? new();
     }
 
     [Action("Create token", Description = "Create a new token")]

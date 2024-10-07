@@ -29,7 +29,16 @@ public class MarketoClient : RestClient
 
     public T GetSingleEntity<T>(RestRequest request)
     {
-        return ExecuteWithError<T>(request).Result!.First();
+        var result = ExecuteWithError<T>(request);
+        if (result.Result == null || !result.Result.Any())
+        {
+            if (result.Warnings.Any())
+            {
+                throw new Exception(result.Warnings.First());
+            }
+            throw new Exception("No single result found");
+        }
+        return result.Result!.First();
     }
     
     public BaseResponseDto<T> ExecuteWithError<T>(RestRequest request)
