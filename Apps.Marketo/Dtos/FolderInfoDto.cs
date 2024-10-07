@@ -17,6 +17,9 @@ public class FolderInfoDto
     [Display("Folder")]
     public Folder FolderId { get; set; }
 
+    [Display("Parent folder")]
+    public Folder? Parent { get; set; }
+
     [Display("Folder type")]
     public string FolderType { get; set; }
 
@@ -41,7 +44,8 @@ public class FolderInfoDto
 }
 
 public class Folder {
-    
+
+    [Display("ID")]
     public string Id { get; set; }
     public string Type { get; set; }
 }

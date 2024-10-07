@@ -7,7 +7,7 @@ namespace Apps.Marketo.Models;
 
 public class FolderRequest
 {
-    [Display("Folder")]
+    [Display("Folder ID")]
     [DataSource(typeof(FolderDataHandler))]
     public string FolderId { get; set; }
 

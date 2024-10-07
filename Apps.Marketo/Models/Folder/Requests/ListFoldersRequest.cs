@@ -14,4 +14,7 @@ public class ListFoldersRequest
     public int? MaxDepth { get; set; }
 
     public string? WorkSpace { get; set; }
+
+    [Display("Filter folder type", Description = "If set, the results will be filtered to match this exact folder type")]
+    public string? FilterFolderType { get; set; }
 }

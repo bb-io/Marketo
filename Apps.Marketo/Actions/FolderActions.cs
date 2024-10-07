@@ -7,6 +7,7 @@ using Apps.Marketo.Models.Tags.Request;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Blackbird.Applications.Sdk.Utils.Extensions.String;
 using Newtonsoft.Json;
 using RestSharp;
 
@@ -28,19 +29,25 @@ public class FolderActions : MarketoInvocable
             .AddQueryParameter("workSpace", input.WorkSpace);
 
         var response = Client.Paginate<FolderInfoDto>(request);
+
         if (input.Root != null)
             response = response.Where(x => x.Id != input.Root).ToList();
+
+        if (input.FilterFolderType != null)
+            response = response.Where(x => x.FolderType == input.FilterFolderType).ToList();
+
         response.ForEach(x =>
         {
-            x.SearchId = $"{x.Id}_{x.FolderId.Type}";
+            x.SearchId = $"{x.Id}_{x.FolderId.Type}"; // TODO: This really shouldn't be necessary anymore. Check if that's true.
         });
+
         return new() { Folders = response };
     }
 
     [Action("Get folder info", Description = "Get folder info")]
     public FolderInfoDto GetFolderInfo([ActionParameter] GetFolderInfoRequest input)
     {
-        var endpoint = $"/rest/asset/v1/folder/{input.FolderId}.json";
+        var endpoint = $"/rest/asset/v1/folder/{input.FolderId}.json".SetQueryParameter("type", input.FolderType);
         var request = new MarketoRequest(endpoint, Method.Get, Credentials);
 
         return Client.GetSingleEntity<FolderInfoDto>(request);
