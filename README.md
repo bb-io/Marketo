@@ -99,7 +99,7 @@ Example of how we include metadata in the HTML file:
 ```html
 <html>
 <head>
-    <meta name="blackbird-email-id" content="example-entry-id">
+    <meta name="blackbird-email-id" content="1001">
 </head>
 <body>
     <h1>Example title</h1>
