@@ -15,18 +15,16 @@ using System.Net.Mime;
 using System.Text;
 using Newtonsoft.Json.Linq;
 using Apps.Marketo.HtmlHelpers;
+using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 
 namespace Apps.Marketo.Actions;
 
 [ActionList]
-public class LandingPageActions : MarketoInvocable
+public class LandingPageActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
+    : MarketoInvocable(invocationContext)
 {
-    private readonly IFileManagementClient _fileManagementClient;
-    public LandingPageActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : base(invocationContext)
-    {
-        _fileManagementClient = fileManagementClient;
-    }
-
+    private const string BlackbirdLandingPageId = "blackbird-landing-page-id";
+    
     [Action("Search landing pages", Description = "Search landing pages")]
     public ListLandingPagesResponse ListLandingPages([ActionParameter] ListLandingPagesRequest input)
     {
@@ -156,21 +154,32 @@ public class LandingPageActions : MarketoInvocable
             .ToDictionary(
                 x => x.Id,
                 y => GetLandingSectionContent(getLandingPageInfoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, y));
-        var resultHtml = HtmlContentBuilder.GenerateHtml(sectionContent, landingInfo.Name, getSegmentBySegmentationRequest.Segment);
+        var resultHtml = HtmlContentBuilder.GenerateHtml(sectionContent, landingInfo.Name, getSegmentBySegmentationRequest.Segment, new(BlackbirdLandingPageId, getLandingPageInfoRequest.Id));
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
-        var file = await _fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html, $"{landingInfo.Name}.html");
+        var file = await fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html, $"{landingInfo.Name}.html");
         return new() { File = file };
     }
 
     [Action("Translate landing page from HTML file", Description = "Translate landing page from HTML file")]
-    public TranslateLandingWithHtmlResponse TranslateLandingWithHtml(
-        [ActionParameter] GetLandingInfoRequest getLandingPageInfoRequest,
+    public async Task<TranslateLandingWithHtmlResponse> TranslateLandingWithHtml(
+        [ActionParameter] GetLandingInfoOptionalRequest getLandingPageInfoRequest,
         [ActionParameter] GetSegmentationRequest getSegmentationRequest,
         [ActionParameter] GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
         [ActionParameter] TranslateEmailWithHtmlRequest translateLandingWithHtmlRequest)
     {
-        var landingContentResponse = GetLandingContent(getLandingPageInfoRequest);
+        var stream = await fileManagementClient.DownloadAsync(translateLandingWithHtmlRequest.File);
+        var bytes = await stream.GetByteData();
+        var html = Encoding.UTF8.GetString(bytes);
+        
+        var extractedId = HtmlContentBuilder.ExtractIdFromMeta(html, BlackbirdLandingPageId);
+        
+        var landingPageInfoRequest = new GetLandingInfoRequest
+        {
+            Id = getLandingPageInfoRequest.Id ?? extractedId ?? throw new Exception("Landing page ID is not provided and not found in the HTML file. Please provide value in the optional input.")
+        };
+        
+        var landingContentResponse = GetLandingContent(landingPageInfoRequest);
 
         if (!translateLandingWithHtmlRequest.TranslateOnlyDynamic.HasValue ||
             !translateLandingWithHtmlRequest.TranslateOnlyDynamic.Value)
@@ -180,13 +189,13 @@ public class LandingPageActions : MarketoInvocable
                 if (!IsJsonObject(item.Content.ToString()) &&
                     (item.Type == "HTML" || item.Type == "RichText"))
                 {
-                    ConvertSectionToDynamicContent(getLandingPageInfoRequest.Id, item.Id, getSegmentationRequest.SegmentationId);
+                    ConvertSectionToDynamicContent(landingPageInfoRequest.Id, item.Id, getSegmentationRequest.SegmentationId);
                 }
             }
-            landingContentResponse = GetLandingContent(getLandingPageInfoRequest);
+            landingContentResponse = GetLandingContent(landingPageInfoRequest);
         }
         
-        var translatedContent = HtmlContentBuilder.ParseHtml(translateLandingWithHtmlRequest.File, _fileManagementClient);
+        var translatedContent = HtmlContentBuilder.ParseHtml(html);
         var errors = new List<string>();
         foreach (var item in landingContentResponse.LandingPageContentItems)
         {
@@ -194,12 +203,12 @@ public class LandingPageActions : MarketoInvocable
                     (item.Type == "HTML" || item.Type == "RichText"))
             {
                 var content = item.Content.ToString();
-                var landingPageContent = JsonConvert.DeserializeObject<LandingPageContentValueDto>(content);
+                var landingPageContent = JsonConvert.DeserializeObject<LandingPageContentValueDto>(content!)!;
                 if (landingPageContent.ContentType == "DynamicContent" && 
                     !string.IsNullOrWhiteSpace(content) && 
                     translatedContent.TryGetValue(item.Id, out var translatedContentItem))
                 {
-                    var result = UpdateLandingDynamicContent(getLandingPageInfoRequest, getSegmentBySegmentationRequest, landingPageContent.Content, item.Type, translatedContentItem);
+                    var result = UpdateLandingDynamicContent(landingPageInfoRequest, getSegmentBySegmentationRequest, landingPageContent.Content, item.Type, translatedContentItem);
                     if(!string.IsNullOrEmpty(result))
                         errors.Add(result);
                 }

@@ -13,19 +13,17 @@ using Newtonsoft.Json;
 using RestSharp;
 using System.Net.Mime;
 using System.Text;
+using Apps.Marketo.Models.Entities;
+using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 
 namespace Apps.Marketo.Actions;
 
 [ActionList]
-public class SnippetActions : MarketoInvocable
+public class SnippetActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
+    : MarketoInvocable(invocationContext)
 {
-    private readonly IFileManagementClient _fileManagementClient;
-
-    public SnippetActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : base(invocationContext)
-    {
-        _fileManagementClient = fileManagementClient;
-    }
-
+    private const string BlackbirdSnippetId = "blackbird-snippet-id";
+    
     [Action("Search snippets", Description = "Search snippets")]
     public ListSnippetsResponse ListSnippets([ActionParameter] ListSnippetsRequest input)
     {
@@ -116,34 +114,47 @@ public class SnippetActions : MarketoInvocable
             .ToDictionary(
                 x => x.Type,
                 y => y.Content);
-        var resultHtml = HtmlContentBuilder.GenerateHtml(sectionContent, snippetInfo.Name, getSegmentBySegmentationRequest.Segment);
+        var resultHtml = HtmlContentBuilder.GenerateHtml(sectionContent, snippetInfo.Name, getSegmentBySegmentationRequest.Segment, new HtmlIdEntity(BlackbirdSnippetId, getSnippetRequest.SnippetId));
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
-        var file = await _fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html, $"{snippetInfo.Name}.html");
+        var file = await fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html, $"{snippetInfo.Name}.html");
         return new() { File = file };
     }
 
     [Action("Translate snippet from HTML file", Description = "Translate snippet from HTML file")]
-    public void TranslateSnippetWithHtml(
-        [ActionParameter] SnippetRequest getSnippetRequest,
+    public async Task TranslateSnippetWithHtml(
+        [ActionParameter] SnippetOptionalRequest getSnippetRequest,
         [ActionParameter] GetSegmentationRequest getSegmentationRequest,
         [ActionParameter] GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
         [ActionParameter] TranslateSnippetWithHtmlRequest translateSnippetWithHtmlRequest)
     {
-        var snippetContentResponse = GetSnippetContent(getSnippetRequest);
+        var stream = await fileManagementClient.DownloadAsync(translateSnippetWithHtmlRequest.File);
+        var bytes = await stream.GetByteData();
+        var html = Encoding.UTF8.GetString(bytes);
+        
+        var extractedSnippetId = HtmlContentBuilder.ExtractIdFromMeta(html, BlackbirdSnippetId);
+        var snippetRequest = new SnippetRequest
+        {
+            SnippetId = getSnippetRequest.SnippetId ?? extractedSnippetId ??
+                throw new Exception(
+                    "Snippet ID is not provided and not found in the HTML file. Please provide value in the optional input.")
+        };
+        
+        var snippetContentResponse = GetSnippetContent(snippetRequest);
         if (!(snippetContentResponse.ContentItems.Count() == 1 &&
            snippetContentResponse.ContentItems.First().Type == "DynamicContent"))
         {
-            ConvertSnippetToDynamicContent(getSnippetRequest.SnippetId, getSegmentationRequest.SegmentationId);
+            ConvertSnippetToDynamicContent(snippetRequest.SnippetId, getSegmentationRequest.SegmentationId);
         }
-        var snippetDynamicContent = GetSnippetDynamicContent(getSnippetRequest, getSegmentationRequest, getSegmentBySegmentationRequest);
-        var translatedContent = HtmlContentBuilder.ParseHtml(translateSnippetWithHtmlRequest.File, _fileManagementClient);
+        var snippetDynamicContent = GetSnippetDynamicContent(snippetRequest, getSegmentationRequest, getSegmentBySegmentationRequest);
+        
+        var translatedContent = HtmlContentBuilder.ParseHtml(html);
         foreach (var item in snippetDynamicContent.Where(x => x.SegmentName == getSegmentBySegmentationRequest.Segment).ToList())
         {
             if ((item.Type == "HTML" || item.Type == "Text") &&
                 translatedContent.TryGetValue(item.Type, out var translatedContentItem))
             {
-                UpdateSnippetDynamicContent(getSnippetRequest, item.SegmentId.ToString(), item.Type, translatedContentItem);
+                UpdateSnippetDynamicContent(snippetRequest, item.SegmentId.ToString(), item.Type, translatedContentItem);
             }
         }
     }

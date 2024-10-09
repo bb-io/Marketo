@@ -13,6 +13,7 @@ using System.Net.Mime;
 using System.Text;
 using Apps.Marketo.Models;
 using Apps.Marketo.HtmlHelpers;
+using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using HtmlAgilityPack;
 
 namespace Apps.Marketo.Actions;
@@ -22,6 +23,7 @@ public class EmailActions : MarketoInvocable
 {
     private const string HtmlIdAttribute = "id";
     private const string ContextImageAttribute = "data-blackbird-image";
+    private const string BlackbirdEmailIdAttribute = "blackbird-email-id";
 
     private readonly IFileManagementClient _fileManagementClient;
 
@@ -117,7 +119,7 @@ public class EmailActions : MarketoInvocable
             sectionContent.Add("data-subject-value", subjectContent);
         }
         
-        var resultHtml = HtmlContentBuilder.GenerateHtml(sectionContent, emailInfo.Name, getSegmentBySegmentationRequest.Segment);
+        var resultHtml = HtmlContentBuilder.GenerateHtml(sectionContent, emailInfo.Name, getSegmentBySegmentationRequest.Segment, new(BlackbirdEmailIdAttribute, getEmailInfoRequest.EmailId));
         
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
         var file = await _fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html, $"{emailInfo.Name}.html");
@@ -125,13 +127,25 @@ public class EmailActions : MarketoInvocable
     }
 
     [Action("Translate email from HTML file", Description = "Translate email from HTML file")]
-    public TranslateEmailWithHtmlResponse TranslateEmailWithHtml(
-        [ActionParameter] GetEmailInfoRequest getEmailInfoRequest,
+    public async Task<TranslateEmailWithHtmlResponse> TranslateEmailWithHtml(
+        [ActionParameter] GetEmailInfoOptionalRequest getEmailInfoRequest,
         [ActionParameter] GetSegmentationRequest getSegmentationRequest,
         [ActionParameter] GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
         [ActionParameter] TranslateEmailWithHtmlRequest translateEmailWithHtmlRequest)
     {
-        var emailContentResponse = GetEmailContentAll(getEmailInfoRequest);
+        var stream = await _fileManagementClient.DownloadAsync(translateEmailWithHtmlRequest.File);
+        var formBytes = await stream.GetByteData();
+        var html = Encoding.UTF8.GetString(formBytes);
+        
+        var extractedMeta = HtmlContentBuilder.ExtractIdFromMeta(html, BlackbirdEmailIdAttribute);
+        var translatedContent = HtmlContentBuilder.ParseHtml(html);
+
+        var infoRequest = new GetEmailInfoRequest
+        {
+            EmailId = getEmailInfoRequest.EmailId ?? extractedMeta ?? throw new Exception("Email ID is not provided and not found in the HTML file. Please provide value in the optional input Email ID.") 
+        };
+        
+        var emailContentResponse = GetEmailContentAll(infoRequest);
 
         if (!translateEmailWithHtmlRequest.TranslateOnlyDynamic.HasValue || 
             !translateEmailWithHtmlRequest.TranslateOnlyDynamic.Value)
@@ -140,17 +154,16 @@ public class EmailActions : MarketoInvocable
             {
                 if (item.ContentType == "Text")
                 {
-                    ConvertSectionToDynamicContent(getEmailInfoRequest.EmailId, item.HtmlId, getSegmentationRequest.SegmentationId);
+                    ConvertSectionToDynamicContent(infoRequest.EmailId, item.HtmlId, getSegmentationRequest.SegmentationId);
                 }
             }
-            emailContentResponse = GetEmailContentAll(getEmailInfoRequest);
+            emailContentResponse = GetEmailContentAll(infoRequest);
         }
-        var translatedContent = HtmlContentBuilder.ParseHtml(translateEmailWithHtmlRequest.File, _fileManagementClient);
         
         var updateEmailSubject = translateEmailWithHtmlRequest.UpdateEmailSubject.HasValue ? translateEmailWithHtmlRequest.UpdateEmailSubject.Value : true;
         if(translatedContent.TryGetValue("data-subject-value", out var subjectContent) && updateEmailSubject)
         {
-            var emailInfo = GetEmailInfo(getEmailInfoRequest);
+            var emailInfo = GetEmailInfo(infoRequest);
             if (emailInfo.Subject?.Type == "Text" && translateEmailWithHtmlRequest.TranslateOnlyDynamic.HasValue
                                                   && !translateEmailWithHtmlRequest.TranslateOnlyDynamic.Value)
             {
@@ -165,7 +178,7 @@ public class EmailActions : MarketoInvocable
             }
             else if (emailInfo.Subject?.Type == "DynamicContent")
             {
-                UpdateEmailDynamicContent(getEmailInfoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, new EmailContentDto()
+                UpdateEmailDynamicContent(infoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, new EmailContentDto()
                 {
                     ContentType = "Text",
                     Value = emailInfo.Subject.Value
@@ -181,7 +194,7 @@ public class EmailActions : MarketoInvocable
                 translatedContent.TryGetValue(item.HtmlId, out var translatedContentItem))
             {
                 var ignoreModule = UpdateEmailDynamicContent(
-                    getEmailInfoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, item, 
+                    infoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, item, 
                     translatedContentItem, emailContentResponse.EmailContentItems, translatedContent, 0,
                     translateEmailWithHtmlRequest.RecreateCorruptedModules == null ? true : translateEmailWithHtmlRequest.RecreateCorruptedModules.Value);
                 modulesToIgnore.Add(ignoreModule);
