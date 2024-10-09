@@ -4,9 +4,9 @@ using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Marketo.Models.LandingPages.Requests;
 
-public class GetLandingInfoRequest
+public class GetLandingInfoOptionalRequest
 {
     [DataSource(typeof(LandingPageHandler))]
     [Display("Landing page ID")]
-    public string Id { get; set; }
+    public string? Id { get; set; }
 }

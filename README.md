@@ -94,6 +94,24 @@ Before you can connect you need to make sure that:
 - **On forms created or updated**
 - **On landing pages created or updated**
 
+## HTML features
+
+We add metadata to the HTML file to include ids. This metadata is used to update the content from the HTML file. These tags are used to identify the content in the `Marketo`, eliminating the need to store IDs elsewhere.
+
+Example of how we include metadata in the HTML file:
+
+```html
+<html>
+<head>
+    <meta name="blackbird-email-id" content="1001">
+</head>
+<body>
+    <h1>Example title</h1>
+    <p>Example content</p>
+</body>
+</html>
+```
+
 ## Missing features
 
 - Smart lists/campaigns
