@@ -19,18 +19,12 @@ using HtmlAgilityPack;
 namespace Apps.Marketo.Actions;
 
 [ActionList]
-public class EmailActions : MarketoInvocable
+public class EmailActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
+    : MarketoInvocable(invocationContext)
 {
     private const string HtmlIdAttribute = "id";
     private const string ContextImageAttribute = "data-blackbird-image";
     private const string BlackbirdEmailIdAttribute = "blackbird-email-id";
-
-    private readonly IFileManagementClient _fileManagementClient;
-
-    public EmailActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : base(invocationContext)
-    {
-        _fileManagementClient = fileManagementClient;
-    }
 
     [Action("Search emails", Description = "Search all emails")]
     public ListEmailsResponse ListEmails([ActionParameter] ListEmailsRequest input)
@@ -122,7 +116,7 @@ public class EmailActions : MarketoInvocable
         var resultHtml = HtmlContentBuilder.GenerateHtml(sectionContent, emailInfo.Name, getSegmentBySegmentationRequest.Segment, new(BlackbirdEmailIdAttribute, getEmailInfoRequest.EmailId));
         
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
-        var file = await _fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html, $"{emailInfo.Name}.html");
+        var file = await fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html, $"{emailInfo.Name}.html");
         return new() { File = file };
     }
 
@@ -133,7 +127,7 @@ public class EmailActions : MarketoInvocable
         [ActionParameter] GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
         [ActionParameter] TranslateEmailWithHtmlRequest translateEmailWithHtmlRequest)
     {
-        var stream = await _fileManagementClient.DownloadAsync(translateEmailWithHtmlRequest.File);
+        var stream = await fileManagementClient.DownloadAsync(translateEmailWithHtmlRequest.File);
         var formBytes = await stream.GetByteData();
         var html = Encoding.UTF8.GetString(formBytes);
         
@@ -244,6 +238,10 @@ public class EmailActions : MarketoInvocable
             var htmlSnippet = new HtmlDocument();
             htmlSnippet.LoadHtml(content);
             var altTextAttribute = htmlSnippet.DocumentNode.FirstChild.Attributes["alt"];
+            var styleAttribute = htmlSnippet.DocumentNode.FirstChild.Attributes["style"];
+            var widthAttribute = htmlSnippet.DocumentNode.FirstChild.Attributes["width"];
+            var heightAttribute = htmlSnippet.DocumentNode.FirstChild.Attributes["height"];
+            
             if (altTextAttribute == null)
                 return string.Empty;
             var imageIdAttribute = htmlSnippet.DocumentNode.FirstChild.Attributes[ContextImageAttribute];
@@ -252,6 +250,9 @@ public class EmailActions : MarketoInvocable
             .AddQueryParameter("segment", getSegmentBySegmentationRequest.Segment)
             .AddQueryParameter("type", "Image")
             .AddQueryParameter("altText", altTextAttribute.Value)
+            .AddQueryParameter("style", styleAttribute.Value)
+            .AddQueryParameter("width", widthAttribute.Value)
+            .AddQueryParameter("height", heightAttribute.Value)
             .AddQueryParameter("value", imageIdAttribute.Value);
         }
         
@@ -295,9 +296,11 @@ public class EmailActions : MarketoInvocable
                 var imageSegment = responseSeg.Result!.First().Content.Where(x => x.SegmentName == getSegmentBySegmentationRequest.Segment).FirstOrDefault();
                 if (imageSegment != null && imageSegment.Type == "File" && includeImages)
                 {
-                    var altTextAttribute = string.IsNullOrWhiteSpace(imageSegment.AltText) ? "" : $" alt=\"{imageSegment.AltText}\"";
+                    var altTextAttribute = string.IsNullOrWhiteSpace(imageSegment.AltText) ? string.Empty : $" alt=\"{imageSegment.AltText}\"";
                     var imageIdAttribute = $" {ContextImageAttribute}=\"{imageSegment.Content}\"";
-                    return $"<img src=\"{imageSegment.ContentUrl}\" style=\"{imageSegment.Style}\"{altTextAttribute}{imageIdAttribute}>";
+                    var widthAttribute = string.IsNullOrWhiteSpace(imageSegment.Width) ? string.Empty : $" width=\"{imageSegment.Width}\"";
+                    var heightAttribute = string.IsNullOrWhiteSpace(imageSegment.Height) ? string.Empty : $" height=\"{imageSegment.Height}\"";
+                    return $"<img src=\"{imageSegment.ContentUrl}\" style=\"{imageSegment.Style}\"{altTextAttribute}{imageIdAttribute}{widthAttribute}{heightAttribute}>";
                 }
                 else if(imageSegment != null && imageSegment.Type == "Text")
                 {
