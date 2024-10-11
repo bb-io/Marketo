@@ -250,10 +250,22 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
             .AddQueryParameter("segment", getSegmentBySegmentationRequest.Segment)
             .AddQueryParameter("type", "Image")
             .AddQueryParameter("altText", altTextAttribute.Value)
-            .AddQueryParameter("style", styleAttribute.Value)
-            .AddQueryParameter("width", widthAttribute.Value)
-            .AddQueryParameter("height", heightAttribute.Value)
             .AddQueryParameter("value", imageIdAttribute.Value);
+
+            if (styleAttribute != null && !string.IsNullOrWhiteSpace(styleAttribute.Value))
+            {
+                request.AddQueryParameter("style", styleAttribute.Value);
+            }
+            
+            if (widthAttribute != null && !string.IsNullOrWhiteSpace(widthAttribute.Value))
+            {
+                request.AddQueryParameter("width", widthAttribute.Value);
+            }
+            
+            if (heightAttribute != null && !string.IsNullOrWhiteSpace(heightAttribute.Value))
+            {
+                request.AddQueryParameter("height", heightAttribute.Value);
+            }
         }
         
         try
