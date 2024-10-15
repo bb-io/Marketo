@@ -259,12 +259,18 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
             
             if (widthAttribute != null && !string.IsNullOrWhiteSpace(widthAttribute.Value))
             {
-                request.AddQueryParameter("width", widthAttribute.Value);
+                if(int.TryParse(widthAttribute.Value, out var width))
+                {
+                    request.AddQueryParameter("width", width);
+                }
             }
             
             if (heightAttribute != null && !string.IsNullOrWhiteSpace(heightAttribute.Value))
             {
-                request.AddQueryParameter("height", heightAttribute.Value);
+                if(int.TryParse(heightAttribute.Value, out var height))
+                {
+                    request.AddQueryParameter("height", height);
+                }
             }
         }
         
