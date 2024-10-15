@@ -19,5 +19,8 @@ namespace Apps.Marketo.Models.Emails.Requests
         
         [Display("Update email subject", Description = "If true, Blackbird will try to update email subject with translated text. If false, subject will be left as is. Default value is true.")]
         public bool? UpdateEmailSubject { get; set; }
+
+        [Display("Update style attributes for images", Description = "If true, Blackbird will try to update style attributes for images in HTML. If false, style attributes will be left as is. Default value is false.")]
+        public bool? UpdateStyleForImages { get; set; }
     }
 }

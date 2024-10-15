@@ -190,7 +190,8 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
                 var ignoreModule = UpdateEmailDynamicContent(
                     infoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, item, 
                     translatedContentItem, emailContentResponse.EmailContentItems, translatedContent, 0,
-                    translateEmailWithHtmlRequest.RecreateCorruptedModules == null ? true : translateEmailWithHtmlRequest.RecreateCorruptedModules.Value);
+                    translateEmailWithHtmlRequest.RecreateCorruptedModules == null ? true : translateEmailWithHtmlRequest.RecreateCorruptedModules.Value,
+                    updateStyle: translateEmailWithHtmlRequest.UpdateStyleForImages ?? false);
                 modulesToIgnore.Add(ignoreModule);
             }
         }
@@ -220,7 +221,8 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
         Dictionary<string, string> translatedContent,
         int tryNumber,
         bool reacreateCorruptedModules,
-        string? type = null)
+        string? type = null,
+        bool updateStyle = false)
     {
         var endpoint =
             $"/rest/asset/v1/email/{getEmailInfoRequest.EmailId}/dynamicContent/{dynamicContentItem.Value}.json";
@@ -252,7 +254,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
             .AddQueryParameter("altText", altTextAttribute.Value)
             .AddQueryParameter("value", imageIdAttribute.Value);
 
-            if (styleAttribute != null && !string.IsNullOrWhiteSpace(styleAttribute.Value))
+            if (styleAttribute != null && !string.IsNullOrWhiteSpace(styleAttribute.Value) && updateStyle)
             {
                 request.AddQueryParameter("style", styleAttribute.Value);
             }
