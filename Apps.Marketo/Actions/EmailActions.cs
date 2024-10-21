@@ -314,13 +314,21 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
             if (responseSeg.Result!.First().Segmentation.ToString() == getSegmentationRequest.SegmentationId)
             {
                 var imageSegment = responseSeg.Result!.First().Content.Where(x => x.SegmentName == getSegmentBySegmentationRequest.Segment).FirstOrDefault();
-                if (imageSegment != null && (imageSegment.Type == "File" || imageSegment.Type == "Image") && includeImages) // dynamic images
+                if (imageSegment != null && (imageSegment.Type == "File") && includeImages) // dynamic images
                 {
                     var altTextAttribute = string.IsNullOrWhiteSpace(imageSegment.AltText) ? string.Empty : $" alt=\"{imageSegment.AltText}\"";
                     var imageIdAttribute = $" {ContextImageAttribute}=\"{imageSegment.Content}\"";
                     var widthAttribute = string.IsNullOrWhiteSpace(imageSegment.Width) ? string.Empty : $" width=\"{imageSegment.Width}\"";
                     var heightAttribute = string.IsNullOrWhiteSpace(imageSegment.Height) ? string.Empty : $" height=\"{imageSegment.Height}\"";
                     return $"<img src=\"{imageSegment.ContentUrl}\" style=\"{imageSegment.Style}\"{altTextAttribute}{imageIdAttribute}{widthAttribute}{heightAttribute}>";
+                }
+                else if(imageSegment != null && (imageSegment.Type == "Image") && includeImages)
+                {
+                    var altTextAttribute = string.IsNullOrWhiteSpace(imageSegment.AltText) ? string.Empty : $" alt=\"{imageSegment.AltText}\"";
+                    var imageIdAttribute = $" {ContextImageAttribute}=\"{imageSegment.Content}\"";
+                    var widthAttribute = string.IsNullOrWhiteSpace(imageSegment.Width) ? string.Empty : $" width=\"{imageSegment.Width}\"";
+                    var heightAttribute = string.IsNullOrWhiteSpace(imageSegment.Height) ? string.Empty : $" height=\"{imageSegment.Height}\"";
+                    return $"<img src=\"{imageSegment.Content}\" style=\"{imageSegment.Style}\"{altTextAttribute}{imageIdAttribute}{widthAttribute}{heightAttribute}>";
                 }
                 else if(imageSegment != null && imageSegment.Type == "Text")
                 {
