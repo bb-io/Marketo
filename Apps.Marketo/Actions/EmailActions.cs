@@ -314,7 +314,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
             if (responseSeg.Result!.First().Segmentation.ToString() == getSegmentationRequest.SegmentationId)
             {
                 var imageSegment = responseSeg.Result!.First().Content.Where(x => x.SegmentName == getSegmentBySegmentationRequest.Segment).FirstOrDefault();
-                if (imageSegment != null && imageSegment.Type == "File" && includeImages)
+                if (imageSegment != null && (imageSegment.Type == "File" || imageSegment.Type == "Image") && includeImages) // dynamic images
                 {
                     var altTextAttribute = string.IsNullOrWhiteSpace(imageSegment.AltText) ? string.Empty : $" alt=\"{imageSegment.AltText}\"";
                     var imageIdAttribute = $" {ContextImageAttribute}=\"{imageSegment.Content}\"";
