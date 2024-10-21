@@ -433,24 +433,29 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
     //    return Client.GetSingleEntity<IdDto>(request);
     //}
 
-    //[Action("Get email dynamic content", Description = "Get email dynamic content")]
-    //public GetEmailDynamicContentResponse GetEmailDynamicContent(
-    //    [ActionParameter] GetEmailInfoRequest getEmailInfoRequest,
-    //    [ActionParameter] GetEmailDynamicItemRequest getEmailDynamicItemRequest,
-    //    [ActionParameter] GetEmailSegmentRequest getSegmentRequest)
-    //{
-    //    var endpoint =
-    //        $"/rest/asset/v1/email/{getEmailInfoRequest.EmailId}/dynamicContent/{getEmailDynamicItemRequest.DynamicContentId}.json";
-    //    var request = new MarketoRequest(endpoint, Method.Get, Credentials);
-    //    var response = Client.GetSingleEntity<DynamicContentDto>(request);
+    [Action("Get email dynamic content", Description = "Get email dynamic content")]
+    public DynamicContentDto<EmailBaseSegmentDto> GetEmailDynamicContent(
+        [ActionParameter] GetEmailInfoRequest getEmailInfoRequest,
+        [ActionParameter] GetEmailDynamicItemRequest getEmailDynamicItemRequest,
+        [ActionParameter] GetEmailSegmentRequest getSegmentRequest)
+    {
+        var endpoint =
+            $"/rest/asset/v1/email/{getEmailInfoRequest.EmailId}/dynamicContent/{getEmailDynamicItemRequest.DynamicContentId}.json";
+        var request = new MarketoRequest(endpoint, Method.Get, Credentials);
+        return Client.GetSingleEntity<DynamicContentDto<EmailBaseSegmentDto>>(request);
+    }
 
-    //    var dynamicContent =
-    //        response.Content.FirstOrDefault(x => x.Type == "HTML" && x.SegmentName == getSegmentRequest.Segment);
-    //    return new(dynamicContent)
-    //    {
-    //        DynamicContentId = getEmailDynamicItemRequest.DynamicContentId
-    //    };
-    //}
+    [Action("Get email dynamic image content", Description = "Get email dynamic image content")]
+    public DynamicContentDto<EmailImageSegmentDto> GetEmailDynamicImageContent(
+       [ActionParameter] GetEmailInfoRequest getEmailInfoRequest,
+       [ActionParameter] GetEmailDynamicItemRequest getEmailDynamicItemRequest,
+       [ActionParameter] GetEmailSegmentRequest getSegmentRequest)
+    {
+        var endpoint =
+            $"/rest/asset/v1/email/{getEmailInfoRequest.EmailId}/dynamicContent/{getEmailDynamicItemRequest.DynamicContentId}.json";
+        var request = new MarketoRequest(endpoint, Method.Get, Credentials);
+        return Client.GetSingleEntity<DynamicContentDto<EmailImageSegmentDto>>(request);
+    }
 
     //[Action("List email dynamic content", Description = "List email dynamic content by segmentation")]
     //public ListEmailDynamicContentResponse ListEmailDynamicContent(
