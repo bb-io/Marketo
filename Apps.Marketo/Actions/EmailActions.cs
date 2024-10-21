@@ -243,7 +243,8 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
             var styleAttribute = htmlSnippet.DocumentNode.FirstChild.Attributes["style"];
             var widthAttribute = htmlSnippet.DocumentNode.FirstChild.Attributes["width"];
             var heightAttribute = htmlSnippet.DocumentNode.FirstChild.Attributes["height"];
-            
+            var srcAttribute = htmlSnippet.DocumentNode.FirstChild.Attributes["src"];
+
             if (altTextAttribute == null)
                 return string.Empty;
             var imageIdAttribute = htmlSnippet.DocumentNode.FirstChild.Attributes[ContextImageAttribute];
@@ -251,8 +252,13 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
             request = new MarketoRequest(endpoint, Method.Post, Credentials)
             .AddQueryParameter("segment", getSegmentBySegmentationRequest.Segment)
             .AddQueryParameter("type", "Image")
-            .AddQueryParameter("altText", altTextAttribute.Value)
-            .AddQueryParameter("value", imageIdAttribute.Value);
+            .AddQueryParameter("altText", altTextAttribute.Value);
+
+            if (srcAttribute.Value == imageIdAttribute.Value)
+                request.AddQueryParameter("externalUrl", srcAttribute.Value);
+            else
+                request.AddQueryParameter("value", imageIdAttribute.Value);
+
 
             if (styleAttribute != null && !string.IsNullOrWhiteSpace(styleAttribute.Value) && updateStyle)
             {
