@@ -204,7 +204,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
                 var ignoreModule = UpdateEmailDynamicContent(
                     infoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, item, 
                     translatedContentItem, emailContentResponse.EmailContentItems, translatedContent, 0,
-                    translateEmailWithHtmlRequest.RecreateCorruptedModules == null ? true : translateEmailWithHtmlRequest.RecreateCorruptedModules.Value,
+                    translateEmailWithHtmlRequest.RecreateCorruptedModules == null ? false : translateEmailWithHtmlRequest.RecreateCorruptedModules.Value,
                     updateStyle: translateEmailWithHtmlRequest.UpdateStyleForImages ?? false);
                 modulesToIgnore.Add(ignoreModule);
             }
