@@ -181,11 +181,16 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
             }
             else if (emailInfo.Subject?.Type == "DynamicContent")
             {
-                UpdateEmailDynamicContent(infoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, new EmailContentDto()
+                var errorMessage = UpdateEmailDynamicContent(infoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, new EmailContentDto()
                 {
                     ContentType = "Text",
                     Value = emailInfo.Subject.Value
                 }, subjectContent, emailContentResponse.EmailContentItems, translatedContent, 0, true, "Text");
+                if(!string.IsNullOrEmpty(errorMessage))
+                    return new()
+                    {
+                        Errors = new() { errorMessage }
+                    };
             }
         }
         
