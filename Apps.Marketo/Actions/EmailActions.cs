@@ -16,6 +16,8 @@ using Apps.Marketo.HtmlHelpers;
 using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using HtmlAgilityPack;
 using System.Web;
+using Newtonsoft.Json.Linq;
+using System.Diagnostics;
 
 namespace Apps.Marketo.Actions;
 
@@ -484,6 +486,21 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
             $"/rest/asset/v1/email/{getEmailInfoRequest.EmailId}/dynamicContent/{getEmailDynamicItemRequest.DynamicContentId}.json";
         var request = new MarketoRequest(endpoint, Method.Get, Credentials);
         return Client.GetSingleEntity<DynamicContentDto<EmailImageSegmentDto>>(request);
+    }
+
+    [Action("Execute raw http (debug)", Description = "Execute raw http (debug)")]
+    public async Task<string> ExecuteRawHttp([ActionParameter] string url, [ActionParameter] string methodType, [ActionParameter] List<string> paramNames, [ActionParameter] List<string> paramValues)
+    {
+        Enum.TryParse(methodType, out Method methodTypeParsed);
+        var request = new MarketoRequest(url, methodTypeParsed, Credentials);
+
+        for (int i = 0; i < paramNames.Count; i++)
+        {
+            request.AddQueryParameter(paramNames[i], paramValues[i]);
+        }
+        var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders, false);
+        var response = await client.ExecuteAsync(request);
+        return response.Content;
     }
 
     //[Action("List email dynamic content", Description = "List email dynamic content by segmentation")]

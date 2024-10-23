@@ -12,11 +12,20 @@ namespace Apps.Marketo;
 
 public class MarketoClient : RestClient
 {
+    public MarketoClient(IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders, bool throwOnAnyError)
+        : base(
+            new RestClientOptions { ThrowOnAnyError = throwOnAnyError, BaseUrl = GetUri(authenticationCredentialsProviders) },
+            configureSerialization: s => s.UseSystemTextJson(new(JsonSerializerDefaults.Web)
+                { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull })
+        )
+    {
+    }
+
     public MarketoClient(IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders)
         : base(
             new RestClientOptions { ThrowOnAnyError = true, BaseUrl = GetUri(authenticationCredentialsProviders) },
             configureSerialization: s => s.UseSystemTextJson(new(JsonSerializerDefaults.Web)
-                { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull })
+            { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull })
         )
     {
     }
