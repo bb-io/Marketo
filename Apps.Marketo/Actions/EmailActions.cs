@@ -193,6 +193,8 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
                     translateEmailWithHtmlRequest.RecreateCorruptedModules == null ? true : translateEmailWithHtmlRequest.RecreateCorruptedModules.Value,
                     updateStyle: translateEmailWithHtmlRequest.UpdateStyleForImages ?? false);
                 modulesToIgnore.Add(ignoreModule);
+                if (ignoreModule.Contains("Error code: 702"))
+                    break;
             }
         }
         return new TranslateEmailWithHtmlResponse()
