@@ -15,6 +15,7 @@ using Apps.Marketo.Models;
 using Apps.Marketo.HtmlHelpers;
 using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using HtmlAgilityPack;
+using System.Web;
 
 namespace Apps.Marketo.Actions;
 
@@ -269,7 +270,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
             .AddQueryParameter("altText", altTextAttribute.Value);
 
             if (srcAttribute.Value == imageIdAttribute.Value)
-                request.AddQueryParameter("externalUrl", srcAttribute.Value);
+                request.AddQueryParameter("externalUrl", srcAttribute.Value.Replace(" ", "+"));
             else
                 request.AddQueryParameter("value", imageIdAttribute.Value);
 
