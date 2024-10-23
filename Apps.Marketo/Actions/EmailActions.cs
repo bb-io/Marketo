@@ -167,8 +167,17 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
                         type = "Text",
                         value = subjectContent
                     }));
-            
-                Client.GetSingleEntity<IdDto>(subjectContentRequest);
+                try
+                {
+                    Client.GetSingleEntity<IdDto>(subjectContentRequest);
+                }
+                catch(BusinessRuleViolationException ex)
+                {
+                    return new()
+                    {
+                        Errors = new() { $"BusinessRuleViolationException, {ex.Message}, Error code: {ex.ErrorCode}, Content: {subjectContent}" }
+                    };
+                } 
             }
             else if (emailInfo.Subject?.Type == "DynamicContent")
             {
@@ -193,8 +202,6 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
                     translateEmailWithHtmlRequest.RecreateCorruptedModules == null ? true : translateEmailWithHtmlRequest.RecreateCorruptedModules.Value,
                     updateStyle: translateEmailWithHtmlRequest.UpdateStyleForImages ?? false);
                 modulesToIgnore.Add(ignoreModule);
-                if (ignoreModule.Contains("Error code: 702"))
-                    break;
             }
         }
         return new TranslateEmailWithHtmlResponse()
