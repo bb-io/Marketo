@@ -489,14 +489,14 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
     }
 
     [Action("Execute raw http (debug)", Description = "Execute raw http (debug)")]
-    public async Task<string> ExecuteRawHttp([ActionParameter] string url, [ActionParameter] string methodType, [ActionParameter] List<string> paramNames, [ActionParameter] List<string> paramValues)
+    public async Task<string> ExecuteRawHttp([ActionParameter] DebugInputs debugInputs)
     {
-        Enum.TryParse(methodType, out Method methodTypeParsed);
-        var request = new MarketoRequest(url, methodTypeParsed, Credentials);
+        Enum.TryParse(debugInputs.MethodType, out Method methodTypeParsed);
+        var request = new MarketoRequest(debugInputs.Url, methodTypeParsed, Credentials);
 
-        for (int i = 0; i < paramNames.Count; i++)
+        for (int i = 0; i < debugInputs.ParamNames.Count; i++)
         {
-            request.AddQueryParameter(paramNames[i], paramValues[i]);
+            request.AddQueryParameter(debugInputs.ParamNames[i], debugInputs.ParamValues[i]);
         }
         var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders, false);
         var response = await client.ExecuteAsync(request);
