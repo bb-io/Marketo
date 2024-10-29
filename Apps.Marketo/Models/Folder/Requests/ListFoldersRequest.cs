@@ -11,7 +11,6 @@ public class ListFoldersRequest
     public string? Root { get; set; }
 
     [Display("Manual root folder ID")]
-    [DataSource(typeof(FolderDataHandler))]
     public string? RootManual { get; set; }
 
     [Display("Max depth")]
