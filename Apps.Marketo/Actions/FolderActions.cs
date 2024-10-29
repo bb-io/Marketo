@@ -24,9 +24,12 @@ public class FolderActions : MarketoInvocable
     public ListFoldersResponse ListFolders([ActionParameter] ListFoldersRequest input)
     {
         var request = new MarketoRequest("/rest/asset/v1/folders.json", Method.Get, Credentials)
-            .AddQueryParameter("root", input.Root)
             .AddQueryParameter("maxDepth", input.MaxDepth ?? 10)
             .AddQueryParameter("workSpace", input.WorkSpace);
+        if (!string.IsNullOrEmpty(input.RootManual))
+            request.AddQueryParameter("root", input.RootManual);
+        else if (!string.IsNullOrEmpty(input.Root))
+            request.AddQueryParameter("root", input.Root);
 
         var response = Client.Paginate<FolderInfoDto>(request);
 
