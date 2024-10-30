@@ -56,6 +56,14 @@ public class FolderActions : MarketoInvocable
         return Client.GetSingleEntity<FolderInfoDto>(request);
     }
 
+    [Action("Get folder by name", Description = "Get folder by name")]
+    public List<FolderInfoDto> GetFolderByName([ActionParameter][Display("Folder name")] string folderName)
+    {
+        var endpoint = $"/rest/asset/v1/folder/byName.json".SetQueryParameter("name", folderName);
+        var request = new MarketoRequest(endpoint, Method.Get, Credentials);
+        return Client.ExecuteWithError<FolderInfoDto>(request).Result!;
+    }
+
     [Action("Create folder", Description = "Create folder")]
     public FolderInfoDto CreateFolder([ActionParameter] CreateFolderRequest input)
     {
