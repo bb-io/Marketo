@@ -16,6 +16,7 @@ using System.Text;
 using Newtonsoft.Json.Linq;
 using Apps.Marketo.HtmlHelpers;
 using Blackbird.Applications.Sdk.Utils.Extensions.Files;
+using Blackbird.Applications.Sdk.Common.Authentication;
 
 namespace Apps.Marketo.Actions;
 
@@ -263,6 +264,7 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
         LandingPageContentDto sectionContent,
         bool includeImages = false)
     {
+        var domain = InvocationContext.AuthenticationCredentialsProviders.First(v => v.KeyName == "Munchkin Account ID").Value;
         if (IsJsonObject(sectionContent.Content.ToString()) && JsonConvert.DeserializeObject<LandingPageContentValueDto>(sectionContent.Content.ToString()).ContentType == "DynamicContent")
         {
             var landingPageContent = JsonConvert.DeserializeObject<LandingPageContentValueDto>(sectionContent.Content.ToString());
@@ -274,6 +276,7 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
             if (responseSeg.Result!.First().Segmentation.ToString() == getSegmentationRequest.SegmentationId)
             {
                 var imageSegment = responseSeg.Result!.First().Segments.Where(x => x.SegmentName == getSegmentBySegmentationRequest.Segment).FirstOrDefault();
+                
                 //if (imageSegment != null && (imageSegment.Type == "File") && includeImages) // dynamic images
                 //{
                 //    var altTextAttribute = string.IsNullOrWhiteSpace(imageSegment.AltText) ? string.Empty : $" alt=\"{imageSegment.AltText}\"";
@@ -286,7 +289,11 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
                 {
                     var imageDto = JsonConvert.DeserializeObject<LandingPageImageContent>(imageSegment.Content.ToString());
                     var imageUrl = string.IsNullOrWhiteSpace(imageDto.ContentUrl) ? imageDto.Content : imageDto.ContentUrl;
-                    return $"<img src=\"{imageUrl}\" style=\"width:{imageSegment.FormattingOptions.Width};height:{imageSegment.FormattingOptions.Height};left:{imageSegment.FormattingOptions.Left};top:{imageSegment.FormattingOptions.Top}\">";
+
+                    var builder = new UriBuilder(imageUrl);
+                    builder.Host = $"{domain}.mktoweb.com";
+
+                    return $"<img src=\"{builder.Uri}\" style=\"width:{imageSegment.FormattingOptions.Width};height:{imageSegment.FormattingOptions.Height};left:{imageSegment.FormattingOptions.Left};top:{imageSegment.FormattingOptions.Top}\">";
                 }
                 else if (imageSegment != null && imageSegment.Type == "Text")
                 {
@@ -305,7 +312,11 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
             var imageDto = JsonConvert.DeserializeObject<LandingPageImageContent>(sectionContent.Content.ToString());
             var imageUrl = string.IsNullOrWhiteSpace(imageDto.ContentUrl) ? imageDto.Content : imageDto.ContentUrl;
             //var altTextAttribute = string.IsNullOrWhiteSpace(imageDto.AltText) ? "" : $" alt=\"{imageDto.AltText}\"";
-            return $"<img src=\"{imageUrl}\" style=\"width:{sectionContent.FormattingOptions.Width};height:{sectionContent.FormattingOptions.Height};left:{sectionContent.FormattingOptions.Left};top:{sectionContent.FormattingOptions.Top}\">";
+
+            var builder = new UriBuilder(imageUrl);
+            builder.Host = $"{domain}.mktoweb.com";
+
+            return $"<img src=\"{builder.Uri}\" style=\"width:{sectionContent.FormattingOptions.Width};height:{sectionContent.FormattingOptions.Height};left:{sectionContent.FormattingOptions.Left};top:{sectionContent.FormattingOptions.Top}\">";
         }
         return sectionContent.Content.ToString();
     }
