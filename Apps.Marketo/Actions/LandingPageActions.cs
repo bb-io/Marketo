@@ -293,7 +293,7 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
                     var builder = new UriBuilder(imageUrl);
                     builder.Host = $"{domain}.mktoweb.com";
 
-                    return $"<img src=\"{builder.Uri}\" style=\"width:{imageSegment.FormattingOptions.Width};height:{imageSegment.FormattingOptions.Height};left:{imageSegment.FormattingOptions.Left};top:{imageSegment.FormattingOptions.Top}\">";
+                    return $"<img src=\"{builder.Uri}\" style=\"width:{imageSegment.FormattingOptions.Width};height:{imageSegment.FormattingOptions.Height};left:{imageSegment.FormattingOptions.Left ?? "0px"};top:{imageSegment.FormattingOptions.Top ?? "0px"};position:relative\">";
                 }
                 else if (imageSegment != null && imageSegment.Type == "Text")
                 {
@@ -316,7 +316,7 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
             var builder = new UriBuilder(imageUrl);
             builder.Host = $"{domain}.mktoweb.com";
 
-            return $"<img src=\"{builder.Uri}\" style=\"width:{sectionContent.FormattingOptions.Width};height:{sectionContent.FormattingOptions.Height};left:{sectionContent.FormattingOptions.Left};top:{sectionContent.FormattingOptions.Top}\">";
+            return $"<img src=\"{builder.Uri}\" style=\"width:{sectionContent.FormattingOptions.Width};height:{sectionContent.FormattingOptions.Height};left:{sectionContent.FormattingOptions.Left ?? "0px"};top:{sectionContent.FormattingOptions.Top ?? "0px"};position:relative\">";
         }
         return sectionContent.Content.ToString();
     }
