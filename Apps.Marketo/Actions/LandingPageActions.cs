@@ -293,16 +293,17 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
                     var builder = new UriBuilder(imageUrl);
                     builder.Host = $"{domain}.mktoweb.com";
 
-                    return $"<img src=\"{builder.Uri}\" style=\"width:{imageSegment.FormattingOptions.Width};height:{imageSegment.FormattingOptions.Height};left:{imageSegment.FormattingOptions.Left ?? "0px"};top:{imageSegment.FormattingOptions.Top ?? "0px"};position:relative\">";
+                    return $"<img src=\"{builder.Uri}\" style=\"width:{imageSegment.FormattingOptions.Width};height:{imageSegment.FormattingOptions.Height};left:{imageSegment.FormattingOptions.Left ?? "0px"};top:{imageSegment.FormattingOptions.Top ?? "0px"};position:absolute\">";
                 }
                 else if (imageSegment != null && imageSegment.Type == "Text")
                 {
-                    return imageSegment.Content.ToString();
+                    return $"<div style=\"left:{imageSegment.FormattingOptions.Left ?? "0px"};top:{imageSegment.FormattingOptions.Top ?? "0px"};position:absolute\">{imageSegment.Content.ToString()}</div>";
                 }
                 else
                 {
-                    return responseSeg.Result!.First().Segments
+                    var res = responseSeg.Result!.First().Segments
                     .Where(x => x.SegmentName == getSegmentBySegmentationRequest.Segment).First().Content.ToString();
+                    return $"<div style=\"left:{imageSegment.FormattingOptions.Left ?? "0px"};top:{imageSegment.FormattingOptions.Top ?? "0px"};position:absolute\">{res}</div>";
                 }             
             }          
             return string.Empty;
@@ -316,7 +317,7 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
             var builder = new UriBuilder(imageUrl);
             builder.Host = $"{domain}.mktoweb.com";
 
-            return $"<img src=\"{builder.Uri}\" style=\"width:{sectionContent.FormattingOptions.Width};height:{sectionContent.FormattingOptions.Height};left:{sectionContent.FormattingOptions.Left ?? "0px"};top:{sectionContent.FormattingOptions.Top ?? "0px"};position:relative\">";
+            return $"<img src=\"{builder.Uri}\" style=\"width:{sectionContent.FormattingOptions.Width};height:{sectionContent.FormattingOptions.Height};left:{sectionContent.FormattingOptions.Left ?? "0px"};top:{sectionContent.FormattingOptions.Top ?? "0px"};position:absolute\">";
         }
         return sectionContent.Content.ToString();
     }
