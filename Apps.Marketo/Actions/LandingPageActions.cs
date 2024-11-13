@@ -263,7 +263,7 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
         LandingPageContentDto sectionContent,
         bool includeImages = false)
     {
-        if (IsJsonObject(sectionContent.Content.ToString()))
+        if (IsJsonObject(sectionContent.Content.ToString()) && JsonConvert.DeserializeObject<LandingPageContentValueDto>(sectionContent.Content.ToString()).ContentType == "DynamicContent")
         {
             var landingPageContent = JsonConvert.DeserializeObject<LandingPageContentValueDto>(sectionContent.Content.ToString());
             var requestSeg = new MarketoRequest(
