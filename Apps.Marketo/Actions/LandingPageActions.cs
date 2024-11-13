@@ -16,6 +16,7 @@ using System.Text;
 using Newtonsoft.Json.Linq;
 using Apps.Marketo.HtmlHelpers;
 using Blackbird.Applications.Sdk.Utils.Extensions.Files;
+using Blackbird.Applications.Sdk.Common.Authentication;
 
 namespace Apps.Marketo.Actions;
 
@@ -24,7 +25,9 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
     : MarketoInvocable(invocationContext)
 {
     private const string BlackbirdLandingPageId = "blackbird-landing-page-id";
-    
+    private const string ContextImageAttribute = "data-blackbird-image";
+    private const string BlackbirdEmailIdAttribute = "blackbird-email-id";
+
     [Action("Search landing pages", Description = "Search landing pages")]
     public ListLandingPagesResponse ListLandingPages([ActionParameter] ListLandingPagesRequest input)
     {
@@ -147,13 +150,14 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
         var landingInfo = GetLandingInfo(getLandingPageInfoRequest);
         var landingContentResponse = GetLandingContent(getLandingPageInfoRequest);
         var onlyDynamic = getLandingPageAsHtmlRequest.GetOnlyDynamicContent.HasValue && getLandingPageAsHtmlRequest.GetOnlyDynamicContent.Value;
+        var includeImages = getLandingPageAsHtmlRequest.IncludeImages.HasValue && getLandingPageAsHtmlRequest.IncludeImages.Value;
 
         var sectionContent = landingContentResponse.LandingPageContentItems!
-            .Where(x => (x.Type == "HTML" || x.Type == "RichText") && 
+            .Where(x => (x.Type == "HTML" || x.Type == "RichText" || (includeImages && x.Type == "Image")) && 
             ((onlyDynamic && IsJsonObject(x.Content.ToString())) || !onlyDynamic))
             .ToDictionary(
                 x => x.Id,
-                y => GetLandingSectionContent(getLandingPageInfoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, y));
+                y => GetLandingSectionContent(getLandingPageInfoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, y, includeImages));
         var resultHtml = HtmlContentBuilder.GenerateHtml(sectionContent, landingInfo.Name, getSegmentBySegmentationRequest.Segment, new(BlackbirdLandingPageId, getLandingPageInfoRequest.Id));
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
@@ -257,22 +261,63 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
         GetLandingInfoRequest getLandingInfoRequest,
         GetSegmentationRequest getSegmentationRequest,
         GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
-        LandingPageContentDto sectionContent)
+        LandingPageContentDto sectionContent,
+        bool includeImages = false)
     {
-        if (IsJsonObject(sectionContent.Content.ToString()))
+        var domain = InvocationContext.AuthenticationCredentialsProviders.First(v => v.KeyName == "Munchkin Account ID").Value;
+        if (IsJsonObject(sectionContent.Content.ToString()) && JsonConvert.DeserializeObject<LandingPageContentValueDto>(sectionContent.Content.ToString()).ContentType == "DynamicContent")
         {
             var landingPageContent = JsonConvert.DeserializeObject<LandingPageContentValueDto>(sectionContent.Content.ToString());
             var requestSeg = new MarketoRequest(
                     $"/rest/asset/v1/landingPage/{getLandingInfoRequest.Id}/dynamicContent/{landingPageContent.Content}.json",
                     Method.Get, Credentials);
 
-            var responseSeg = Client.ExecuteWithError<LandingDynamicContentDto>(requestSeg);
+            var responseSeg = Client.ExecuteWithError<LandingDynamicContentDto<LandingPageImageSegmentDto<object>>>(requestSeg);
             if (responseSeg.Result!.First().Segmentation.ToString() == getSegmentationRequest.SegmentationId)
-                return responseSeg.Result!.First().Segments
-                    .Where(x => x.SegmentName == getSegmentBySegmentationRequest.Segment)
-                    .Select(x => new GetEmailDynamicContentResponse(x)
-                    { DynamicContentId = landingPageContent.Content }).First().Content;
+            {
+                var imageSegment = responseSeg.Result!.First().Segments.Where(x => x.SegmentName == getSegmentBySegmentationRequest.Segment).FirstOrDefault();
+                
+                //if (imageSegment != null && (imageSegment.Type == "File") && includeImages) // dynamic images
+                //{
+                //    var altTextAttribute = string.IsNullOrWhiteSpace(imageSegment.AltText) ? string.Empty : $" alt=\"{imageSegment.AltText}\"";
+                //    var imageIdAttribute = $" {ContextImageAttribute}=\"{imageSegment.Content}\"";
+                //    var widthAttribute = string.IsNullOrWhiteSpace(imageSegment.Width) ? string.Empty : $" width=\"{imageSegment.Width}\"";
+                //    var heightAttribute = string.IsNullOrWhiteSpace(imageSegment.Height) ? string.Empty : $" height=\"{imageSegment.Height}\"";
+                //    return $"<img src=\"{imageSegment.ContentUrl}\" style=\"{imageSegment.Style}\"{altTextAttribute}{imageIdAttribute}{widthAttribute}{heightAttribute}>";
+                //}
+                if (imageSegment != null && (imageSegment.Type == "Image") && includeImages)
+                {
+                    var imageDto = JsonConvert.DeserializeObject<LandingPageImageContent>(imageSegment.Content.ToString());
+                    var imageUrl = string.IsNullOrWhiteSpace(imageDto.ContentUrl) ? imageDto.Content : imageDto.ContentUrl;
+
+                    var builder = new UriBuilder(imageUrl);
+                    builder.Host = $"{domain}.mktoweb.com";
+
+                    return $"<img src=\"{builder.Uri}\" style=\"width:{imageSegment.FormattingOptions.Width};height:{imageSegment.FormattingOptions.Height};left:{imageSegment.FormattingOptions.Left ?? "0px"};top:{imageSegment.FormattingOptions.Top ?? "0px"};position:absolute\">";
+                }
+                else if (imageSegment != null && imageSegment.Type == "Text")
+                {
+                    return $"<div style=\"left:{imageSegment.FormattingOptions.Left ?? "0px"};top:{imageSegment.FormattingOptions.Top ?? "0px"};position:absolute\">{imageSegment.Content.ToString()}</div>";
+                }
+                else
+                {
+                    var res = responseSeg.Result!.First().Segments
+                    .Where(x => x.SegmentName == getSegmentBySegmentationRequest.Segment).First().Content.ToString();
+                    return $"<div style=\"left:{imageSegment.FormattingOptions.Left ?? "0px"};top:{imageSegment.FormattingOptions.Top ?? "0px"};position:absolute\">{res}</div>";
+                }             
+            }          
             return string.Empty;
+        }
+        else if (sectionContent.Type == "Image") // Static images
+        {
+            var imageDto = JsonConvert.DeserializeObject<LandingPageImageContent>(sectionContent.Content.ToString());
+            var imageUrl = string.IsNullOrWhiteSpace(imageDto.ContentUrl) ? imageDto.Content : imageDto.ContentUrl;
+            //var altTextAttribute = string.IsNullOrWhiteSpace(imageDto.AltText) ? "" : $" alt=\"{imageDto.AltText}\"";
+
+            var builder = new UriBuilder(imageUrl);
+            builder.Host = $"{domain}.mktoweb.com";
+
+            return $"<img src=\"{builder.Uri}\" style=\"width:{sectionContent.FormattingOptions.Width};height:{sectionContent.FormattingOptions.Height};left:{sectionContent.FormattingOptions.Left ?? "0px"};top:{sectionContent.FormattingOptions.Top ?? "0px"};position:absolute\">";
         }
         return sectionContent.Content.ToString();
     }
