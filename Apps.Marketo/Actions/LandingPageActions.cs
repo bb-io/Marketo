@@ -286,7 +286,7 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
                 {
                     var imageDto = JsonConvert.DeserializeObject<LandingPageImageContent>(sectionContent.Content.ToString());
                     var imageUrl = string.IsNullOrWhiteSpace(imageDto.ContentUrl) ? imageDto.Content : imageDto.ContentUrl;
-                    return $"<img src=\"{imageUrl}\" style=\"width:{sectionContent.FormattingOptions.Width};height:{sectionContent.FormattingOptions.Height};left:{sectionContent.FormattingOptions.Left};top:{sectionContent.FormattingOptions.Top}\">";
+                    return $"<img src=\"{imageUrl}\" style=\"width:{imageSegment.FormattingOptions.Width};height:{imageSegment.FormattingOptions.Height};left:{imageSegment.FormattingOptions.Left};top:{imageSegment.FormattingOptions.Top}\">";
                 }
                 else if (imageSegment != null && imageSegment.Type == "Text")
                 {
