@@ -284,7 +284,7 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
                 //}
                 if (imageSegment != null && (imageSegment.Type == "Image") && includeImages)
                 {
-                    var imageDto = JsonConvert.DeserializeObject<LandingPageImageContent>(sectionContent.Content.ToString());
+                    var imageDto = JsonConvert.DeserializeObject<LandingPageImageContent>(imageSegment.Content.ToString());
                     var imageUrl = string.IsNullOrWhiteSpace(imageDto.ContentUrl) ? imageDto.Content : imageDto.ContentUrl;
                     return $"<img src=\"{imageUrl}\" style=\"width:{imageSegment.FormattingOptions.Width};height:{imageSegment.FormattingOptions.Height};left:{imageSegment.FormattingOptions.Left};top:{imageSegment.FormattingOptions.Top}\">";
                 }
