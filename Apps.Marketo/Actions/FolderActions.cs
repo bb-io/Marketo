@@ -105,4 +105,14 @@ public class FolderActions : MarketoInvocable
         }));
         Client.ExecuteWithError<IdDto>(request);
     }
+
+    [Action("Get program tag value", Description = "Get program tag value")]
+    public string GetProgramTagValue([ActionParameter] GetProgramRequest programRequest,
+        [ActionParameter] GetTagTypeRequest tagTypeRequest)
+    {
+        var endpoint = $"/rest/asset/v1/program/{programRequest.ProgramId}.json";
+        var request = new MarketoRequest(endpoint, Method.Get, Credentials);
+        var program = Client.GetSingleEntity<ProgramDto>(request);
+        return program.Tags.FirstOrDefault(x => x.TagType == tagTypeRequest.TagType).TagValue;
+    }
 }
