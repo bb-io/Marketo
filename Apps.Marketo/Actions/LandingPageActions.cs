@@ -170,7 +170,7 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
         [ActionParameter] GetLandingInfoOptionalRequest getLandingPageInfoRequest,
         [ActionParameter] GetSegmentationRequest getSegmentationRequest,
         [ActionParameter] GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
-        [ActionParameter] TranslateEmailWithHtmlRequest translateLandingWithHtmlRequest)
+        [ActionParameter] TranslateLandingPageWithHtmlRequest translateLandingWithHtmlRequest)
     {
         var stream = await fileManagementClient.DownloadAsync(translateLandingWithHtmlRequest.File);
         var bytes = await stream.GetByteData();
