@@ -293,17 +293,27 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
                     var builder = new UriBuilder(imageUrl);
                     builder.Host = $"{domain}.mktoweb.com";
 
-                    return $"<img src=\"{builder.Uri}\" style=\"width:{imageSegment.FormattingOptions.Width};height:{imageSegment.FormattingOptions.Height};left:{imageSegment.FormattingOptions.Left ?? "0px"};top:{imageSegment.FormattingOptions.Top ?? "0px"};position:absolute\">";
+                    string styleAttr = "";
+                    if (imageSegment.FormattingOptions != null)
+                        styleAttr = $" style=\"width:{imageSegment.FormattingOptions.Width};height:{imageSegment.FormattingOptions.Height};left:{imageSegment.FormattingOptions.Left ?? "0px"};top:{imageSegment.FormattingOptions.Top ?? "0px"};position:absolute\"";
+
+                    return $"<img src=\"{builder.Uri}\"{styleAttr}>";
                 }
                 else if (imageSegment != null && imageSegment.Type == "Text")
                 {
-                    return $"<div style=\"left:{imageSegment.FormattingOptions.Left ?? "0px"};top:{imageSegment.FormattingOptions.Top ?? "0px"};position:absolute\">{imageSegment.Content.ToString()}</div>";
+                    if (imageSegment.FormattingOptions != null)
+                        return $"<div style=\"left:{imageSegment.FormattingOptions.Left ?? "0px"};top:{imageSegment.FormattingOptions.Top ?? "0px"};position:absolute\">{imageSegment.Content.ToString()}</div>";
+                    else
+                        return imageSegment.Content.ToString();
                 }
                 else
                 {
                     var res = responseSeg.Result!.First().Segments
                     .Where(x => x.SegmentName == getSegmentBySegmentationRequest.Segment).First().Content.ToString();
-                    return $"<div style=\"left:{imageSegment.FormattingOptions.Left ?? "0px"};top:{imageSegment.FormattingOptions.Top ?? "0px"};position:absolute\">{res}</div>";
+                    if (imageSegment?.FormattingOptions != null)
+                        return $"<div style=\"left:{imageSegment.FormattingOptions.Left ?? "0px"};top:{imageSegment.FormattingOptions.Top ?? "0px"};position:absolute\">{res}</div>";
+                    else
+                        return res;
                 }             
             }          
             return string.Empty;
