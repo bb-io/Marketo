@@ -13,6 +13,7 @@
         public ProgramFolder Folder { get; set; }
         public string Status { get; set; }
         public string Workspace { get; set; }
+        public List<TagAppliedDto> Tags { get; set; }
     }
 
     public class ProgramFolder
