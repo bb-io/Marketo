@@ -6,7 +6,7 @@ namespace Apps.Marketo.Models.Folder.Requests;
 
 public class ListFoldersRequest
 {
-    [Display("Root folder")]
+    [Display("Root folder ID")]
     [DataSource(typeof(FolderDataHandler))]
     public string? Root { get; set; }
 
