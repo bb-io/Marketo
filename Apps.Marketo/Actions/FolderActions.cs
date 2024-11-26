@@ -10,6 +10,7 @@ using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Utils.Extensions.String;
 using Newtonsoft.Json;
 using RestSharp;
+using System.Linq;
 
 namespace Apps.Marketo.Actions;
 
@@ -36,8 +37,8 @@ public class FolderActions : MarketoInvocable
         if (input.Root != null)
             response = response.Where(x => x.Id != input.Root).ToList();
 
-        if (input.FilterFolderType != null)
-            response = response.Where(x => x.FolderType == input.FilterFolderType).ToList();
+        if (input.FilterFolderTypes != null && input.FilterFolderTypes.Any())
+            response = response.Where(x => input.FilterFolderTypes.Contains(x.FolderType)).ToList();
 
         response.ForEach(x =>
         {

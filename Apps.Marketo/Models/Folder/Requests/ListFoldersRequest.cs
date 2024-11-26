@@ -18,6 +18,6 @@ public class ListFoldersRequest
 
     public string? WorkSpace { get; set; }
 
-    [Display("Filter folder type", Description = "If set, the results will be filtered to match this exact folder type")]
-    public string? FilterFolderType { get; set; }
+    [Display("Filter folder types", Description = "If set, the results will be filtered to match one of the folder types")]
+    public List<string>? FilterFolderTypes { get; set; }
 }

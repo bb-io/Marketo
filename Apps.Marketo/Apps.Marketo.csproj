@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <OutputType>Library</OutputType>
     <Product>Marketo</Product>
-    <Version>1.8.3</Version>
+    <Version>1.8.4</Version>
     <Description>Marketo is a marketing automation solution from Adobe.</Description>
     <AssemblyName>Apps.Marketo</AssemblyName>
   </PropertyGroup>
