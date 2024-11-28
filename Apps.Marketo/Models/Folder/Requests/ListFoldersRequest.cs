@@ -20,4 +20,7 @@ public class ListFoldersRequest
 
     [Display("Filter folder types", Description = "If set, the results will be filtered to match one of the folder types")]
     public List<string>? FilterFolderTypes { get; set; }
+
+    [Display("URL contains filter", Description = "If set, the results will be filtered by specified string in a folder path")]
+    public string? UrlContainsFilter { get; set; }
 }
