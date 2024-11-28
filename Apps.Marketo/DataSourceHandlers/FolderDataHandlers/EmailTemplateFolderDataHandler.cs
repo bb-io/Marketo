@@ -7,6 +7,7 @@ namespace Apps.Marketo.DataSourceHandlers.FolderDataHandlers
 {
     public class EmailTemplateFolderDataHandler : BaseInvocable, IAsyncDataSourceHandler
     {
+        private readonly string MarketoTemplatesFolderPath = "/Design Studio/Default/Emails/Marketo Templates";
         public EmailTemplateFolderDataHandler(InvocationContext invocationContext) : base(invocationContext)
         {
         }
@@ -19,7 +20,7 @@ namespace Apps.Marketo.DataSourceHandlers.FolderDataHandlers
             var response = client.Paginate<FolderInfoDto>(request);
             return response
                 .DistinctBy(x => x.Id)
-                .Where(x => x.FolderType == "Email Template")
+                .Where(x => x.FolderType == "Email Template" && !x.Path.Contains(MarketoTemplatesFolderPath))
                 .Where(str => context.SearchString is null || str.Name.Contains(context.SearchString, StringComparison.OrdinalIgnoreCase))
                 .ToDictionary(k => $"{k.Id.ToString()}_{k.FolderId.Type}", v => v.Name);
         }
