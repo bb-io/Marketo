@@ -27,14 +27,15 @@ namespace Apps.Marketo.Actions
         {
             var request = new MarketoRequest($"/rest/asset/v1/emailTemplates.json", Method.Get, Credentials);
 
-            if (input.Status != null) request.AddQueryParameter("status", input.Status);
+            if (!string.IsNullOrEmpty(input.Status)) request.AddQueryParameter("status", input.Status);
             var response = Client.Paginate<EmailTemplateDto>(request);
 
-            if (input.Status == null) 
+            if (string.IsNullOrEmpty(input.Status)) 
             {
-                request.AddQueryParameter("status", "approved");
-                var approvedTemaplates = Client.Paginate<EmailTemplateDto>(request);
-                response.AddRange(approvedTemaplates);
+                var requestApproved = new MarketoRequest($"/rest/asset/v1/emailTemplates.json", Method.Get, Credentials);
+                requestApproved.AddQueryParameter("status", "approved");
+                var approvedTemplates = Client.Paginate<EmailTemplateDto>(requestApproved);
+                response.AddRange(approvedTemplates);
                 response = response.DistinctBy(x => x.Id).ToList();
             } 
 
