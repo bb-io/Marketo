@@ -40,6 +40,9 @@ public class FolderActions : MarketoInvocable
         if (input.FilterFolderTypes != null && input.FilterFolderTypes.Any())
             response = response.Where(x => input.FilterFolderTypes.Contains(x.FolderType)).ToList();
 
+        if (input.UrlContainsFilter != null)
+            response = response.Where(x => x.Path.Contains(input.UrlContainsFilter)).ToList();
+
         response.ForEach(x =>
         {
             x.SearchId = $"{x.Id}_{x.FolderId.Type}"; // TODO: This really shouldn't be necessary anymore. Check if that's true.
