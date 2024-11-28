@@ -19,7 +19,7 @@ namespace Apps.Marketo.DataSourceHandlers.FolderDataHandlers
             var response = client.Paginate<FolderInfoDto>(request);
             return response
                 .DistinctBy(x => x.Id)
-                .Where(x => x.FolderType == "Email Template" || x.FolderId.Type == "Program")
+                .Where(x => x.FolderType == "Email Template")
                 .Where(str => context.SearchString is null || str.Name.Contains(context.SearchString, StringComparison.OrdinalIgnoreCase))
                 .ToDictionary(k => $"{k.Id.ToString()}_{k.FolderId.Type}", v => v.Name);
         }

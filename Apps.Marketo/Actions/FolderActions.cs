@@ -21,7 +21,7 @@ public class FolderActions : MarketoInvocable
     {
     }
 
-    [Action("List folders", Description = "List folders")]
+    [Action("Search folders", Description = "Search folders")]
     public ListFoldersResponse ListFolders([ActionParameter] ListFoldersRequest input)
     {
         var request = new MarketoRequest("/rest/asset/v1/folders.json", Method.Get, Credentials)

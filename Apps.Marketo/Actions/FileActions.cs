@@ -24,7 +24,7 @@ public class FileActions : MarketoInvocable
         _fileManagementClient = fileManagementClient;
     }
 
-    [Action("List all files", Description = "List all files")]
+    [Action("Search all files", Description = "Search all files")]
     public ListFilesResponse ListFiles()
     {
         var request = new MarketoRequest("/rest/asset/v1/files.json", Method.Get, Credentials);

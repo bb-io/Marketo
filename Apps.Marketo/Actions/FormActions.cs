@@ -59,7 +59,7 @@ public class FormActions : MarketoInvocable
         return new() { Forms = forms };
     }
 
-    [Action("List forms fields", Description = "List forms fields")]
+    [Action("Search forms fields", Description = "Search forms fields")]
     public ListFormFieldsResponse ListFormsFields(
         [ActionParameter] GetMultipleFormsRequest getMultipleFormsRequest, 
         [ActionParameter] ListFormFieldsRequest listFormFields)
