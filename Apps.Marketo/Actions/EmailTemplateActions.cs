@@ -27,8 +27,18 @@ namespace Apps.Marketo.Actions
         {
             var request = new MarketoRequest($"/rest/asset/v1/emailTemplates.json", Method.Get, Credentials);
 
-            if (input.Status != null) request.AddQueryParameter("status", input.Status);
+            if (!string.IsNullOrEmpty(input.Status)) request.AddQueryParameter("status", input.Status);
             var response = Client.Paginate<EmailTemplateDto>(request);
+
+            if (string.IsNullOrEmpty(input.Status)) 
+            {
+                var requestApproved = new MarketoRequest($"/rest/asset/v1/emailTemplates.json", Method.Get, Credentials);
+                requestApproved.AddQueryParameter("status", "approved");
+                var approvedTemplates = Client.Paginate<EmailTemplateDto>(requestApproved);
+                response.AddRange(approvedTemplates);
+                response = response.DistinctBy(x => x.Id).ToList();
+            } 
+
             return new() { EmailTemplates = response };
         }
 
@@ -48,7 +58,7 @@ namespace Apps.Marketo.Actions
         }
 
         [Action("Create email template", Description = "Create email template")]
-        public EmailTemplateContentResponse CreateEmailTemplate([ActionParameter] CreateEmailTemplateRequest input)
+        public EmailTemplateDto CreateEmailTemplate([ActionParameter] CreateEmailTemplateRequest input)
         {
             var request = new MarketoRequest($"/rest/asset/v1/emailTemplates.json", Method.Post, Credentials);
 
@@ -61,7 +71,7 @@ namespace Apps.Marketo.Actions
                 type = input.FolderId.Split("_").Last()
             }));
 
-            var response = Client.GetSingleEntity<EmailTemplateContentResponse>(request);
+            var response = Client.GetSingleEntity<EmailTemplateDto>(request);
             return response;
         }
 

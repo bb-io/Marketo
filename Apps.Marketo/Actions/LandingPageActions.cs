@@ -327,7 +327,11 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
             var builder = new UriBuilder(imageUrl);
             builder.Host = $"{domain}.mktoweb.com";
 
-            return $"<img src=\"{builder.Uri}\" style=\"width:{sectionContent.FormattingOptions.Width};height:{sectionContent.FormattingOptions.Height};left:{sectionContent.FormattingOptions.Left ?? "0px"};top:{sectionContent.FormattingOptions.Top ?? "0px"};position:absolute\">";
+            var styleAttr = "";
+            if(sectionContent.FormattingOptions != null)
+                styleAttr = $" style=\"width:{sectionContent.FormattingOptions.Width};height:{sectionContent.FormattingOptions.Height};left:{sectionContent.FormattingOptions.Left ?? "0px"};top:{sectionContent.FormattingOptions.Top ?? "0px"};position:absolute\"";
+
+            return $"<img src=\"{builder.Uri}\"{styleAttr}>";
         }
         return sectionContent.Content.ToString();
     }

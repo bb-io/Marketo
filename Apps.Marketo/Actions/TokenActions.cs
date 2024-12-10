@@ -17,7 +17,7 @@ public class TokenActions : MarketoInvocable
     {
     }
 
-    [Action("List tokens", Description = "List all folder tokens")]
+    [Action("Search tokens", Description = "Search all folder tokens")]
     public ListTokensResponse ListTokens([ActionParameter] ListTokensRequest input)
     {
         var endpoint = $"/rest/asset/v1/folder/{input.FolderId.Split("_").First()}/tokens.json"
