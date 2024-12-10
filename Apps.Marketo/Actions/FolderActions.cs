@@ -43,6 +43,9 @@ public class FolderActions : MarketoInvocable
         if (input.UrlContainsFilter != null)
             response = response.Where(x => x.Path.Contains(input.UrlContainsFilter)).ToList();
 
+        if (input.IncludeArchive == null || !input.IncludeArchive.Value)
+            response = response.Where(x => !x.IsArchive).ToList();
+
         response.ForEach(x =>
         {
             x.SearchId = $"{x.Id}_{x.FolderId.Type}"; // TODO: This really shouldn't be necessary anymore. Check if that's true.
