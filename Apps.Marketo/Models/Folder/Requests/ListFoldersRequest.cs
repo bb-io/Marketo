@@ -23,4 +23,7 @@ public class ListFoldersRequest
 
     [Display("URL contains filter", Description = "If set, the results will be filtered by specified string in a folder path")]
     public string? UrlContainsFilter { get; set; }
+
+    [Display("Include archive")]
+    public bool? IncludeArchive { get; set; }
 }
