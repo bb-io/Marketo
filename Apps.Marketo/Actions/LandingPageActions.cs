@@ -17,6 +17,8 @@ using Newtonsoft.Json.Linq;
 using Apps.Marketo.HtmlHelpers;
 using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Utils.Extensions.String;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 
 namespace Apps.Marketo.Actions;
 
@@ -42,6 +44,9 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
             response = response.Where(x => x.UpdatedAt <= input.LatestUpdatedAt.Value).ToList();
 
         response = input.NamePatterns != null ? response.Where(x => IsFilePathMatchingPattern(input.NamePatterns, x.Name, input.ExcludeMatched ?? false)).ToList() : response;
+
+        if (input.IgnoreInArchive.HasValue && input.IgnoreInArchive.Value)
+            response = response.Where(x => !IsAssetInArchieveFolder(x.Folder).Result).ToList();
         return new() { LandingPages = response };
     }
 
@@ -136,7 +141,7 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
         catch (BusinessRuleViolationException e) 
         {
             if (e.Message != $"{input.Id} Landing Page is not approved")
-                throw e;
+                throw new PluginMisconfigurationException(e.Message);
         }
     }
 

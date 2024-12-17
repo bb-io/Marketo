@@ -8,7 +8,7 @@ public class EmailDto
     [Display("Created at")]
     [JsonConverter(typeof(DateTimeConverter))]
     public DateTime CreatedAt { get; set; }
-    public EmailFolder Folder { get; set; }
+    public AssetFolder Folder { get; set; }
     public EmailHeaderField FromEmail { get; set; }
     public EmailHeaderField FromName { get; set; }
 
@@ -52,7 +52,7 @@ public class EmailCCField
     public string ApiName { get; set; }
 }
 
-public class EmailFolder
+public class AssetFolder
 {
     public string Type { get; set; }
     

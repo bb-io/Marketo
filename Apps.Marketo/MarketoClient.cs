@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Apps.Marketo.Dtos;
 using Apps.Marketo.Models;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Utils.Extensions.String;
 using Newtonsoft.Json;
 using RestSharp;
@@ -106,12 +107,12 @@ public class MarketoClient : RestClient
                     JsonConvert.DeserializeObject<ErrorResponse>(retryResponse.Content);
 
                 if (retryErrors.Errors.Any())
-                    throw new ArgumentException(errors.Errors.First().Message);
+                    throw new PluginMisconfigurationException(errors.Errors.First().Message);
 
                 return retryResponse;
             }
 
-            throw new ArgumentException($"Error message: {errors.Errors.First().Message}, Error code: {errors.Errors.First().Code}");
+            throw new PluginMisconfigurationException($"Error message: {errors.Errors.First().Message}, Error code: {errors.Errors.First().Code}");
         }
 
         return response;
