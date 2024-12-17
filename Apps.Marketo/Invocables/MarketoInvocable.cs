@@ -2,6 +2,7 @@ using Apps.Marketo.Dtos;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Blackbird.Applications.Sdk.Utils.Extensions.String;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Newtonsoft.Json;
 using RestSharp;
@@ -64,5 +65,14 @@ public class MarketoInvocable : BaseInvocable
         request.AddQueryParameter("type", folderType);
         var response = Client.Paginate<FolderTypeInfoDto>(request);
         return response.Where(x => x.Type == "Program" || x.Type == "Folder").Select(x => $"{x.Id}_{x.Type}").ToList();
+    }
+
+    protected async Task<bool> IsAssetInArchieveFolder(AssetFolder folderDto)
+    {
+        var endpoint = $"/rest/asset/v1/folder/{folderDto.Value}.json".SetQueryParameter("type", folderDto.Type);
+        var request = new MarketoRequest(endpoint, Method.Get, Credentials);
+        var emailFolderInfo = Client.GetSingleEntity<FolderInfoDto>(request);
+        await Task.Delay(500);
+        return emailFolderInfo.IsArchive;
     }
 }

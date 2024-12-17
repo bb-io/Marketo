@@ -45,7 +45,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
         response = input.NamePatterns != null ? response.Where(x => IsFilePathMatchingPattern(input.NamePatterns, x.Name, input.ExcludeMatched ?? false)).ToList() : response;
 
         if(input.IgnoreInArchive.HasValue && input.IgnoreInArchive.Value)
-            response = response.Where(x => !IsEmailInArchieveFolder(x).Result).ToList();
+            response = response.Where(x => !IsAssetInArchieveFolder(x.Folder).Result).ToList();
 
         return new() { Emails = response };
     }
@@ -503,15 +503,6 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
         var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders, false);
         var response = await client.ExecuteAsync(request);
         return response.Content;
-    }
-
-    private async Task<bool> IsEmailInArchieveFolder(EmailDto emailDto)
-    {
-        var endpoint = $"/rest/asset/v1/folder/{emailDto.Folder.Value}.json".SetQueryParameter("type", emailDto.Folder.Type);
-        var request = new MarketoRequest(endpoint, Method.Get, Credentials);
-        var emailFolderInfo = Client.GetSingleEntity<FolderInfoDto>(request);
-        await Task.Delay(500);
-        return emailFolderInfo.IsArchive;
     }
 
     //[Action("List email dynamic content", Description = "List email dynamic content by segmentation")]

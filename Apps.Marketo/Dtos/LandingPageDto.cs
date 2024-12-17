@@ -21,7 +21,7 @@ public class LandingPageDto
 
     [Display("Facebook OG tags")]
     public string FacebookOgTags { get; set; }
-    public Folder Folder { get; set; }
+    public AssetFolder Folder { get; set; }
 
     [Display("Form prefill")]
     public bool FormPrefill { get; set; }
