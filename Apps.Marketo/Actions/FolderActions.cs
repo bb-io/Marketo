@@ -11,6 +11,7 @@ using Blackbird.Applications.Sdk.Utils.Extensions.String;
 using Newtonsoft.Json;
 using RestSharp;
 using System.Linq;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 
 namespace Apps.Marketo.Actions;
 
@@ -115,11 +116,25 @@ public class FolderActions : MarketoInvocable
 
     [Action("Get program tag value", Description = "Get program tag value")]
     public string GetProgramTagValue([ActionParameter] GetProgramRequest programRequest,
-        [ActionParameter] GetTagTypeRequest tagTypeRequest)
+        [ActionParameter] GetTagTypeRequest tagTypeRequest,
+        [ActionParameter] GetProgramTagRequest programTagRequest)
     {
         var endpoint = $"/rest/asset/v1/program/{programRequest.ProgramId}.json";
         var request = new MarketoRequest(endpoint, Method.Get, Credentials);
         var program = Client.GetSingleEntity<ProgramDto>(request);
-        return program.Tags.FirstOrDefault(x => x.TagType == tagTypeRequest.TagType).TagValue;
+        
+        var tag = program.Tags.FirstOrDefault(x => x.TagType == tagTypeRequest.TagType);
+        if (tag == null)
+        {
+            if (programTagRequest.IgnoreTagNotFoundError == true)
+            {
+                return string.Empty;
+            }
+            
+            var tags = string.Join(", ", program.Tags.Select(x => $"[{x.TagType}] {x.TagValue}").ToList());
+            throw new PluginMisconfigurationException($"We couldn't find the specified tag. All tags: {tags}");
+        }
+        
+        return tag.TagValue;
     }
 }
