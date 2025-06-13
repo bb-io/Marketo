@@ -16,6 +16,7 @@ using Apps.Marketo.HtmlHelpers;
 using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using HtmlAgilityPack;
 using Blackbird.Applications.Sdk.Utils.Extensions.String;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 
 namespace Apps.Marketo.Actions;
 
@@ -62,6 +63,9 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
         [ActionParameter] GetEmailInfoRequest input,
         [ActionParameter] UpdateEmailMetadataRequest updateEmailMetadata)
     {
+        if (string.IsNullOrEmpty(input.EmailId))
+            throw new PluginMisconfigurationException("EmailId cannot be null or empty. Please check your input and try again");
+
         var request = new MarketoRequest($"/rest/asset/v1/email/{input.EmailId}.json", Method.Post, Credentials);
         if (!string.IsNullOrEmpty(updateEmailMetadata.Name))
             request.AddParameter("name", updateEmailMetadata.Name);

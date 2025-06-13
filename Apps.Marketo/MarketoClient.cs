@@ -2,6 +2,7 @@
 using System.Text.Json.Serialization;
 using Apps.Marketo.Dtos;
 using Apps.Marketo.Models;
+using Apps.Marketo.Utils;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Utils.Extensions.String;
@@ -37,9 +38,11 @@ public class MarketoClient : RestClient
         return new($"https://{url}.mktorest.com");
     }
 
-    public T GetSingleEntity<T>(RestRequest request)
+    public  T GetSingleEntity<T>(RestRequest request)
     {
-        var result = ExecuteWithError<T>(request);
+        return ErrorHandler.ExecuteWithErrorHandling<T>(() =>
+        {
+            var result = ExecuteWithError<T>(request);
         if (result.Result == null || !result.Result.Any())
         {
             if (result.Warnings.Any())
@@ -49,7 +52,9 @@ public class MarketoClient : RestClient
             throw new Exception("No single result found");
         }
         return result.Result!.First();
+        });
     }
+   
     
     public BaseResponseDto<T> ExecuteWithError<T>(RestRequest request)
     {
