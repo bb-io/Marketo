@@ -8,7 +8,7 @@ public class MarketoRequest : RestRequest
 {
     public MarketoRequest(string endpoint, Method method, IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders) : base(endpoint, method)
     {
-        this.AddQueryParameter("access_token", GetAccessToken(authenticationCredentialsProviders));
+        this.AddHeader("Authorization", $"Bearer {GetAccessToken(authenticationCredentialsProviders)}");
         this.AddHeader("accept", "*/*");
     }
 
