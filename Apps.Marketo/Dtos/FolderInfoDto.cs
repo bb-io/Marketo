@@ -45,7 +45,7 @@ public class FolderInfoDto
 
 public class Folder {
 
-    [Display("ID")]
+    [Display("Folder ID")]
     public string Id { get; set; }
     public string Type { get; set; }
 }

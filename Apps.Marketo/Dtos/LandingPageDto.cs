@@ -26,7 +26,8 @@ public class LandingPageDto
     [Display("Form prefill")]
     public bool FormPrefill { get; set; }
 
-    
+
+    [Display("Landing page ID")]
     public string Id { get; set; }
     public string Keywords { get; set; }
 
