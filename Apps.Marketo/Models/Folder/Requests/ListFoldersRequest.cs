@@ -16,6 +16,7 @@ public class ListFoldersRequest
     [Display("Max depth")]
     public int? MaxDepth { get; set; }
 
+    [Display("Work space")]
     public string? WorkSpace { get; set; }
 
     [Display("Filter folder types", Description = "If set, the results will be filtered to match one of the folder types")]
