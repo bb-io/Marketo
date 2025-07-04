@@ -154,6 +154,13 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
     {
         var landingInfo = GetLandingInfo(getLandingPageInfoRequest);
         var landingContentResponse = GetLandingContent(getLandingPageInfoRequest);
+
+        if (landingContentResponse.LandingPageContentItems == null
+        || !landingContentResponse.LandingPageContentItems.Any())
+        {
+            throw new PluginMisconfigurationException($"No assets found for landing page ID {getLandingPageInfoRequest.Id}");
+        }
+
         var onlyDynamic = getLandingPageAsHtmlRequest.GetOnlyDynamicContent.HasValue && getLandingPageAsHtmlRequest.GetOnlyDynamicContent.Value;
         var includeImages = getLandingPageAsHtmlRequest.IncludeImages.HasValue && getLandingPageAsHtmlRequest.IncludeImages.Value;
 
@@ -163,6 +170,12 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
             .ToDictionary(
                 x => x.Id,
                 y => GetLandingSectionContent(getLandingPageInfoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, y, includeImages));
+
+        if (!sectionContent.Any())
+        {
+            throw new PluginMisconfigurationException($"No matching content items found for landing page ID {getLandingPageInfoRequest.Id}");
+        }
+
         var resultHtml = HtmlContentBuilder.GenerateHtml(sectionContent, landingInfo.Name, getSegmentBySegmentationRequest.Segment, new(BlackbirdLandingPageId, getLandingPageInfoRequest.Id));
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
