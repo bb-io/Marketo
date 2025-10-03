@@ -47,9 +47,9 @@ public class MarketoClient : RestClient
         {
             if (result.Warnings.Any())
             {
-                throw new Exception(result.Warnings.First());
+                throw new PluginMisconfigurationException(result.Warnings.First());
             }
-            throw new Exception("No single result found");
+            throw new PluginApplicationException("No single result found");
         }
         return result.Result!.First();
         });
