@@ -198,7 +198,7 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
         
         var landingPageInfoRequest = new GetLandingInfoRequest
         {
-            Id = getLandingPageInfoRequest.Id ?? extractedId ?? throw new Exception("Landing page ID is not provided and not found in the HTML file. Please provide value in the optional input.")
+            Id = getLandingPageInfoRequest.Id ?? extractedId ?? throw new PluginMisconfigurationException("Landing page ID is not provided and not found in the HTML file. Please provide value in the optional input.")
         };
         
         var landingContentResponse = GetLandingContent(landingPageInfoRequest);
