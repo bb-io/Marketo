@@ -21,7 +21,7 @@ using System.Text.Json.Serialization;
 
 namespace Apps.Marketo.Actions;
 
-[ActionList]
+[ActionList("Forms")]
 public class FormActions : MarketoInvocable
 {
     private readonly IFileManagementClient _fileManagementClient;

@@ -18,7 +18,7 @@ using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 
 namespace Apps.Marketo.Actions;
 
-[ActionList]
+[ActionList("Snippets")]
 public class SnippetActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : MarketoInvocable(invocationContext)
 {

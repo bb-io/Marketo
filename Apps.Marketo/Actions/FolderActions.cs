@@ -10,12 +10,11 @@ using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Utils.Extensions.String;
 using Newtonsoft.Json;
 using RestSharp;
-using System.Linq;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 
 namespace Apps.Marketo.Actions;
 
-[ActionList]
+[ActionList("Folders")]
 public class FolderActions : MarketoInvocable
 {
     public FolderActions(InvocationContext invocationContext) : base(invocationContext)
