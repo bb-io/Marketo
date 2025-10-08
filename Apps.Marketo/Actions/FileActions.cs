@@ -13,7 +13,7 @@ using Newtonsoft.Json;
 
 namespace Apps.Marketo.Actions;
 
-[ActionList]
+[ActionList("Files")]
 public class FileActions : MarketoInvocable
 {
     private readonly IFileManagementClient _fileManagementClient;

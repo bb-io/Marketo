@@ -12,7 +12,7 @@ using System.Text;
 
 namespace Apps.Marketo.Actions
 {
-    [ActionList]
+    [ActionList("Email templates")]
     public class EmailTemplateActions : MarketoInvocable
     {
         private readonly IFileManagementClient _fileManagementClient;

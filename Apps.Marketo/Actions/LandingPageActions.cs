@@ -1,7 +1,6 @@
 ﻿using Apps.Marketo.Dtos;
 using Apps.Marketo.Invocables;
 using Apps.Marketo.Models.Emails.Requests;
-using Apps.Marketo.Models.Emails.Responses;
 using Apps.Marketo.Models;
 using Apps.Marketo.Models.LandingPages.Requests;
 using Apps.Marketo.Models.LandingPages.Responses;
@@ -16,13 +15,11 @@ using System.Text;
 using Newtonsoft.Json.Linq;
 using Apps.Marketo.HtmlHelpers;
 using Blackbird.Applications.Sdk.Utils.Extensions.Files;
-using Blackbird.Applications.Sdk.Common.Authentication;
-using Blackbird.Applications.Sdk.Utils.Extensions.String;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 
 namespace Apps.Marketo.Actions;
 
-[ActionList]
+[ActionList("Landing pages")]
 public class LandingPageActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : MarketoInvocable(invocationContext)
 {

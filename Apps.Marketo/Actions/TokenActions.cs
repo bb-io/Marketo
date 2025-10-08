@@ -10,7 +10,7 @@ using RestSharp;
 
 namespace Apps.Marketo.Actions;
 
-[ActionList]
+[ActionList("Tokens")]
 public class TokenActions : MarketoInvocable
 {
     public TokenActions(InvocationContext invocationContext) : base(invocationContext)
