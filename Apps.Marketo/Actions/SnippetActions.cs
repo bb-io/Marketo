@@ -37,12 +37,11 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
             response = response.Where(x => x.UpdatedAt <= input.LatestUpdatedAt.Value).ToList();
 
         response = input.NamePatterns != null ? response.Where(x => IsFilePathMatchingPattern(input.NamePatterns, x.Name, input.ExcludeMatched ?? false)).ToList() : response;
-        return new()
-        {
-            Snippets = string.IsNullOrEmpty(input.FolderId) ? 
-                        response : 
-                        response.Where(x => x.Folder.Value.ToString() == input.FolderId.Split("_").First()).ToList()
-        };
+
+        var result = string.IsNullOrEmpty(input.FolderId) ?
+            response :
+            response.Where(x => x.Folder.Value.ToString() == input.FolderId.Split("_").First()).ToList();
+        return new(result);
     }
 
     [Action("Get snippet info", Description = "Get snippet info")]
@@ -203,18 +202,4 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
         throw new ArgumentException("Segmentation does not match! " +
             "Looks like you choosed one segmentation, but your snippet already is segmented by another segmentation");
     }
-
-    //Deprecated
-    //[Action("Update snippet content", Description = "Update content of a specific snippet")]
-    //public void UpdateSnippetContent(
-    //    [ActionParameter] SnippetRequest snippetRequest,
-    //    [ActionParameter] UpdateContentRequest input)
-    //{
-    //    var request = new MarketoRequest($"/rest/asset/v1/snippet/{snippetRequest.SnippetId}/content.json", Method.Post,
-    //            Credentials)
-    //        .AddParameter("type", input.Type)
-    //        .AddParameter("content", input.Content);
-
-    //    Client.ExecuteWithErrorHandling(request);
-    //}
 }

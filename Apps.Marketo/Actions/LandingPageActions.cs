@@ -24,8 +24,6 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
     : MarketoInvocable(invocationContext)
 {
     private const string BlackbirdLandingPageId = "blackbird-landing-page-id";
-    private const string ContextImageAttribute = "data-blackbird-image";
-    private const string BlackbirdEmailIdAttribute = "blackbird-email-id";
 
     [Action("Search landing pages", Description = "Search landing pages")]
     public ListLandingPagesResponse ListLandingPages([ActionParameter] ListLandingPagesRequest input)
@@ -44,7 +42,7 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
 
         if (input.IgnoreInArchive.HasValue && input.IgnoreInArchive.Value)
             response = response.Where(x => !IsAssetInArchieveFolder(x.Folder).Result).ToList();
-        return new() { LandingPages = response };
+        return new(response);
     }
 
     [Action("Get landing page info", Description = "Get landing page info")]

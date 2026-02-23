@@ -22,16 +22,9 @@ using System.Text.Json.Serialization;
 namespace Apps.Marketo.Actions;
 
 [ActionList("Forms")]
-public class FormActions : MarketoInvocable
+public class FormActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) 
+    : MarketoInvocable(invocationContext)
 {
-    private readonly IFileManagementClient _fileManagementClient;
-
-    public FormActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
-        : base(invocationContext)
-    {
-        _fileManagementClient = fileManagementClient;
-    }
-
     [Action("Get form", Description = "Get specified form.")]
     public FormDto GetForm([ActionParameter] GetFormRequest input)
     {
@@ -56,7 +49,7 @@ public class FormActions : MarketoInvocable
             forms = forms.Where(x => x.UpdatedAt <= input.LatestUpdatedAt.Value).ToList();
 
         forms = input.NamePatterns != null ? forms.Where(x => IsFilePathMatchingPattern(input.NamePatterns, x.Name, input.ExcludeMatched ?? false)).ToList() : forms;
-        return new() { Forms = forms };
+        return new(forms);
     }
 
     [Action("Search forms fields", Description = "Search forms fields")]
@@ -94,7 +87,7 @@ public class FormActions : MarketoInvocable
         var resultHtml = $"<html><body>{fieldsHtml}</body></html>";
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
-        var file = _fileManagementClient
+        var file = fileManagementClient
             .UploadAsync(stream, MediaTypeNames.Text.Html, $"{form.Name.Replace(" ", "_")}.html").Result;
         return new() { File = file };
     }
@@ -111,7 +104,7 @@ public class FormActions : MarketoInvocable
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
         };
 
-        var formBytes =_fileManagementClient.DownloadAsync(form.File).Result.GetByteData().Result;
+        var formBytes = fileManagementClient.DownloadAsync(form.File).Result.GetByteData().Result;
         var html = Encoding.UTF8.GetString(formBytes);
         var (formDto, formFields) = HtmlToFormConverter.ConvertToForm(html, Credentials);
         

@@ -3,8 +3,8 @@ using Blackbird.Applications.Sdk.Common;
 
 namespace Apps.Marketo.Models.LandingPages.Responses;
 
-public class ListLandingPagesResponse
+public record ListLandingPagesResponse(List<LandingPageDto> LandingPages)
 {
     [Display("Landing pages")]
-    public IEnumerable<LandingPageDto> LandingPages { get; set; }
+    public List<LandingPageDto> LandingPages { get; set; } = LandingPages;
 }

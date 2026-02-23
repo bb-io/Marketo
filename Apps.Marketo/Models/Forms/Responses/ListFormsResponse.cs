@@ -2,7 +2,4 @@
 
 namespace Apps.Marketo.Models.Forms.Responses;
 
-public class ListFormsResponse
-{
-    public IEnumerable<FormDto> Forms { get; set; }
-}
+public record ListFormsResponse(List<FormDto> Forms);

@@ -15,12 +15,8 @@ using Blackbird.Applications.Sdk.Common.Exceptions;
 namespace Apps.Marketo.Actions;
 
 [ActionList("Folders")]
-public class FolderActions : MarketoInvocable
+public class FolderActions(InvocationContext invocationContext) : MarketoInvocable(invocationContext)
 {
-    public FolderActions(InvocationContext invocationContext) : base(invocationContext)
-    {
-    }
-
     [Action("Search folders", Description = "Search folders")]
     public ListFoldersResponse ListFolders([ActionParameter] ListFoldersRequest input)
     {

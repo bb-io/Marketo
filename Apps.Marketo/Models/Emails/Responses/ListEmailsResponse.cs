@@ -2,7 +2,4 @@
 
 namespace Apps.Marketo.Models.Emails.Responses;
 
-public class ListEmailsResponse
-{
-    public List<EmailDto> Emails { get; set; }
-}
+public record ListEmailsResponse(List<EmailDto> Emails);

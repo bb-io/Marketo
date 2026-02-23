@@ -14,16 +14,9 @@ using Newtonsoft.Json;
 namespace Apps.Marketo.Actions;
 
 [ActionList("Files")]
-public class FileActions : MarketoInvocable
+public class FileActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) 
+    : MarketoInvocable(invocationContext)
 {
-    private readonly IFileManagementClient _fileManagementClient;
-
-    public FileActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
-        : base(invocationContext)
-    {
-        _fileManagementClient = fileManagementClient;
-    }
-
     [Action("Search all files", Description = "Search all files")]
     public ListFilesResponse ListFiles()
     {
@@ -56,7 +49,7 @@ public class FileActions : MarketoInvocable
     public void UpdateFile([ActionParameter] UpdateFileRequest input)
     {
         var fileInfo = GetFileInfo(input);
-        var fileBytes = _fileManagementClient.DownloadAsync(input.File).Result.GetByteData().Result;
+        var fileBytes = fileManagementClient.DownloadAsync(input.File).Result.GetByteData().Result;
 
         var request = new MarketoRequest($"/rest/asset/v1/file/{input.FileId}/content.json", Method.Post, Credentials)
             .AddFile("file", fileBytes, input.File.Name, fileInfo.MimeType)
@@ -68,7 +61,7 @@ public class FileActions : MarketoInvocable
     [Action("Upload file", Description = "Upload file")]
     public FileInfoDto UploadFile([ActionParameter] UploadFileRequest input)
     {
-        var fileBytes = _fileManagementClient.DownloadAsync(input.File).Result.GetByteData().Result;
+        var fileBytes = fileManagementClient.DownloadAsync(input.File).Result.GetByteData().Result;
 
         var request = new MarketoRequest("/rest/asset/v1/files.json", Method.Post, Credentials)
             .AddParameter("name", input.File.Name)

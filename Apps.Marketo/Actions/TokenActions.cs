@@ -11,12 +11,8 @@ using RestSharp;
 namespace Apps.Marketo.Actions;
 
 [ActionList("Tokens")]
-public class TokenActions : MarketoInvocable
+public class TokenActions(InvocationContext invocationContext) : MarketoInvocable(invocationContext)
 {
-    public TokenActions(InvocationContext invocationContext) : base(invocationContext)
-    {
-    }
-
     [Action("Search tokens", Description = "Search all folder tokens")]
     public ListTokensResponse ListTokens([ActionParameter] ListTokensRequest input)
     {
