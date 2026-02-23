@@ -18,6 +18,7 @@ using RestSharp;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 using Apps.Marketo.DataSourceHandlers.FolderDataHandlers;
 using System.Text.Json.Serialization;
+using Apps.Marketo.Models.Identifiers;
 
 namespace Apps.Marketo.Actions;
 
@@ -26,7 +27,7 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
     : MarketoInvocable(invocationContext)
 {
     [Action("Get form", Description = "Get specified form.")]
-    public FormDto GetForm([ActionParameter] GetFormRequest input)
+    public FormDto GetForm([ActionParameter] FormIdentifier input)
     {
         var endpoint = $"/rest/asset/v1/form/{input.FormId}.json";
         var request = new MarketoRequest(endpoint, Method.Get, Credentials);
@@ -62,7 +63,7 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
 
     [Action("Update form metadata", Description = "Update form metadata")]
     public FormDto UpdateEmailMetadata(
-        [ActionParameter] GetFormRequest input,
+        [ActionParameter] FormIdentifier input,
         [ActionParameter] UpdateFormMetadataRequest updateFormMetadata)
     {
         var request = new MarketoRequest($"/rest/asset/v1/form/{input.FormId}.json", Method.Post, Credentials);       
@@ -74,7 +75,8 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
     }
 
     [Action("Get form as HTML for translation", Description = "Retrieve a form as HTML file for translation.")]
-    public async Task<FileWrapper> GetFormAsHtml([ActionParameter] GetFormRequest input,
+    public async Task<FileWrapper> GetFormAsHtml(
+        [ActionParameter] FormIdentifier input,
         [ActionParameter] IgnoreFieldsRequest ignoreFieldsRequest)
     {
         var getFormRequest = new MarketoRequest($"/rest/asset/v1/form/{input.FormId}.json", Method.Get, Credentials);
@@ -93,7 +95,8 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
     }
 
     [Action("Create or update form from translated HTML", Description = "Create or update form from translated HTML.")]
-    public FormDto SetFormFromHtml([ActionParameter] FileWrapper form,
+    public FormDto SetFormFromHtml(
+        [ActionParameter] FileWrapper form,
         [ActionParameter] [DataSource(typeof(FormFolderDataHandler))] [Display("Folder")] string? folderId,
         [ActionParameter] UpdateFormRequest updateFormRequest)
     {

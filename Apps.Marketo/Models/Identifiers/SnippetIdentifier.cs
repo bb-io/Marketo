@@ -2,11 +2,10 @@ using Apps.Marketo.DataSourceHandlers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 
-namespace Apps.Marketo.Models.Snippets.Request;
+namespace Apps.Marketo.Models.Identifiers;
 
-public class SnippetRequest
+public class SnippetIdentifier
 {
-    [Display("Snippet ID")]
-    [DataSource(typeof(SnippetDataHandler))]
+    [Display("Snippet ID"), DataSource(typeof(SnippetDataHandler))]
     public string SnippetId { get; set; }
 }

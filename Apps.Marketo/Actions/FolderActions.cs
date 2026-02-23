@@ -2,7 +2,6 @@
 using Apps.Marketo.Invocables;
 using Apps.Marketo.Models.Folder.Requests;
 using Apps.Marketo.Models.Folder.Responses;
-using Apps.Marketo.Models.Program.Request;
 using Apps.Marketo.Models.Tags.Request;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
@@ -11,6 +10,7 @@ using Blackbird.Applications.Sdk.Utils.Extensions.String;
 using Newtonsoft.Json;
 using RestSharp;
 using Blackbird.Applications.Sdk.Common.Exceptions;
+using Apps.Marketo.Models.Identifiers;
 
 namespace Apps.Marketo.Actions;
 
@@ -92,9 +92,10 @@ public class FolderActions(InvocationContext invocationContext) : MarketoInvocab
     }
 
     [Action("Add tag to program", Description = "Add tag to program")]
-    public void AddTagToFolder([ActionParameter] GetProgramRequest programRequest,
-        [ActionParameter] GetTagTypeRequest tagTypeRequest,
-        [ActionParameter] GetTagValueRequest tagValueRequest)
+    public void AddTagToFolder(
+        [ActionParameter] ProgramIdentifier programRequest,
+        [ActionParameter] TagTypeIdentifier tagTypeRequest,
+        [ActionParameter] TagValueIdentifier tagValueRequest)
     {
         var endpoint = $"/rest/asset/v1/program/{programRequest.ProgramId}.json";
         var request = new MarketoRequest(endpoint, Method.Post, Credentials);
@@ -110,8 +111,9 @@ public class FolderActions(InvocationContext invocationContext) : MarketoInvocab
     }
 
     [Action("Get program tag value", Description = "Get program tag value")]
-    public string GetProgramTagValue([ActionParameter] GetProgramRequest programRequest,
-        [ActionParameter] GetTagTypeRequest tagTypeRequest,
+    public string GetProgramTagValue(
+        [ActionParameter] ProgramIdentifier programRequest,
+        [ActionParameter] TagTypeIdentifier tagTypeRequest,
         [ActionParameter] GetProgramTagRequest programTagRequest)
     {
         var endpoint = $"/rest/asset/v1/program/{programRequest.ProgramId}.json";

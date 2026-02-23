@@ -1,5 +1,5 @@
 ﻿using Apps.Marketo.Dtos;
-using Apps.Marketo.Models.Tags.Request;
+using Apps.Marketo.Models.Identifiers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Invocation;
@@ -9,8 +9,8 @@ namespace Apps.Marketo.DataSourceHandlers
 {
     public class TagValueDataHandler : BaseInvocable, IAsyncDataSourceHandler
     {
-        public GetTagTypeRequest GetTagTypeRequest {  get; set; }
-        public TagValueDataHandler(InvocationContext invocationContext, [ActionParameter] GetTagTypeRequest getTagTypeRequest) : base(invocationContext)
+        public TagTypeIdentifier GetTagTypeRequest {  get; set; }
+        public TagValueDataHandler(InvocationContext invocationContext, [ActionParameter] TagTypeIdentifier getTagTypeRequest) : base(invocationContext)
         {
             GetTagTypeRequest = getTagTypeRequest;
         }

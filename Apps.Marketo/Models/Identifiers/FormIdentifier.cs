@@ -2,11 +2,10 @@
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 
-namespace Apps.Marketo.Models.Forms.Requests;
+namespace Apps.Marketo.Models.Identifiers;
 
-public class GetFormRequest
+public class FormIdentifier
 {
-    [Display("Form")]
-    [DataSource(typeof(FormDataHandler))]
+    [Display("Form ID"), DataSource(typeof(FormDataHandler))]
     public string FormId { get; set; }
 }

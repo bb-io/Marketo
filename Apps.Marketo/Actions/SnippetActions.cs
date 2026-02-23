@@ -1,7 +1,6 @@
 using Apps.Marketo.Dtos;
 using Apps.Marketo.HtmlHelpers;
 using Apps.Marketo.Invocables;
-using Apps.Marketo.Models.Emails.Requests;
 using Apps.Marketo.Models;
 using Apps.Marketo.Models.Snippets.Request;
 using Apps.Marketo.Models.Snippets.Response;
@@ -15,6 +14,7 @@ using System.Net.Mime;
 using System.Text;
 using Apps.Marketo.Models.Entities;
 using Blackbird.Applications.Sdk.Utils.Extensions.Files;
+using Apps.Marketo.Models.Identifiers;
 
 namespace Apps.Marketo.Actions;
 
@@ -45,7 +45,7 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
     }
 
     [Action("Get snippet info", Description = "Get snippet info")]
-    public SnippetDto GetSnippetInfo([ActionParameter] SnippetRequest snippetRequest)
+    public SnippetDto GetSnippetInfo([ActionParameter] SnippetIdentifier snippetRequest)
     {
         var endpoit = $"/rest/asset/v1/snippet/{snippetRequest.SnippetId}.json";
         var request = new MarketoRequest(endpoit, Method.Get, Credentials);
@@ -54,7 +54,7 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
     }
 
     [Action("Get snippet content", Description = "Get content of a specific snippet")]
-    public ListSnippetContentResponse GetSnippetContent([ActionParameter] SnippetRequest snippetRequest)
+    public ListSnippetContentResponse GetSnippetContent([ActionParameter] SnippetIdentifier snippetRequest)
     {
         var request = new MarketoRequest($"/rest/asset/v1/snippet/{snippetRequest.SnippetId}/content.json", Method.Get,
             Credentials);
@@ -83,7 +83,7 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
 
     [Action("Update snippet metadata", Description = "Update snippet metadata")]
     public SnippetDto UpdateSnippetMetadata(
-        [ActionParameter] SnippetRequest input,
+        [ActionParameter] SnippetIdentifier input,
         [ActionParameter] UpdateSnippetMetadataRequest updateSnippetMetadata)
     {
         var request = new MarketoRequest($"/rest/asset/v1/snippet/{input.SnippetId}.json", Method.Post, Credentials);
@@ -96,9 +96,9 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
 
     [Action("Get snippet as HTML for translation", Description = "Get snippet as HTML for translation")]
     public async Task<FileWrapper> GetSnippetAsHtml(
-        [ActionParameter] SnippetRequest getSnippetRequest,
-        [ActionParameter] GetSegmentationRequest getSegmentationRequest,
-        [ActionParameter] GetSegmentBySegmentationRequest getSegmentBySegmentationRequest)
+        [ActionParameter] SnippetIdentifier getSnippetRequest,
+        [ActionParameter] SegmentationIdentifier getSegmentationRequest,
+        [ActionParameter] SegmentIdentifier getSegmentBySegmentationRequest)
     {
         var snippetInfo = GetSnippetInfo(getSnippetRequest);
         var snippetContentResponse = GetSnippetContent(getSnippetRequest);
@@ -123,8 +123,8 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
     [Action("Translate snippet from HTML file", Description = "Translate snippet from HTML file")]
     public async Task TranslateSnippetWithHtml(
         [ActionParameter] SnippetOptionalRequest getSnippetRequest,
-        [ActionParameter] GetSegmentationRequest getSegmentationRequest,
-        [ActionParameter] GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
+        [ActionParameter] SegmentationIdentifier getSegmentationRequest,
+        [ActionParameter] SegmentIdentifier getSegmentBySegmentationRequest,
         [ActionParameter] TranslateSnippetWithHtmlRequest translateSnippetWithHtmlRequest)
     {
         var stream = await fileManagementClient.DownloadAsync(translateSnippetWithHtmlRequest.File);
@@ -132,7 +132,7 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
         var html = Encoding.UTF8.GetString(bytes);
         
         var extractedSnippetId = HtmlContentBuilder.ExtractIdFromMeta(html, BlackbirdSnippetId);
-        var snippetRequest = new SnippetRequest
+        var snippetRequest = new SnippetIdentifier
         {
             SnippetId = getSnippetRequest.SnippetId ?? extractedSnippetId ??
                 throw new Exception(
@@ -168,7 +168,7 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
     }
 
     private IdDto UpdateSnippetDynamicContent(
-        SnippetRequest getSnippetRequest,
+        SnippetIdentifier getSnippetRequest,
         string segmentId,
         string contentType,
         string content)
@@ -187,9 +187,9 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
     }
 
     private List<SnippetSegmentDto> GetSnippetDynamicContent(
-        SnippetRequest getSnippetRequest,
-        GetSegmentationRequest getSegmentationRequest,
-        GetSegmentBySegmentationRequest getSegmentBySegmentationRequest)
+        SnippetIdentifier getSnippetRequest,
+        SegmentationIdentifier getSegmentationRequest,
+        SegmentIdentifier getSegmentBySegmentationRequest)
     {
         var requestSeg = new MarketoRequest(
                 $"/rest/asset/v1/snippet/{getSnippetRequest.SnippetId}/dynamicContent.json",

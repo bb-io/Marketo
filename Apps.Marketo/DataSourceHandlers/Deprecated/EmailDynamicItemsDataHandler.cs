@@ -3,15 +3,15 @@ using Blackbird.Applications.Sdk.Common;
 using Apps.Marketo.Dtos;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using RestSharp;
-using Apps.Marketo.Models.Emails.Requests;
+using Apps.Marketo.Models.Identifiers;
 
 namespace Apps.Marketo.DataSourceHandlers.Deprecated
 {
     public class EmailDynamicItemsDataHandler : BaseInvocable, IAsyncDataSourceHandler
     {
-        public GetEmailInfoRequest EmailInfoRequest { get; set; }
+        public EmailIdentifier EmailInfoRequest { get; set; }
         public EmailDynamicItemsDataHandler(InvocationContext invocationContext,
-            [ActionParameter] GetEmailInfoRequest emailInfoRequest) : base(invocationContext)
+            [ActionParameter] EmailIdentifier emailInfoRequest) : base(invocationContext)
         {
             EmailInfoRequest = emailInfoRequest;
         }

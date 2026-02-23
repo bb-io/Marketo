@@ -2,11 +2,10 @@
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 
-namespace Apps.Marketo.Models.Files.Requests;
+namespace Apps.Marketo.Models.Identifiers;
 
-public class GetFileInfoRequest
+public class FileIdentifier
 {
-    [Display("File")]
-    [DataSource(typeof(FileDataHandler))]
+    [Display("File ID"), DataSource(typeof(FileDataHandler))]
     public string FileId { get; set; }
 }

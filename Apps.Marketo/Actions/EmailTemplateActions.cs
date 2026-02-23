@@ -2,10 +2,10 @@
 using Apps.Marketo.Invocables;
 using Apps.Marketo.Models.EmailTemplates.Requests;
 using Apps.Marketo.Models.EmailTemplates.Response;
+using Apps.Marketo.Models.Identifiers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Invocation;
-using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Newtonsoft.Json;
 using RestSharp;
 using System.Text;
@@ -36,14 +36,14 @@ public class EmailTemplateActions(InvocationContext invocationContext) : Marketo
     }
 
     [Action("Get email template info", Description = "Get email template info")]
-    public EmailTemplateDto GetEmailTemplateInfo([ActionParameter] GetEmailTemplateRequest input)
+    public EmailTemplateDto GetEmailTemplateInfo([ActionParameter] EmailTemplateIdentifier input)
     {
         var request = new MarketoRequest($"/rest/asset/v1/emailTemplate/{input.EmailTemplateId}.json", Method.Get, Credentials);
         return Client.GetSingleEntity<EmailTemplateDto>(request);
     }
 
     [Action("Get email template content", Description = "Get email template content")]
-    public EmailTemplateContentResponse GetEmailTemplateContent([ActionParameter] GetEmailTemplateRequest input)
+    public EmailTemplateContentResponse GetEmailTemplateContent([ActionParameter] EmailTemplateIdentifier input)
     {
         var request = new MarketoRequest($"/rest/asset/v1/emailTemplate/{input.EmailTemplateId}/content.json", Method.Get, Credentials);
         var response = Client.GetSingleEntity<EmailTemplateContentResponse>(request);
@@ -69,7 +69,7 @@ public class EmailTemplateActions(InvocationContext invocationContext) : Marketo
     }
 
     [Action("Update email template content", Description = "Update email template content")]
-    public void UpdateEmailTemplateContent([ActionParameter] GetEmailTemplateRequest input,
+    public void UpdateEmailTemplateContent([ActionParameter] EmailTemplateIdentifier input,
         [ActionParameter] UpdateEmailTemplateContentRequest emailTemplateContentRequest)
     {
         var request = new MarketoRequest($"/rest/asset/v1/emailTemplate/{input.EmailTemplateId}/content.json", Method.Post, Credentials);
@@ -78,14 +78,14 @@ public class EmailTemplateActions(InvocationContext invocationContext) : Marketo
     }
 
     [Action("Delete email template", Description = "Delete email template")]
-    public void DeleteEmailTemplate([ActionParameter] GetEmailTemplateRequest input)
+    public void DeleteEmailTemplate([ActionParameter] EmailTemplateIdentifier input)
     {
         var request = new MarketoRequest($"/rest/asset/v1/emailTemplate/{input.EmailTemplateId}/delete.json", Method.Post, Credentials);
         Client.ExecuteWithError<IdDto>(request);
     }
 
     [Action("Approve email template draft", Description = "Approve email template draft")]
-    public EmailTemplateDto ApproveEmailTemplateDraft([ActionParameter] GetEmailTemplateRequest input)
+    public EmailTemplateDto ApproveEmailTemplateDraft([ActionParameter] EmailTemplateIdentifier input)
     {
         var request = new MarketoRequest($"/rest/asset/v1/emailTemplate/{input.EmailTemplateId}/approveDraft.json", Method.Post, Credentials);
         return Client.GetSingleEntity<EmailTemplateDto>(request);

@@ -1,5 +1,5 @@
 ﻿using Apps.Marketo.Dtos;
-using Apps.Marketo.Models.Emails.Requests;
+using Apps.Marketo.Models.Identifiers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Invocation;
@@ -9,8 +9,8 @@ namespace Apps.Marketo.DataSourceHandlers
 {
     public class SegmentBySegmentationDataHandler : BaseInvocable, IAsyncDataSourceHandler
     {
-        public GetSegmentationRequest SegmentationRequest { get; set; }
-        public SegmentBySegmentationDataHandler(InvocationContext invocationContext, [ActionParameter] GetSegmentationRequest segmentationRequest) : base(invocationContext)
+        public SegmentationIdentifier SegmentationRequest { get; set; }
+        public SegmentBySegmentationDataHandler(InvocationContext invocationContext, [ActionParameter] SegmentationIdentifier segmentationRequest) : base(invocationContext)
         {
             SegmentationRequest = segmentationRequest;
         }

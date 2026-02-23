@@ -16,6 +16,8 @@ using Apps.Marketo.HtmlHelpers;
 using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using HtmlAgilityPack;
 using Blackbird.Applications.Sdk.Common.Exceptions;
+using Apps.Marketo.Models.Identifiers;
+using Apps.Marketo.Models.Identifiers.Optional;
 
 namespace Apps.Marketo.Actions;
 
@@ -50,7 +52,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
     }
 
     [Action("Get email info", Description = "Get email info")]
-    public EmailDto GetEmailInfo([ActionParameter] GetEmailInfoRequest input)
+    public EmailDto GetEmailInfo([ActionParameter] EmailIdentifier input)
     {
         var request = new MarketoRequest($"/rest/asset/v1/email/{input.EmailId}.json", Method.Get, Credentials);
         return Client.GetSingleEntity<EmailDto>(request);
@@ -58,7 +60,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
 
     [Action("Update email metadata", Description = "Update email metadata")]
     public EmailDto UpdateEmailMetadata(
-        [ActionParameter] GetEmailInfoRequest input,
+        [ActionParameter] EmailIdentifier input,
         [ActionParameter] UpdateEmailMetadataRequest updateEmailMetadata)
     {
         if (string.IsNullOrEmpty(input.EmailId))
@@ -73,7 +75,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
     }
 
     [Action("Get email content", Description = "Get email content")]
-    public EmailContentUserFriendlyResponse GetEmailContent([ActionParameter] GetEmailInfoRequest input)
+    public EmailContentUserFriendlyResponse GetEmailContent([ActionParameter] EmailIdentifier input)
     {
         var request = new MarketoRequest($"/rest/asset/v1/email/{input.EmailId}/content.json", Method.Get, Credentials);
         var response = Client.ExecuteWithError<EmailContentDto>(request);
@@ -81,7 +83,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
     }
 
     [Action("Delete email", Description = "Delete email")]
-    public void DeleteEmail([ActionParameter] GetEmailInfoRequest input)
+    public void DeleteEmail([ActionParameter] EmailIdentifier input)
     {
         var request = new MarketoRequest($"/rest/asset/v1/email/{input.EmailId}/delete.json", Method.Post, Credentials);
         Client.ExecuteWithError<IdDto>(request);
@@ -89,9 +91,9 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
 
     [Action("Get email as HTML for translation", Description = "Get email as HTML for translation")]
     public async Task<FileWrapper> GetEmailAsHtml(
-        [ActionParameter] GetEmailInfoRequest getEmailInfoRequest,
-        [ActionParameter] GetSegmentationRequest getSegmentationRequest,
-        [ActionParameter] GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
+        [ActionParameter] EmailIdentifier getEmailInfoRequest,
+        [ActionParameter] SegmentationIdentifier getSegmentationRequest,
+        [ActionParameter] SegmentIdentifier getSegmentBySegmentationRequest,
         [ActionParameter] GetEmailAsHtmlRequest getEmailAsHtmlRequest)
     {
         var emailInfo = GetEmailInfo(getEmailInfoRequest);
@@ -129,9 +131,9 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
 
     [Action("Translate email from HTML file", Description = "Translate email from HTML file")]
     public async Task<TranslateEmailWithHtmlResponse> TranslateEmailWithHtml(
-        [ActionParameter] GetEmailInfoOptionalRequest getEmailInfoRequest,
-        [ActionParameter] GetSegmentationRequest getSegmentationRequest,
-        [ActionParameter] GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
+        [ActionParameter] OptionalEmailIdenfitier getEmailInfoRequest,
+        [ActionParameter] SegmentationIdentifier getSegmentationRequest,
+        [ActionParameter] SegmentIdentifier getSegmentBySegmentationRequest,
         [ActionParameter] TranslateEmailWithHtmlRequest translateEmailWithHtmlRequest)
     {
         var stream = await fileManagementClient.DownloadAsync(translateEmailWithHtmlRequest.File);
@@ -141,7 +143,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
         var extractedMeta = HtmlContentBuilder.ExtractIdFromMeta(html, BlackbirdEmailIdAttribute);
         var translatedContent = HtmlContentBuilder.ParseHtml(html);
 
-        var infoRequest = new GetEmailInfoRequest
+        var infoRequest = new EmailIdentifier
         {
             EmailId = getEmailInfoRequest.EmailId ?? extractedMeta ?? throw new Exception("Email ID is not provided and not found in the HTML file. Please provide value in the optional input Email ID.") 
         };
@@ -233,9 +235,9 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
     }
 
     private string UpdateEmailDynamicContent(
-        GetEmailInfoRequest getEmailInfoRequest,
-        GetSegmentationRequest getSegmentationRequest,
-        GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
+        EmailIdentifier getEmailInfoRequest,
+        SegmentationIdentifier getSegmentationRequest,
+        SegmentIdentifier getSegmentBySegmentationRequest,
         EmailContentDto dynamicContentItem,
         string content,
         List<EmailContentDto> emailContentItems,
@@ -325,9 +327,9 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
     }
 
     private string? GetEmailSectionContent(
-        GetEmailInfoRequest getEmailInfoRequest,
-        GetSegmentationRequest getSegmentationRequest,
-        GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
+        EmailIdentifier getEmailInfoRequest,
+        SegmentationIdentifier getSegmentationRequest,
+        SegmentIdentifier getSegmentBySegmentationRequest,
         EmailContentDto sectionContent,
         bool includeImages = false)
     {
@@ -385,7 +387,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
         return string.Empty;
     }
 
-    private EmailContentResponse GetEmailContentAll([ActionParameter] GetEmailInfoRequest input)
+    private EmailContentResponse GetEmailContentAll([ActionParameter] EmailIdentifier input)
     {
         var request = new MarketoRequest($"/rest/asset/v1/email/{input.EmailId}/content.json", Method.Get, Credentials);
         var response = Client.ExecuteWithError<EmailContentDto>(request);
@@ -393,9 +395,9 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
     }
 
     private string RecreateModuleWithIssue(
-        GetEmailInfoRequest getEmailInfoRequest,
-        GetSegmentationRequest getSegmentationRequest,
-        GetSegmentBySegmentationRequest getSegmentBySegmentationRequest,
+        EmailIdentifier getEmailInfoRequest,
+        SegmentationIdentifier getSegmentationRequest,
+        SegmentIdentifier getSegmentBySegmentationRequest,
         EmailContentDto dynamicContentItem, 
         List<EmailContentDto> emailContentItems,
         Dictionary<string, string> translatedContent,
@@ -450,7 +452,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
 
     [Action("Get email dynamic content", Description = "Get email dynamic content")]
     public DynamicContentDto<EmailBaseSegmentDto> GetEmailDynamicContent(
-        [ActionParameter] GetEmailInfoRequest getEmailInfoRequest,
+        [ActionParameter] EmailIdentifier getEmailInfoRequest,
         [ActionParameter] GetEmailDynamicItemRequest getEmailDynamicItemRequest,
         [ActionParameter] GetEmailSegmentRequest getSegmentRequest)
     {
@@ -462,7 +464,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
 
     [Action("Get email dynamic image content", Description = "Get email dynamic image content")]
     public DynamicContentDto<EmailImageSegmentDto> GetEmailDynamicImageContent(
-       [ActionParameter] GetEmailInfoRequest getEmailInfoRequest,
+       [ActionParameter] EmailIdentifier getEmailInfoRequest,
        [ActionParameter] GetEmailDynamicItemRequest getEmailDynamicItemRequest,
        [ActionParameter] GetEmailSegmentRequest getSegmentRequest)
     {

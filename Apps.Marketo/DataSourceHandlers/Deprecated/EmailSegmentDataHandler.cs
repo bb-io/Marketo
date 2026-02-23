@@ -4,15 +4,16 @@ using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Common;
 using RestSharp;
+using Apps.Marketo.Models.Identifiers;
 
 namespace Apps.Marketo.DataSourceHandlers.Deprecated
 {
     public class EmailSegmentDataHandler : BaseInvocable, IAsyncDataSourceHandler
     {
-        public GetEmailInfoRequest EmailInfoRequest { get; set; }
+        public EmailIdentifier EmailInfoRequest { get; set; }
         public GetEmailDynamicItemRequest DynamicItemRequest { get; set; }
         public EmailSegmentDataHandler(InvocationContext invocationContext,
-            [ActionParameter] GetEmailInfoRequest emailInfoRequest,
+            [ActionParameter] EmailIdentifier emailInfoRequest,
             [ActionParameter] GetEmailDynamicItemRequest dynamicItemRequest) : base(invocationContext)
         {
             EmailInfoRequest = emailInfoRequest;

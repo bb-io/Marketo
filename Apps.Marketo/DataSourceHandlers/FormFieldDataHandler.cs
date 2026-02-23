@@ -1,5 +1,5 @@
 ﻿using Apps.Marketo.Dtos;
-using Apps.Marketo.Models.Forms.Requests;
+using Apps.Marketo.Models.Identifiers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Invocation;
@@ -9,9 +9,9 @@ namespace Apps.Marketo.DataSourceHandlers
 {
     public class FormFieldDataHandler : BaseInvocable, IDataSourceHandler
     {
-        public GetFormRequest GetFormRequest { get; set; }
+        public FormIdentifier GetFormRequest { get; set; }
 
-        public FormFieldDataHandler(InvocationContext invocationContext, [ActionParameter] GetFormRequest getFormRequest) : base(invocationContext)
+        public FormFieldDataHandler(InvocationContext invocationContext, [ActionParameter] FormIdentifier getFormRequest) : base(invocationContext)
         {
             GetFormRequest = getFormRequest;
         }

@@ -48,30 +48,26 @@ public class TokenActions(InvocationContext invocationContext) : MarketoInvocabl
     }
 
     [Action("Create token", Description = "Create a new token")]
-    public TokenDto CreateToken(
-        [ActionParameter] ListTokensRequest folderRequest,
-        [ActionParameter] CreateTokenRequest input)
+    public TokenDto CreateToken([ActionParameter] CreateTokenRequest input)
     {
-        var endpoint = $"/rest/asset/v1/folder/{folderRequest.FolderId.Split("_").First()}/tokens.json";
+        var endpoint = $"/rest/asset/v1/folder/{input.FolderId.Split("_").First()}/tokens.json";
         var request = new MarketoRequest(endpoint, Method.Post, Credentials)
             .AddParameter("name", input.Name)
             .AddParameter("type", input.Type)
             .AddParameter("value", input.Value)
-            .AddParameter("folderType", folderRequest.FolderId.Split("_").Last());
+            .AddParameter("folderType", input.FolderId.Split("_").Last());
 
         return Client.GetSingleEntity<ListTokensResponse>(request).Tokens.First();
     }
 
     [Action("Delete token", Description = "Delete specific token")]
-    public void DeleteToken(
-        [ActionParameter] ListTokensRequest folderRequest,
-        [ActionParameter] DeleteTokenRequest input)
+    public void DeleteToken([ActionParameter] DeleteTokenRequest input)
     {
-        var endpoint = $"/rest/asset/v1/folder/{folderRequest.FolderId.Split("_").First()}/tokens/delete.json";
+        var endpoint = $"/rest/asset/v1/folder/{input.FolderId.Split("_").First()}/tokens/delete.json";
         var request = new MarketoRequest(endpoint, Method.Post, Credentials)
             .AddParameter("name", input.Name)
             .AddParameter("type", input.Type)
-            .AddParameter("folderType", folderRequest.FolderId.Split("_").Last());
+            .AddParameter("folderType", input.FolderId.Split("_").Last());
 
         Client.ExecuteWithErrorHandling(request);
     }

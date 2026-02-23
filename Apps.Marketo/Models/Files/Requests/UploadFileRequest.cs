@@ -2,11 +2,14 @@
 using Apps.Marketo.DataSourceHandlers.FolderDataHandlers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
+using Blackbird.Applications.Sdk.Common.Files;
 
 namespace Apps.Marketo.Models.Files.Requests;
 
-public class UploadFileRequest : FileWrapper
+public class UploadFileRequest
 {
+    public FileReference File { get; set; }
+
     public string? Description { get; set; }
 
     [Display("Insert only")]

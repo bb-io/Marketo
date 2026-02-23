@@ -2,9 +2,9 @@
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 
-namespace Apps.Marketo.Models.Emails.Requests;
+namespace Apps.Marketo.Models.Identifiers.Optional;
 
-public class GetEmailInfoOptionalRequest
+public class OptionalEmailIdenfitier
 {
     [Display("Email ID")]
     [DataSource(typeof(EmailDataHandler))]

@@ -10,6 +10,7 @@ using Apps.Marketo.Models.Files.Requests;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using Newtonsoft.Json;
+using Apps.Marketo.Models.Identifiers;
 
 namespace Apps.Marketo.Actions;
 
@@ -27,7 +28,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
     }
 
     [Action("Get file info", Description = "Get file info")]
-    public FileInfoDto GetFileInfo([ActionParameter] GetFileInfoRequest input)
+    public FileInfoDto GetFileInfo([ActionParameter] FileIdentifier input)
     {
         var endpoint = $"/rest/asset/v1/file/{input.FileId}.json";
         var request = new MarketoRequest(endpoint, Method.Get, Credentials);
@@ -36,7 +37,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
     }
 
     [Action("Download file", Description = "Download file")]
-    public FileWrapper DownloadFile([ActionParameter] GetFileInfoRequest input)
+    public FileWrapper DownloadFile([ActionParameter] FileIdentifier input)
     {
         var fileInfo = GetFileInfo(input);
         return new()
@@ -46,14 +47,16 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
     }
 
     [Action("Update file", Description = "Update file content")]
-    public void UpdateFile([ActionParameter] UpdateFileRequest input)
+    public void UpdateFile(
+        [ActionParameter] FileIdentifier fileId,
+        [ActionParameter] UpdateFileRequest input)
     {
-        var fileInfo = GetFileInfo(input);
+        var fileInfo = GetFileInfo(fileId);
         var fileBytes = fileManagementClient.DownloadAsync(input.File).Result.GetByteData().Result;
 
-        var request = new MarketoRequest($"/rest/asset/v1/file/{input.FileId}/content.json", Method.Post, Credentials)
+        var request = new MarketoRequest($"/rest/asset/v1/file/{fileId.FileId}/content.json", Method.Post, Credentials)
             .AddFile("file", fileBytes, input.File.Name, fileInfo.MimeType)
-            .AddParameter("id", input.FileId);
+            .AddParameter("id", fileId.FileId);
 
         Client.ExecuteWithErrorHandling(request);
     }
