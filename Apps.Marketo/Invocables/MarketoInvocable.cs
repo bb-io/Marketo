@@ -1,3 +1,4 @@
+using Apps.Marketo.Api;
 using Apps.Marketo.Dtos;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Authentication;
@@ -20,7 +21,7 @@ public class MarketoInvocable : BaseInvocable
         Client = new(Credentials);
     }
 
-    protected IEnumerable<string>? AddFolderParameter(MarketoRequest request, string? folderId, bool isRecursive = false)
+    protected async Task<IEnumerable<string>?> AddFolderParameter(RestRequest request, string? folderId, bool isRecursive = false)
     {
         if (folderId != null)
         {
@@ -28,7 +29,7 @@ public class MarketoInvocable : BaseInvocable
             {
                 var folderParsedId = int.Parse(folderId.Replace("_Folder", ""));
                 request.AddQueryParameter("folder", folderParsedId);
-                return isRecursive ? ListFoldersInSpecifiedFolder(folderParsedId, "Folder") : null;
+                return isRecursive ? await ListFoldersInSpecifiedFolder(folderParsedId, "Folder") : null;
             }  
             else if (folderId.Contains("_Program"))
             {
@@ -38,13 +39,13 @@ public class MarketoInvocable : BaseInvocable
                     id = programParsedId,
                     type = "Program"
                 }));
-                return isRecursive ? ListFoldersInSpecifiedFolder(programParsedId, "Program") : null;
+                return isRecursive ? await ListFoldersInSpecifiedFolder(programParsedId, "Program") : null;
             }
         }
         return null;
     }
 
-    protected bool IsFilePathMatchingPattern(List<string> patterns, string filePath, bool exclude)
+    protected static bool IsFilePathMatchingPattern(List<string> patterns, string filePath, bool exclude)
     {
         var matcher = new Matcher();
         if (exclude)
@@ -59,19 +60,19 @@ public class MarketoInvocable : BaseInvocable
         return matcher.Match(filePath).HasMatches;
     }
 
-    private IEnumerable<string> ListFoldersInSpecifiedFolder(int folderId, string folderType)
+    private async Task<IEnumerable<string>> ListFoldersInSpecifiedFolder(int folderId, string folderType)
     {
-        var request = new MarketoRequest($"/rest/asset/v1/folder/{folderId}/content.json", Method.Get, Credentials);
+        var request = new RestRequest($"/rest/asset/v1/folder/{folderId}/content.json", Method.Get);
         request.AddQueryParameter("type", folderType);
-        var response = Client.Paginate<FolderTypeInfoDto>(request);
+        var response = await Client.Paginate<FolderTypeInfoDto>(request);
         return response.Where(x => x.Type == "Program" || x.Type == "Folder").Select(x => $"{x.Id}_{x.Type}").ToList();
     }
 
     protected async Task<bool> IsAssetInArchieveFolder(AssetFolder folderDto)
     {
         var endpoint = $"/rest/asset/v1/folder/{folderDto.Value}.json".SetQueryParameter("type", folderDto.Type);
-        var request = new MarketoRequest(endpoint, Method.Get, Credentials);
-        var emailFolderInfo = Client.GetSingleEntity<FolderInfoDto>(request);
+        var request = new RestRequest(endpoint, Method.Get);
+        var emailFolderInfo = await Client.ExecuteWithErrorHandlingFirst<FolderInfoDto>(request);
         await Task.Delay(500);
         return emailFolderInfo.IsArchive;
     }

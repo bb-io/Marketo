@@ -17,6 +17,7 @@ using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Apps.Marketo.Models.Identifiers;
 using Apps.Marketo.Models.Identifiers.Optional;
+using Apps.Marketo.Constants;
 
 namespace Apps.Marketo.Actions;
 
@@ -24,16 +25,14 @@ namespace Apps.Marketo.Actions;
 public class LandingPageActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : MarketoInvocable(invocationContext)
 {
-    private const string BlackbirdLandingPageId = "blackbird-landing-page-id";
-
     [Action("Search landing pages", Description = "Search landing pages")]
-    public ListLandingPagesResponse ListLandingPages([ActionParameter] ListLandingPagesRequest input)
+    public async Task<ListLandingPagesResponse> ListLandingPages([ActionParameter] ListLandingPagesRequest input)
     {
-        var request = new MarketoRequest($"/rest/asset/v1/landingPages.json", Method.Get, Credentials);
-        AddFolderParameter(request, input.FolderId);
+        var request = new RestRequest($"/rest/asset/v1/landingPages.json", Method.Get);
+        await AddFolderParameter(request, input.FolderId);
 
         if (input.Status != null) request.AddQueryParameter("status", input.Status);
-        var response = Client.Paginate<LandingPageDto>(request);
+        var response = await Client.Paginate<LandingPageDto>(request);
         if (input.EarliestUpdatedAt != null)
             response = response.Where(x => x.UpdatedAt >= input.EarliestUpdatedAt.Value).ToList();
         if (input.LatestUpdatedAt != null)
@@ -47,37 +46,37 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
     }
 
     [Action("Get landing page info", Description = "Get landing page info")]
-    public LandingPageDto GetLandingInfo([ActionParameter] LandingPageIdentifier input)
+    public async Task<LandingPageDto> GetLandingInfo([ActionParameter] LandingPageIdentifier input)
     {
-        var request = new MarketoRequest($"/rest/asset/v1/landingPage/{input.LandingPageId}.json", Method.Get, Credentials);
-        return Client.GetSingleEntity<LandingPageDto>(request);
+        var request = new RestRequest($"/rest/asset/v1/landingPage/{input.LandingPageId}.json", Method.Get);
+        return await Client.ExecuteWithErrorHandlingFirst<LandingPageDto>(request);
     }
 
     [Action("Get landing page content", Description = "Get landing page content")]
-    public LandingPageContentResponse GetLandingContent([ActionParameter] LandingPageIdentifier input)
+    public async Task<LandingPageContentResponse> GetLandingContent([ActionParameter] LandingPageIdentifier input)
     {
-        var request = new MarketoRequest($"/rest/asset/v1/landingPage/{input.LandingPageId}/content.json", Method.Get, Credentials);
-        var response = Client.ExecuteWithError<LandingPageContentDto>(request);
-        return new(response.Result);
+        var request = new RestRequest($"/rest/asset/v1/landingPage/{input.LandingPageId}/content.json", Method.Get);
+        var response = await Client.ExecuteWithErrorHandling<LandingPageContentDto>(request);
+        return new(response);
     }
 
     [Action("Update landing page metadata", Description = "Update landing page metadata")]
-    public LandingPageDto UpdateLandingPageMetadata(
+    public async Task<LandingPageDto> UpdateLandingPageMetadata(
         [ActionParameter] LandingPageIdentifier input,
         [ActionParameter] UpdateLandingMetadataRequest updateLandingMetadata)
     {
-        var request = new MarketoRequest($"/rest/asset/v1/landingPage/{input.LandingPageId}.json", Method.Post, Credentials);
+        var request = new RestRequest($"/rest/asset/v1/landingPage/{input.LandingPageId}.json", Method.Post);
         if (!string.IsNullOrEmpty(updateLandingMetadata.Name))
             request.AddParameter("name", updateLandingMetadata.Name);
         if (!string.IsNullOrEmpty(updateLandingMetadata.Description))
             request.AddParameter("description", updateLandingMetadata.Description);
-        return Client.GetSingleEntity<LandingPageDto>(request);
+        return await Client.ExecuteWithErrorHandlingFirst<LandingPageDto>(request);
     }
 
     [Action("Create landing page", Description = "Create landing page")]
-    public LandingPageDto CreateLandingPage([ActionParameter] CreateLandingRequest input)
+    public async Task<LandingPageDto> CreateLandingPage([ActionParameter] CreateLandingRequest input)
     {
-        var request = new MarketoRequest($"/rest/asset/v1/landingPages.json", Method.Post, Credentials);
+        var request = new RestRequest($"/rest/asset/v1/landingPages.json", Method.Post);
         if (input.CustomHeadHTML != null) request.AddParameter("customHeadHTML", input.CustomHeadHTML);
         if (input.Description != null) request.AddParameter("description", input.Description);
         if (input.FacebookOgTags != null) request.AddParameter("facebookOgTags", input.FacebookOgTags);
@@ -95,50 +94,43 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
             type = input.FolderId.Split("_").Last()
         }));
         request.AddParameter("name", input.Name);
-        return Client.GetSingleEntity<LandingPageDto>(request);
+        return await Client.ExecuteWithErrorHandlingFirst<LandingPageDto>(request);
     }
 
     [Action("Delete landing page", Description = "Delete landing page")]
-    public void DeleteLandingPage([ActionParameter] LandingPageIdentifier input)
+    public async Task DeleteLandingPage([ActionParameter] LandingPageIdentifier input)
     {
         var endpoint = $"/rest/asset/v1/landingPage/{input.LandingPageId}/delete.json";
-        var request = new MarketoRequest(endpoint, Method.Post, Credentials);
+        var request = new RestRequest(endpoint, Method.Post);
 
-        Client.ExecuteWithError<IdDto>(request);
+        await Client.ExecuteWithErrorHandling<IdDto>(request);
     }
 
     [Action("Approve landing page draft", Description = "Approve landing page draft")]
-    public void ApproveLandingPage([ActionParameter] LandingPageIdentifier input)
+    public async Task ApproveLandingPage([ActionParameter] LandingPageIdentifier input)
     {
         var endpoint = $"/rest/asset/v1/landingPage/{input.LandingPageId}/approveDraft.json";
-        var request = new MarketoRequest(endpoint, Method.Post, Credentials);
+        var request = new RestRequest(endpoint, Method.Post);
 
-        try { Client.ExecuteWithError<IdDto>(request); }
-        catch (BusinessRuleViolationException _) { }
+        await Client.ExecuteWithErrorHandling<IdDto>(request);
     }
 
     [Action("Discard landing page draft", Description = "Discard landing page draft")]
-    public void DiscardLandingPage([ActionParameter] LandingPageIdentifier input)
+    public async Task DiscardLandingPage([ActionParameter] LandingPageIdentifier input)
     {
         var endpoint = $"/rest/asset/v1/landingPage/{input.LandingPageId}/discardDraft.json";
-        var request = new MarketoRequest(endpoint, Method.Post, Credentials);
+        var request = new RestRequest(endpoint, Method.Post);
 
-        try { Client.ExecuteWithError<IdDto>(request); }
-        catch (BusinessRuleViolationException _) {}
+        await Client.ExecuteWithErrorHandling<IdDto>(request);
     }
 
     [Action("Unapprove landing page (back to draft)", Description = "Unapprove landing page (back to draft)")]
-    public void UnapproveLandingPage([ActionParameter] LandingPageIdentifier input)
+    public async Task UnapproveLandingPage([ActionParameter] LandingPageIdentifier input)
     {
         var endpoint = $"/rest/asset/v1/landingPage/{input.LandingPageId}/unapprove.json";
-        var request = new MarketoRequest(endpoint, Method.Post, Credentials);
+        var request = new RestRequest(endpoint, Method.Post);
 
-        try{ Client.ExecuteWithError<IdDto>(request); }
-        catch (BusinessRuleViolationException e) 
-        {
-            if (e.Message != $"{input.LandingPageId} Landing Page is not approved")
-                throw new PluginMisconfigurationException(e.Message);
-        }
+        await Client.ExecuteWithErrorHandling<IdDto>(request);
     }
 
     [Action("Get landing page as HTML for translation", Description = "Get landing page as HTML for translation")]
@@ -148,11 +140,11 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
         [ActionParameter] SegmentIdentifier getSegmentBySegmentationRequest,
         [ActionParameter] GetLandingPageAsHtmlRequest getLandingPageAsHtmlRequest)
     {
-        var landingInfo = GetLandingInfo(getLandingPageInfoRequest);
-        var landingContentResponse = GetLandingContent(getLandingPageInfoRequest);
+        var landingInfo = await GetLandingInfo(getLandingPageInfoRequest);
+        var landingContentResponse = await GetLandingContent(getLandingPageInfoRequest);
 
         if (landingContentResponse.LandingPageContentItems == null
-        || !landingContentResponse.LandingPageContentItems.Any())
+        || landingContentResponse.LandingPageContentItems.Count == 0)
         {
             throw new PluginMisconfigurationException($"No assets found for landing page ID {getLandingPageInfoRequest.LandingPageId}");
         }
@@ -160,19 +152,36 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
         var onlyDynamic = getLandingPageAsHtmlRequest.GetOnlyDynamicContent.HasValue && getLandingPageAsHtmlRequest.GetOnlyDynamicContent.Value;
         var includeImages = getLandingPageAsHtmlRequest.IncludeImages.HasValue && getLandingPageAsHtmlRequest.IncludeImages.Value;
 
-        var sectionContent = landingContentResponse.LandingPageContentItems!
-            .Where(x => (x.Type == "HTML" || x.Type == "RichText" || (includeImages && x.Type == "Image")) && 
-            ((onlyDynamic && IsJsonObject(x.Content.ToString())) || !onlyDynamic))
-            .ToDictionary(
-                x => x.Id,
-                y => GetLandingSectionContent(getLandingPageInfoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, y, includeImages));
+        var targetItems = landingContentResponse.LandingPageContentItems!
+            .Where(x => (x.Type == "HTML" || x.Type == "RichText" || (includeImages && x.Type == "Image")) &&
+                        ((onlyDynamic && IsJsonObject(x.Content?.ToString())) || !onlyDynamic))
+            .ToList();
 
-        if (!sectionContent.Any())
+        if (targetItems.Count == 0)
         {
             throw new PluginMisconfigurationException($"No matching content items found for landing page ID {getLandingPageInfoRequest.LandingPageId}");
         }
 
-        var resultHtml = HtmlContentBuilder.GenerateHtml(sectionContent, landingInfo.Name, getSegmentBySegmentationRequest.Segment, new(BlackbirdLandingPageId, getLandingPageInfoRequest.LandingPageId));
+        var contentTasks = targetItems.Select(async item =>
+        {
+            var content = await GetLandingSectionContent(
+                getLandingPageInfoRequest,
+                getSegmentationRequest,
+                getSegmentBySegmentationRequest,
+                item,
+                includeImages);
+
+            return new KeyValuePair<string, string>(item.Id, content);
+        });
+
+        var contentResults = await Task.WhenAll(contentTasks);
+        var sectionContent = contentResults.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+
+        var resultHtml = HtmlContentBuilder.GenerateHtml(
+            sectionContent,
+            landingInfo.Name,
+            getSegmentBySegmentationRequest.Segment,
+            new(MetadataConstants.BlackbirdLandingPageId, getLandingPageInfoRequest.LandingPageId));
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
         var file = await fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html, $"{landingInfo.Name}.html");
@@ -190,14 +199,14 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
         var bytes = await stream.GetByteData();
         var html = Encoding.UTF8.GetString(bytes);
         
-        var extractedId = HtmlContentBuilder.ExtractIdFromMeta(html, BlackbirdLandingPageId);
+        var extractedId = HtmlContentBuilder.ExtractIdFromMeta(html, MetadataConstants.BlackbirdLandingPageId);
         
         var landingPageInfoRequest = new LandingPageIdentifier
         {
             LandingPageId = getLandingPageInfoRequest.LandingPageId ?? extractedId ?? throw new PluginMisconfigurationException("Landing page ID is not provided and not found in the HTML file. Please provide value in the optional input.")
         };
         
-        var landingContentResponse = GetLandingContent(landingPageInfoRequest);
+        var landingContentResponse = await GetLandingContent(landingPageInfoRequest);
 
         if (!translateLandingWithHtmlRequest.TranslateOnlyDynamic.HasValue ||
             !translateLandingWithHtmlRequest.TranslateOnlyDynamic.Value)
@@ -207,10 +216,10 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
                 if (!IsJsonObject(item.Content.ToString()) &&
                     (item.Type == "HTML" || item.Type == "RichText"))
                 {
-                    ConvertSectionToDynamicContent(landingPageInfoRequest.LandingPageId, item.Id, getSegmentationRequest.SegmentationId);
+                    await ConvertSectionToDynamicContent(landingPageInfoRequest.LandingPageId, item.Id, getSegmentationRequest.SegmentationId);
                 }
             }
-            landingContentResponse = GetLandingContent(landingPageInfoRequest);
+            landingContentResponse = await GetLandingContent(landingPageInfoRequest);
         }
         
         var translatedContent = HtmlContentBuilder.ParseHtml(html);
@@ -226,9 +235,7 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
                     !string.IsNullOrWhiteSpace(content) && 
                     translatedContent.TryGetValue(item.Id, out var translatedContentItem))
                 {
-                    var result = UpdateLandingDynamicContent(landingPageInfoRequest, getSegmentBySegmentationRequest, landingPageContent.Content, item.Type, translatedContentItem);
-                    if(!string.IsNullOrEmpty(result))
-                        errors.Add(result);
+                    await UpdateLandingDynamicContent(landingPageInfoRequest, getSegmentBySegmentationRequest, landingPageContent.Content, item.Type, translatedContentItem);
                 }
             }
         }
@@ -238,16 +245,16 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
         };
     }
 
-    private IdDto ConvertSectionToDynamicContent(string landingId, string htmlId, string segmentationId)
+    private async Task<IdDto> ConvertSectionToDynamicContent(string landingId, string htmlId, string segmentationId)
     {
         var endpoint = $"/rest/asset/v1/landingPage/{landingId}/content/{htmlId}.json";
-        var request = new MarketoRequest(endpoint, Method.Post, Credentials)
+        var request = new RestRequest(endpoint, Method.Post)
             .AddParameter("value", segmentationId)
             .AddParameter("type", "DynamicContent");
-        return Client.ExecuteWithError<IdDto>(request).Result.FirstOrDefault();
+        return await Client.ExecuteWithErrorHandlingFirst<IdDto>(request);
     }
 
-    private string UpdateLandingDynamicContent(
+    private async Task UpdateLandingDynamicContent(
         LandingPageIdentifier getLandingPageInfoRequest,
         SegmentIdentifier getSegmentBySegmentationRequest,
         string dynamicContentId,
@@ -256,22 +263,15 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
     {
         var endpoint =
             $"/rest/asset/v1/landingPage/{getLandingPageInfoRequest.LandingPageId}/dynamicContent/{dynamicContentId}.json";
-        var request = new MarketoRequest(endpoint, Method.Post, Credentials)
+        var request = new RestRequest(endpoint, Method.Post)
             .AddQueryParameter("segment", getSegmentBySegmentationRequest.Segment)
             .AddQueryParameter("type", contentType)
             .AddQueryParameter("value", content);
-        try
-        {
-            Client.GetSingleEntity<IdDto>(request);
-            return null;
-        }
-        catch (Exception ex) 
-        {
-            return $"{ex.Message}, ContentId: {dynamicContentId}, Content: {content}";
-        }
+
+        await Client.ExecuteWithErrorHandlingFirst<IdDto>(request);
     }
 
-    private string GetLandingSectionContent(
+    private async Task<string?> GetLandingSectionContent(
         LandingPageIdentifier getLandingInfoRequest,
         SegmentationIdentifier getSegmentationRequest,
         SegmentIdentifier getSegmentBySegmentationRequest,
@@ -282,23 +282,15 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
         if (IsJsonObject(sectionContent.Content.ToString()) && JsonConvert.DeserializeObject<LandingPageContentValueDto>(sectionContent.Content.ToString()).ContentType == "DynamicContent")
         {
             var landingPageContent = JsonConvert.DeserializeObject<LandingPageContentValueDto>(sectionContent.Content.ToString());
-            var requestSeg = new MarketoRequest(
+            var requestSeg = new RestRequest(
                     $"/rest/asset/v1/landingPage/{getLandingInfoRequest.LandingPageId}/dynamicContent/{landingPageContent.Content}.json",
-                    Method.Get, Credentials);
+                    Method.Get);
 
-            var responseSeg = Client.ExecuteWithError<LandingDynamicContentDto<LandingPageImageSegmentDto<object>>>(requestSeg);
-            if (responseSeg.Result!.First().Segmentation.ToString() == getSegmentationRequest.SegmentationId)
+            var responseSeg = await Client.ExecuteWithErrorHandling<LandingDynamicContentDto<LandingPageImageSegmentDto<object>>>(requestSeg);
+            if (responseSeg.First().Segmentation.ToString() == getSegmentationRequest.SegmentationId)
             {
-                var imageSegment = responseSeg.Result!.First().Segments.Where(x => x.SegmentName == getSegmentBySegmentationRequest.Segment).FirstOrDefault();
+                var imageSegment = responseSeg.First().Segments.Where(x => x.SegmentName == getSegmentBySegmentationRequest.Segment).FirstOrDefault();
                 
-                //if (imageSegment != null && (imageSegment.Type == "File") && includeImages) // dynamic images
-                //{
-                //    var altTextAttribute = string.IsNullOrWhiteSpace(imageSegment.AltText) ? string.Empty : $" alt=\"{imageSegment.AltText}\"";
-                //    var imageIdAttribute = $" {ContextImageAttribute}=\"{imageSegment.Content}\"";
-                //    var widthAttribute = string.IsNullOrWhiteSpace(imageSegment.Width) ? string.Empty : $" width=\"{imageSegment.Width}\"";
-                //    var heightAttribute = string.IsNullOrWhiteSpace(imageSegment.Height) ? string.Empty : $" height=\"{imageSegment.Height}\"";
-                //    return $"<img src=\"{imageSegment.ContentUrl}\" style=\"{imageSegment.Style}\"{altTextAttribute}{imageIdAttribute}{widthAttribute}{heightAttribute}>";
-                //}
                 if (imageSegment != null && (imageSegment.Type == "Image") && includeImages)
                 {
                     var imageDto = JsonConvert.DeserializeObject<LandingPageImageContent>(imageSegment.Content.ToString());
@@ -322,7 +314,7 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
                 }
                 else
                 {
-                    var res = responseSeg.Result!.First().Segments
+                    var res = responseSeg.First().Segments
                     .Where(x => x.SegmentName == getSegmentBySegmentationRequest.Segment).First().Content.ToString();
                     if (imageSegment?.FormattingOptions != null)
                         return $"<div style=\"left:{imageSegment.FormattingOptions.Left ?? "0px"};top:{imageSegment.FormattingOptions.Top ?? "0px"};position:absolute\">{res}</div>";
@@ -336,7 +328,6 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
         {
             var imageDto = JsonConvert.DeserializeObject<LandingPageImageContent>(sectionContent.Content.ToString());
             var imageUrl = string.IsNullOrWhiteSpace(imageDto.ContentUrl) ? imageDto.Content : imageDto.ContentUrl;
-            //var altTextAttribute = string.IsNullOrWhiteSpace(imageDto.AltText) ? "" : $" alt=\"{imageDto.AltText}\"";
 
             var builder = new UriBuilder(imageUrl);
             builder.Host = $"{domain}.mktoweb.com";

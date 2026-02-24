@@ -11,15 +11,19 @@ namespace Apps.Marketo.Polling;
 public class FormPollingEvent(InvocationContext invocationContext) : BasePollingList(invocationContext)
 {
     [PollingEvent("On forms created or updated", "On any forms are created or updated")]
-    public PollingEventResponse<DateMemory, ListFormsResponse> OnFormsCreatedOrUpdated(
-        PollingEventRequest<DateMemory> request) => HandlePolling<ListFormsResponse>(request, memory =>
+    public async Task<PollingEventResponse<DateMemory, ListFormsResponse>> OnFormsCreatedOrUpdated(
+        PollingEventRequest<DateMemory> request)
+    {
+        return await HandlePolling<ListFormsResponse>(request, async memory =>
         {
             var endpoint = "/rest/asset/v1/forms.json";
-            var response = Client.Paginate<FormDto>(new MarketoRequest(endpoint, Method.Get, Credentials));
+            var request = new RestRequest(endpoint, Method.Get);
+            var response = await Client.Paginate<FormDto>(request);
 
             var forms = response
                 .Where(x => x.CreatedAt >= memory.LastInteractionDate || x.UpdatedAt >= memory.LastInteractionDate)
                 .ToList();
             return new(forms);
         }, result => result.Forms.Count != 0);
+    }
 }

@@ -1,11 +1,11 @@
 ﻿using Apps.Marketo.Dtos;
-using Blackbird.Applications.Sdk.Common;
+using Apps.Marketo.Invocables;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using RestSharp;
 namespace Apps.Marketo.DataSourceHandlers.FolderDataHandlers
 {
-    public class EmailTemplateFolderDataHandler : BaseInvocable, IAsyncDataSourceHandler
+    public class EmailTemplateFolderDataHandler : MarketoInvocable, IAsyncDataSourceHandler
     {
         private readonly string MarketoTemplatesFolderPath = "/Design Studio/Default/Emails/Marketo Templates";
         public EmailTemplateFolderDataHandler(InvocationContext invocationContext) : base(invocationContext)
@@ -14,10 +14,9 @@ namespace Apps.Marketo.DataSourceHandlers.FolderDataHandlers
         public async Task<Dictionary<string, string>> GetDataAsync(DataSourceContext context,
             CancellationToken cancellationToken)
         {
-            var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
-            var request = new MarketoRequest($"/rest/asset/v1/folders.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
+            var request = new RestRequest($"/rest/asset/v1/folders.json", Method.Get);
             request.AddQueryParameter("maxDepth", 10);
-            var response = client.Paginate<FolderInfoDto>(request);
+            var response = await Client.Paginate<FolderInfoDto>(request);
             return response
                 .DistinctBy(x => x.Id)
                 .Where(x => x.FolderType == "Email Template" && !x.Path.Contains(MarketoTemplatesFolderPath))

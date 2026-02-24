@@ -19,27 +19,27 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
     : MarketoInvocable(invocationContext)
 {
     [Action("Search all files", Description = "Search all files")]
-    public ListFilesResponse ListFiles()
+    public async Task<ListFilesResponse> ListFiles()
     {
-        var request = new MarketoRequest("/rest/asset/v1/files.json", Method.Get, Credentials);
-        var response = Client.ExecuteWithError<FileInfoDto>(request);
+        var request = new RestRequest("/rest/asset/v1/files.json", Method.Get);
+        var response = await Client.ExecuteWithErrorHandling<FileInfoDto>(request);
 
-        return new() { Files = response.Result };
+        return new() { Files = response };
     }
 
     [Action("Get file info", Description = "Get file info")]
-    public FileInfoDto GetFileInfo([ActionParameter] FileIdentifier input)
+    public async Task<FileInfoDto> GetFileInfo([ActionParameter] FileIdentifier input)
     {
         var endpoint = $"/rest/asset/v1/file/{input.FileId}.json";
-        var request = new MarketoRequest(endpoint, Method.Get, Credentials);
+        var request = new RestRequest(endpoint, Method.Get);
 
-        return Client.GetSingleEntity<FileInfoDto>(request);
+        return await Client.ExecuteWithErrorHandlingFirst<FileInfoDto>(request);
     }
 
     [Action("Download file", Description = "Download file")]
-    public FileWrapper DownloadFile([ActionParameter] FileIdentifier input)
+    public async Task<FileWrapper> DownloadFile([ActionParameter] FileIdentifier input)
     {
-        var fileInfo = GetFileInfo(input);
+        var fileInfo = await GetFileInfo(input);
         return new()
         {
             File = new(new HttpRequestMessage(HttpMethod.Get, fileInfo.Url), fileInfo.Name, fileInfo.MimeType)
@@ -47,26 +47,26 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
     }
 
     [Action("Update file", Description = "Update file content")]
-    public void UpdateFile(
+    public async Task UpdateFile(
         [ActionParameter] FileIdentifier fileId,
         [ActionParameter] UpdateFileRequest input)
     {
-        var fileInfo = GetFileInfo(fileId);
+        var fileInfo = await GetFileInfo(fileId);
         var fileBytes = fileManagementClient.DownloadAsync(input.File).Result.GetByteData().Result;
 
-        var request = new MarketoRequest($"/rest/asset/v1/file/{fileId.FileId}/content.json", Method.Post, Credentials)
+        var request = new RestRequest($"/rest/asset/v1/file/{fileId.FileId}/content.json", Method.Post)
             .AddFile("file", fileBytes, input.File.Name, fileInfo.MimeType)
             .AddParameter("id", fileId.FileId);
 
-        Client.ExecuteWithErrorHandling(request);
+        await Client.ExecuteWithErrorHandling(request);
     }
 
     [Action("Upload file", Description = "Upload file")]
-    public FileInfoDto UploadFile([ActionParameter] UploadFileRequest input)
+    public async Task<FileInfoDto> UploadFile([ActionParameter] UploadFileRequest input)
     {
         var fileBytes = fileManagementClient.DownloadAsync(input.File).Result.GetByteData().Result;
 
-        var request = new MarketoRequest("/rest/asset/v1/files.json", Method.Post, Credentials)
+        var request = new RestRequest("/rest/asset/v1/files.json", Method.Post)
             .AddParameter("name", input.File.Name)
             .AddParameter("description", input.Description)
             .AddFile("file", fileBytes, input.File.Name)
@@ -77,6 +77,6 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
                 type = input.Type
             }));
         
-        return Client.GetSingleEntity<FileInfoDto>(request);
+        return await Client.ExecuteWithErrorHandlingFirst<FileInfoDto>(request);
     }
 }

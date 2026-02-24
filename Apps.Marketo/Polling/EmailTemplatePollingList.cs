@@ -11,15 +11,19 @@ namespace Apps.Marketo.Polling;
 public class EmailTemplatePollingList(InvocationContext invocationContext) : BasePollingList(invocationContext)
 {
     [PollingEvent("On email templates created or updated", "On any email templates are created or updated")]
-    public PollingEventResponse<DateMemory, ListEmailTemplatesResponse> OnEmailTemplatesCreatedOrUpdated(
-        PollingEventRequest<DateMemory> request) => HandlePolling<ListEmailTemplatesResponse>(request, memory =>
+    public async Task<PollingEventResponse<DateMemory, ListEmailTemplatesResponse>> OnEmailTemplatesCreatedOrUpdated(
+        PollingEventRequest<DateMemory> request)
+    {
+        return await HandlePolling<ListEmailTemplatesResponse>(request, async memory =>
         {
             var endpoint = "/rest/asset/v1/emailTemplates.json";
-            var response = Client.Paginate<EmailTemplateDto>(new MarketoRequest(endpoint, Method.Get, Credentials));
+            var request = new RestRequest(endpoint, Method.Get);
+            var response = await Client.Paginate<EmailTemplateDto>(request);
 
             var templates = response
                 .Where(x => x.CreatedAt >= memory.LastInteractionDate || x.UpdatedAt >= memory.LastInteractionDate)
                 .ToList();
             return new(templates);
         }, result => result.EmailTemplates.Count != 0);
+    }
 }

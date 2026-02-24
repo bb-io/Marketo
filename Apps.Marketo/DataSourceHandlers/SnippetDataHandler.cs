@@ -1,12 +1,12 @@
 using Apps.Marketo.Dtos;
-using Blackbird.Applications.Sdk.Common;
+using Apps.Marketo.Invocables;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using RestSharp;
 
 namespace Apps.Marketo.DataSourceHandlers;
 
-public class SnippetDataHandler : BaseInvocable, IAsyncDataSourceHandler
+public class SnippetDataHandler : MarketoInvocable, IAsyncDataSourceHandler
 {
     public SnippetDataHandler(InvocationContext invocationContext) : base(invocationContext)
     {
@@ -15,11 +15,8 @@ public class SnippetDataHandler : BaseInvocable, IAsyncDataSourceHandler
     public async Task<Dictionary<string, string>> GetDataAsync(DataSourceContext context,
         CancellationToken cancellationToken)
     {
-        var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
-
-        var request = new MarketoRequest("/rest/asset/v1/snippets.json", Method.Get,
-            InvocationContext.AuthenticationCredentialsProviders);
-        var items = client.Paginate<SnippetDto>(request);
+        var request = new RestRequest("/rest/asset/v1/snippets.json", Method.Get);
+        var items = await Client.Paginate<SnippetDto>(request);
 
         return items
             .Where(str =>

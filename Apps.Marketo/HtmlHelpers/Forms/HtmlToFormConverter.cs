@@ -1,5 +1,5 @@
-﻿using Apps.Marketo.Dtos;
-using Blackbird.Applications.Sdk.Common.Authentication;
+﻿using Apps.Marketo.Api;
+using Apps.Marketo.Dtos;
 using HtmlAgilityPack;
 using RestSharp;
 
@@ -7,8 +7,7 @@ namespace Apps.Marketo.HtmlHelpers.Forms;
 
 public static class HtmlToFormConverter
 { 
-    public static (FormDto, IEnumerable<FormFieldDto>) ConvertToForm(string html, 
-        IEnumerable<AuthenticationCredentialsProvider> credentials)
+    public static (FormDto, IEnumerable<FormFieldDto>) ConvertToForm(string html, MarketoClient client)
     {
         var htmlDocument = new HtmlDocument();
         htmlDocument.LoadHtml(html);
@@ -16,12 +15,11 @@ public static class HtmlToFormConverter
         var outerDiv = htmlDocument.DocumentNode.SelectSingleNode("//body").SelectSingleNode("//div");
         var formId = outerDiv.Attributes["id"].Value;
 
-        var client = new MarketoClient(credentials);
-        var getFormRequest = new MarketoRequest($"/rest/asset/v1/form/{formId}.json", Method.Get, credentials);
-        var originalForm = client.ExecuteWithError<FormDto>(getFormRequest).Result.First();
+        var getFormRequest = new RestRequest($"/rest/asset/v1/form/{formId}.json", Method.Get);
+        var originalForm = client.ExecuteWithErrorHandling<FormDto>(getFormRequest).Result.First();
         
-        var getFieldsRequest = new MarketoRequest($"/rest/asset/v1/form/{formId}/fields.json", Method.Get, credentials);
-        var originalFields = client.ExecuteWithError<FormFieldDto>(getFieldsRequest).Result;
+        var getFieldsRequest = new RestRequest($"/rest/asset/v1/form/{formId}/fields.json", Method.Get);
+        var originalFields = client.ExecuteWithErrorHandling<FormFieldDto>(getFieldsRequest).Result;
 
         const string formElementAttribute = "data-marketo-form-element";
         const string formElementFieldId = "data-marketo-Id";

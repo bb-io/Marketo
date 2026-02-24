@@ -14,33 +14,33 @@ namespace Apps.Marketo.Actions;
 public class TokenActions(InvocationContext invocationContext) : MarketoInvocable(invocationContext)
 {
     [Action("Search tokens", Description = "Search all folder tokens")]
-    public ListTokensResponse ListTokens([ActionParameter] ListTokensRequest input)
+    public async Task<ListTokensResponse> ListTokens([ActionParameter] ListTokensRequest input)
     {
         var endpoint = $"/rest/asset/v1/folder/{input.FolderId.Split("_").First()}/tokens.json"
             .SetQueryParameter("folderType", input.FolderId.Split("_").Last());
-        var request = new MarketoRequest(endpoint, Method.Get, Credentials);
+        var request = new RestRequest(endpoint, Method.Get);
 
-        return Client.GetSingleEntity<ListTokensResponse>(request);
+        return await Client.ExecuteWithErrorHandlingFirst<ListTokensResponse>(request);
     }
 
     [Action("Get token", Description = "Get token by name")]
-    public TokenDto GetToken([ActionParameter] GetTokenRequest input)
+    public async Task<TokenDto> GetToken([ActionParameter] GetTokenRequest input)
     {
         var endpoint = $"/rest/asset/v1/folder/{input.FolderId}/tokens.json"
             .SetQueryParameter("folderType", input.FolderType);
-        var request = new MarketoRequest(endpoint, Method.Get, Credentials);
-        var tokens = Client.GetSingleEntity<ListTokensResponse>(request);
+        var request = new RestRequest(endpoint, Method.Get);
+        var tokens = await Client.ExecuteWithErrorHandlingFirst<ListTokensResponse>(request);
 
         var token = tokens.Tokens.FirstOrDefault(x => x.Name == input.TokenName);
 
         if (token == null && input.Recursive.HasValue && input.Recursive.Value)
         {
             var folderEndpoint = $"/rest/asset/v1/folder/{input.FolderId}.json".SetQueryParameter("type", input.FolderType);
-            var folderRequest = new MarketoRequest(folderEndpoint, Method.Get, Credentials);
-            var response = Client.GetSingleEntity<FolderInfoDto>(folderRequest);
+            var folderRequest = new RestRequest(folderEndpoint, Method.Get);
+            var response = await Client.ExecuteWithErrorHandlingFirst<FolderInfoDto>(folderRequest);
             if (response.Parent != null)
             {
-                return GetToken(new GetTokenRequest { FolderId = response.Parent.Id, FolderType = response.Parent.Type, Recursive = true, TokenName = input.TokenName });
+                return await GetToken(new GetTokenRequest { FolderId = response.Parent.Id, FolderType = response.Parent.Type, Recursive = true, TokenName = input.TokenName });
             }
         }
 
@@ -48,27 +48,28 @@ public class TokenActions(InvocationContext invocationContext) : MarketoInvocabl
     }
 
     [Action("Create token", Description = "Create a new token")]
-    public TokenDto CreateToken([ActionParameter] CreateTokenRequest input)
+    public async Task<TokenDto> CreateToken([ActionParameter] CreateTokenRequest input)
     {
         var endpoint = $"/rest/asset/v1/folder/{input.FolderId.Split("_").First()}/tokens.json";
-        var request = new MarketoRequest(endpoint, Method.Post, Credentials)
+        var request = new RestRequest(endpoint, Method.Post)
             .AddParameter("name", input.Name)
             .AddParameter("type", input.Type)
             .AddParameter("value", input.Value)
             .AddParameter("folderType", input.FolderId.Split("_").Last());
 
-        return Client.GetSingleEntity<ListTokensResponse>(request).Tokens.First();
+        var result = await Client.ExecuteWithErrorHandlingFirst<ListTokensResponse>(request);
+        return result.Tokens.First();
     }
 
     [Action("Delete token", Description = "Delete specific token")]
-    public void DeleteToken([ActionParameter] DeleteTokenRequest input)
+    public async Task DeleteToken([ActionParameter] DeleteTokenRequest input)
     {
         var endpoint = $"/rest/asset/v1/folder/{input.FolderId.Split("_").First()}/tokens/delete.json";
-        var request = new MarketoRequest(endpoint, Method.Post, Credentials)
+        var request = new RestRequest(endpoint, Method.Post)
             .AddParameter("name", input.Name)
             .AddParameter("type", input.Type)
             .AddParameter("folderType", input.FolderId.Split("_").Last());
 
-        Client.ExecuteWithErrorHandling(request);
+        await Client.ExecuteWithErrorHandling(request);
     }
 }

@@ -1,61 +1,60 @@
 ﻿using Apps.Marketo.Dtos;
+using Apps.Marketo.Invocables;
 using Apps.Marketo.Models.Forms.Requests;
-using Blackbird.Applications.Sdk.Common.Dynamic;
-using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Dynamic;
+using Blackbird.Applications.Sdk.Common.Exceptions;
+using Blackbird.Applications.Sdk.Common.Invocation;
 using RestSharp;
 
-namespace Apps.Marketo.DataSourceHandlers
+namespace Apps.Marketo.DataSourceHandlers;
+
+public class MultipleFormsFieldsDataHandler(
+    InvocationContext invocationContext, 
+    [ActionParameter] GetMultipleFormsRequest input) 
+    : MarketoInvocable(invocationContext), IAsyncDataSourceItemHandler
 {
-    public class MultipleFormsFieldsDataHandler : BaseInvocable, IDataSourceHandler
+    public async Task<IEnumerable<DataSourceItem>> GetDataAsync(DataSourceContext context, CancellationToken ct)
     {
-        public GetMultipleFormsRequest GetMultipleFormsRequest { get; set; }
+        if (input == null || input.Forms == null)
+            throw new PluginMisconfigurationException("Please provide the 'Forms' input first");
 
-        public MultipleFormsFieldsDataHandler(InvocationContext invocationContext, [ActionParameter] GetMultipleFormsRequest getMultipleFormsRequest) : base(invocationContext)
+        var formFields = await GetFormFieldsFromAllForms(input.Forms);
+        var filtered = formFields
+            .Where(formField => 
+                context.SearchString == null ||
+                (!string.IsNullOrEmpty(formField.Label) && 
+                formField.Label.Contains(context.SearchString, StringComparison.OrdinalIgnoreCase)));
+
+        return filtered.Select(x => new DataSourceItem(x.Id, x.Label ?? $"Empty label (id: {x.Id})")).ToList();
+    }
+
+    private async Task<List<FormFieldDto>> GetFormFieldsFromAllForms(List<string> formIds)
+    {
+        var request = new RestRequest($"/rest/asset/v1/forms.json", Method.Get);
+        var forms = (await Client.Paginate<FormDto>(request)).Where(x => formIds.Contains(x.Id.ToString())).ToList();
+        var allFormFields = new List<FormFieldDto>();
+        foreach (var form in forms)
         {
-            GetMultipleFormsRequest = getMultipleFormsRequest;
-        }
-
-        public Dictionary<string, string> GetData(DataSourceContext context)
-        {
-            var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
-            if (GetMultipleFormsRequest == null || GetMultipleFormsRequest.Forms == null)
-                throw new ArgumentException("Specify forms first");
-
-            var formFields = GetFormFieldsFromAllForms(client, GetMultipleFormsRequest.Forms);
-
-            return formFields.Where(formField => context.SearchString == null ||
-                                                 (!string.IsNullOrEmpty(formField.Label) && formField.Label.Contains(context.SearchString, StringComparison.OrdinalIgnoreCase)))
-                .ToDictionary(formField => formField.Id, formField => formField.Label ?? $"Empty label (id: {formField.Id})");
-        }
-
-        private List<FormFieldDto> GetFormFieldsFromAllForms(MarketoClient client, List<string> formIds)
-        {
-            var request = new MarketoRequest($"/rest/asset/v1/forms.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
-            var forms = client.Paginate<FormDto>(request).Where(x => formIds.Contains(x.Id.ToString())).ToList();
-            var allFormFields = new List<FormFieldDto>();
-            foreach (var form in forms)
+            var getFieldsRequest = new RestRequest($"/rest/asset/v1/form/{form.Id}/fields.json", Method.Get);
+            var formFields = await GetFormFieldsFromSingleForm(form.Id.ToString());
+            if (formFields != null)
             {
-                var getFieldsRequest = new MarketoRequest($"/rest/asset/v1/form/{form.Id}/fields.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
-                var formFields = GetFormFieldsFromSingleForm(client, form.Id.ToString());
-                if (formFields != null)
+                foreach (var field in formFields)
                 {
-                    foreach (var field in formFields)
-                    {
-                        field.Label = $"{field.Label ?? $"Empty label (id: {field.Id})"} - {form.Name}";
-                        field.Id = $"{field.Id} {form.Id.ToString()}";
-                        allFormFields.Add(field);
-                    }
+                    field.Label = $"{field.Label ?? $"Empty label (id: {field.Id})"} - {form.Name}";
+                    field.Id = $"{field.Id} {form.Id.ToString()}";
+                    allFormFields.Add(field);
                 }
             }
-            return allFormFields;
         }
+        return allFormFields;
+    }
 
-        private List<FormFieldDto>? GetFormFieldsFromSingleForm(MarketoClient client, string formId)
-        {
-            var getFieldsRequest = new MarketoRequest($"/rest/asset/v1/form/{formId}/fields.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
-            var formFields = client.ExecuteWithError<FormFieldDto>(getFieldsRequest);
-            return formFields.Result;
-        }
+    private async Task<List<FormFieldDto>?> GetFormFieldsFromSingleForm(string formId)
+    {
+        var getFieldsRequest = new RestRequest($"/rest/asset/v1/form/{formId}/fields.json", Method.Get);
+        var formFields = await Client.ExecuteWithErrorHandling<FormFieldDto>(getFieldsRequest);
+        return formFields;
     }
 }

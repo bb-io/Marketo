@@ -11,15 +11,19 @@ namespace Apps.Marketo.Polling;
 public class SnippetPollingList(InvocationContext invocationContext) : BasePollingList(invocationContext)
 {
     [PollingEvent("On snippets created or updated", "On any snippets are created or updated")]
-    public PollingEventResponse<DateMemory, ListSnippetsResponse> OnSnippetsCreatedOrUpdated(
-        PollingEventRequest<DateMemory> request) => HandlePolling<ListSnippetsResponse>(request, memory =>
+    public async Task<PollingEventResponse<DateMemory, ListSnippetsResponse>> OnSnippetsCreatedOrUpdated(
+        PollingEventRequest<DateMemory> request)
+    {
+        return await HandlePolling<ListSnippetsResponse>(request, async memory =>
         {
             var endpoint = "/rest/asset/v1/snippets.json";
-            var response = Client.Paginate<SnippetDto>(new MarketoRequest(endpoint, Method.Get, Credentials));
+            var request = new RestRequest(endpoint, Method.Get);
+            var response = await Client.Paginate<SnippetDto>(request);
 
             var snippets = response
                 .Where(x => x.CreatedAt >= memory.LastInteractionDate || x.UpdatedAt >= memory.LastInteractionDate)
                 .ToList();
             return new(snippets);
         }, result => result.Snippets.Count != 0);
+    }
 }

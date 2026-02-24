@@ -18,9 +18,9 @@ namespace Apps.Marketo.Actions;
 public class FolderActions(InvocationContext invocationContext) : MarketoInvocable(invocationContext)
 {
     [Action("Search folders", Description = "Search folders")]
-    public ListFoldersResponse ListFolders([ActionParameter] ListFoldersRequest input)
+    public async Task<ListFoldersResponse> ListFolders([ActionParameter] ListFoldersRequest input)
     {
-        var request = new MarketoRequest("/rest/asset/v1/folders.json", Method.Get, Credentials)
+        var request = new RestRequest("/rest/asset/v1/folders.json", Method.Get)
             .AddQueryParameter("maxDepth", input.MaxDepth ?? 10)
             .AddQueryParameter("workSpace", input.WorkSpace);
         if (!string.IsNullOrEmpty(input.RootManual))
@@ -28,7 +28,7 @@ public class FolderActions(InvocationContext invocationContext) : MarketoInvocab
         else if (!string.IsNullOrEmpty(input.Root))
             request.AddQueryParameter("root", input.Root);
 
-        var response = Client.Paginate<FolderInfoDto>(request);
+        var response = await Client.Paginate<FolderInfoDto>(request);
 
         if (input.Root != null)
             response = response.Where(x => x.Id != input.Root).ToList();
@@ -51,26 +51,26 @@ public class FolderActions(InvocationContext invocationContext) : MarketoInvocab
     }
 
     [Action("Get folder info", Description = "Get folder info")]
-    public FolderInfoDto GetFolderInfo([ActionParameter] GetFolderInfoRequest input)
+    public async Task<FolderInfoDto> GetFolderInfo([ActionParameter] GetFolderInfoRequest input)
     {
         var endpoint = $"/rest/asset/v1/folder/{input.FolderId}.json".SetQueryParameter("type", input.FolderType);
-        var request = new MarketoRequest(endpoint, Method.Get, Credentials);
+        var request = new RestRequest(endpoint, Method.Get);
 
-        return Client.GetSingleEntity<FolderInfoDto>(request);
+        return await Client.ExecuteWithErrorHandlingFirst<FolderInfoDto>(request);
     }
 
     [Action("Get folder by name", Description = "Get folder by name")]
-    public List<FolderInfoDto> GetFolderByName([ActionParameter][Display("Folder name")] string folderName)
+    public async Task<List<FolderInfoDto>> GetFolderByName([ActionParameter][Display("Folder name")] string folderName)
     {
         var endpoint = $"/rest/asset/v1/folder/byName.json".SetQueryParameter("name", folderName);
-        var request = new MarketoRequest(endpoint, Method.Get, Credentials);
-        return Client.ExecuteWithError<FolderInfoDto>(request).Result!;
+        var request = new RestRequest(endpoint, Method.Get);
+        return await Client.ExecuteWithErrorHandling<FolderInfoDto>(request);
     }
 
     [Action("Create folder", Description = "Create folder")]
-    public FolderInfoDto CreateFolder([ActionParameter] CreateFolderRequest input)
+    public async Task<FolderInfoDto> CreateFolder([ActionParameter] CreateFolderRequest input)
     {
-        var request = new MarketoRequest("/rest/asset/v1/folders.json", Method.Post, Credentials)
+        var request = new RestRequest("/rest/asset/v1/folders.json", Method.Post)
             .AddParameter("description", input.Description)
             .AddParameter("name", input.Name)
             .AddParameter("parent", JsonConvert.SerializeObject(new
@@ -79,26 +79,26 @@ public class FolderActions(InvocationContext invocationContext) : MarketoInvocab
                 type = input.Type ?? "Folder"
             }));
 
-        return Client.GetSingleEntity<FolderInfoDto>(request);
+        return await Client.ExecuteWithErrorHandlingFirst<FolderInfoDto>(request);
     }
 
     [Action("Delete folder", Description = "Delete folder")]
-    public void DeleteFolder([ActionParameter] GetFolderInfoRequest input)
+    public async Task DeleteFolder([ActionParameter] GetFolderInfoRequest input)
     {
         var endpoint = $"/rest/asset/v1/folder/{input.FolderId}/delete.json";
-        var request = new MarketoRequest(endpoint, Method.Post, Credentials);
+        var request = new RestRequest(endpoint, Method.Post);
 
-        Client.ExecuteWithError<IdDto>(request);
+        await Client.ExecuteWithErrorHandling<IdDto>(request);
     }
 
     [Action("Add tag to program", Description = "Add tag to program")]
-    public void AddTagToFolder(
+    public async Task AddTagToFolder(
         [ActionParameter] ProgramIdentifier programRequest,
         [ActionParameter] TagTypeIdentifier tagTypeRequest,
         [ActionParameter] TagValueIdentifier tagValueRequest)
     {
         var endpoint = $"/rest/asset/v1/program/{programRequest.ProgramId}.json";
-        var request = new MarketoRequest(endpoint, Method.Post, Credentials);
+        var request = new RestRequest(endpoint, Method.Post);
         request.AddQueryParameter("tags", JsonConvert.SerializeObject(new[]
         {
             new
@@ -107,18 +107,18 @@ public class FolderActions(InvocationContext invocationContext) : MarketoInvocab
                 tagValue = tagValueRequest.TagValue
             }
         }));
-        Client.ExecuteWithError<IdDto>(request);
+        await Client.ExecuteWithErrorHandling<IdDto>(request);
     }
 
     [Action("Get program tag value", Description = "Get program tag value")]
-    public string GetProgramTagValue(
+    public async Task<string> GetProgramTagValue(
         [ActionParameter] ProgramIdentifier programRequest,
         [ActionParameter] TagTypeIdentifier tagTypeRequest,
         [ActionParameter] GetProgramTagRequest programTagRequest)
     {
         var endpoint = $"/rest/asset/v1/program/{programRequest.ProgramId}.json";
-        var request = new MarketoRequest(endpoint, Method.Get, Credentials);
-        var program = Client.GetSingleEntity<ProgramDto>(request);
+        var request = new RestRequest(endpoint, Method.Get);
+        var program = await Client.ExecuteWithErrorHandlingFirst<ProgramDto>(request);
         
         var tag = program.Tags.FirstOrDefault(x => x.TagType == tagTypeRequest.TagType);
         if (tag == null)

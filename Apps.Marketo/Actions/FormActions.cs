@@ -1,24 +1,25 @@
-﻿using System.Net.Mime;
-using System.Text;
-using System.Text.Encodings.Web;
-using System.Text.Json;
+﻿using Apps.Marketo.DataSourceHandlers.FolderDataHandlers;
 using Apps.Marketo.Dtos;
 using Apps.Marketo.HtmlHelpers.Forms;
 using Apps.Marketo.Invocables;
 using Apps.Marketo.Models;
 using Apps.Marketo.Models.Forms.Requests;
 using Apps.Marketo.Models.Forms.Responses;
+using Apps.Marketo.Models.Identifiers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Dynamic;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
-using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Utils.Extensions.Files;
+using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using RestSharp;
-using JsonSerializer = System.Text.Json.JsonSerializer;
-using Apps.Marketo.DataSourceHandlers.FolderDataHandlers;
+using System.Net.Mime;
+using System.Text;
+using System.Text.Encodings.Web;
+using System.Text.Json;
 using System.Text.Json.Serialization;
-using Apps.Marketo.Models.Identifiers;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Apps.Marketo.Actions;
 
@@ -27,23 +28,23 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
     : MarketoInvocable(invocationContext)
 {
     [Action("Get form", Description = "Get specified form.")]
-    public FormDto GetForm([ActionParameter] FormIdentifier input)
+    public async Task<FormDto> GetForm([ActionParameter] FormIdentifier input)
     {
         var endpoint = $"/rest/asset/v1/form/{input.FormId}.json";
-        var request = new MarketoRequest(endpoint, Method.Get, Credentials);
+        var request = new RestRequest(endpoint, Method.Get);
 
-        return Client.GetSingleEntity<FormDto>(request);
+        return await Client.ExecuteWithErrorHandlingFirst<FormDto>(request);
     }
 
     [Action("Search forms", Description = "Search all forms")]
-    public ListFormsResponse ListRecentlyCreatedOrUpdatedForms([ActionParameter] ListFormsRequest input)
+    public async Task<ListFormsResponse> ListRecentlyCreatedOrUpdatedForms([ActionParameter] ListFormsRequest input)
     {
-        var request = new MarketoRequest($"/rest/asset/v1/forms.json", Method.Get, Credentials);
-        AddFolderParameter(request, input.FolderId);
+        var request = new RestRequest($"/rest/asset/v1/forms.json", Method.Get);
+        await AddFolderParameter(request, input.FolderId);
 
         if (input.Status != null) 
             request.AddQueryParameter("status", input.Status);
-        var forms = Client.Paginate<FormDto>(request);
+        var forms = await Client.Paginate<FormDto>(request);
         if (input.EarliestUpdatedAt != null)
             forms = forms.Where(x => x.UpdatedAt >= input.EarliestUpdatedAt.Value).ToList();
         if (input.LatestUpdatedAt != null)
@@ -62,16 +63,16 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
     }
 
     [Action("Update form metadata", Description = "Update form metadata")]
-    public FormDto UpdateEmailMetadata(
+    public async Task<FormDto> UpdateEmailMetadata(
         [ActionParameter] FormIdentifier input,
         [ActionParameter] UpdateFormMetadataRequest updateFormMetadata)
     {
-        var request = new MarketoRequest($"/rest/asset/v1/form/{input.FormId}.json", Method.Post, Credentials);       
+        var request = new RestRequest($"/rest/asset/v1/form/{input.FormId}.json", Method.Post);       
         if(!string.IsNullOrEmpty(updateFormMetadata.Name))
             request.AddParameter("name", updateFormMetadata.Name);
         if (!string.IsNullOrEmpty(updateFormMetadata.Description))
             request.AddParameter("description", updateFormMetadata.Description);
-        return Client.GetSingleEntity<FormDto>(request);
+        return await Client.ExecuteWithErrorHandlingFirst<FormDto>(request);
     }
 
     [Action("Get form as HTML for translation", Description = "Retrieve a form as HTML file for translation.")]
@@ -79,13 +80,12 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
         [ActionParameter] FormIdentifier input,
         [ActionParameter] IgnoreFieldsRequest ignoreFieldsRequest)
     {
-        var getFormRequest = new MarketoRequest($"/rest/asset/v1/form/{input.FormId}.json", Method.Get, Credentials);
-        var form = Client.GetSingleEntity<FormDto>(getFormRequest);
+        var getFormRequest = new RestRequest($"/rest/asset/v1/form/{input.FormId}.json", Method.Get);
+        var form = await Client.ExecuteWithErrorHandlingFirst<FormDto>(getFormRequest);
 
-        var getFieldsRequest =
-            new MarketoRequest($"/rest/asset/v1/form/{input.FormId}/fields.json", Method.Get, Credentials);
-        var formFields = Client.ExecuteWithError<FormFieldDto>(getFieldsRequest);
-        var fieldsHtml = FormToHtmlConverter.ConvertToHtml(form, formFields.Result, ignoreFieldsRequest);
+        var getFieldsRequest = new RestRequest($"/rest/asset/v1/form/{input.FormId}/fields.json", Method.Get);
+        var formFields = await Client.ExecuteWithErrorHandling<FormFieldDto>(getFieldsRequest);
+        var fieldsHtml = FormToHtmlConverter.ConvertToHtml(form, formFields, ignoreFieldsRequest);
         var resultHtml = $"<html><body>{fieldsHtml}</body></html>";
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
@@ -95,7 +95,7 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
     }
 
     [Action("Create or update form from translated HTML", Description = "Create or update form from translated HTML.")]
-    public FormDto SetFormFromHtml(
+    public async Task<FormDto> SetFormFromHtml(
         [ActionParameter] FileWrapper form,
         [ActionParameter] [DataSource(typeof(FormFolderDataHandler))] [Display("Folder")] string? folderId,
         [ActionParameter] UpdateFormRequest updateFormRequest)
@@ -109,7 +109,7 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
 
         var formBytes = fileManagementClient.DownloadAsync(form.File).Result.GetByteData().Result;
         var html = Encoding.UTF8.GetString(formBytes);
-        var (formDto, formFields) = HtmlToFormConverter.ConvertToForm(html, Credentials);
+        var (formDto, formFields) = HtmlToFormConverter.ConvertToForm(html, Client);
         
         object folder;
 
@@ -131,50 +131,53 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
         }
 
         var cloneFormRequest =
-            new MarketoRequest($"/rest/asset/v1/form/{formDto.Id}/clone.json", Method.Post, Credentials)
+            new RestRequest($"/rest/asset/v1/form/{formDto.Id}/clone.json", Method.Post)
                 .AddParameter("name", string.IsNullOrWhiteSpace(updateFormRequest.FormName) 
                 ? Path.GetFileNameWithoutExtension(form.File.Name) : updateFormRequest.FormName)
                 .AddParameter("folder", JsonSerializer.Serialize(folder, jsonSerializerSettings))
                 .AddParameter("description", formDto.Description);
 
-        FormDto clonedForm = null;
-        try
+        var cloneFormResult = await Client.ExecuteNoErrorHandling<FormDto>(cloneFormRequest);
+        FormDto clonedForm;
+        if (cloneFormResult?.Errors != null && cloneFormResult.Errors.Count != 0)
         {
-            clonedForm = Client.GetSingleEntity<FormDto>(cloneFormRequest);
-        }
-        catch (BusinessRuleViolationException ex)
-        {
-            if(ex.Message == "Form name already exists")
+            if (cloneFormResult.Errors.Any(x => x.Message.Contains("Form name already exists")))
             {
-                DeleteFormWithExistingName(string.IsNullOrWhiteSpace(updateFormRequest.FormName) ? Path.GetFileNameWithoutExtension(form.File.Name) : updateFormRequest.FormName);
-                clonedForm = Client.GetSingleEntity<FormDto>(cloneFormRequest);
+                await DeleteFormWithExistingName(string.IsNullOrWhiteSpace(updateFormRequest.FormName)
+                    ? Path.GetFileNameWithoutExtension(form.File.Name)
+                    : updateFormRequest.FormName);
+
+                clonedForm = await Client.ExecuteWithErrorHandlingFirst<FormDto>(cloneFormRequest);
             }
             else
             {
-                throw ex;
+                var errorMessages = string.Join("; ", cloneFormResult.Errors.Select(x => x.Message));
+                throw new PluginApplicationException($"Failed to clone form: {errorMessages}");
             }
         }
+        else
+            clonedForm = cloneFormResult!.Result!.First();
 
-        var updateSubmitButtonRequest = new MarketoRequest($"/rest/asset/v1/form/{clonedForm.Id}/submitButton.json",
-            Method.Post, Credentials);
+        var updateSubmitButtonRequest = new RestRequest($"/rest/asset/v1/form/{clonedForm.Id}/submitButton.json", Method.Post);
         updateSubmitButtonRequest.AddParameter("label", formDto.ButtonLabel);
         updateSubmitButtonRequest.AddParameter("waitingLabel", formDto.WaitingLabel);
-        clonedForm = Client.GetSingleEntity<FormDto>(updateSubmitButtonRequest);
+        clonedForm = await Client.ExecuteWithErrorHandlingFirst<FormDto>(updateSubmitButtonRequest);
 
         if (formDto.ThankYouList.Any())
         {
-            var updateThankYouListRequest = new MarketoRequest($"/rest/asset/v1/form/{clonedForm.Id}/thankYouPage.json",
-            Method.Post, Credentials);
+            var updateThankYouListRequest = new RestRequest(
+                $"/rest/asset/v1/form/{clonedForm.Id}/thankYouPage.json",
+                Method.Post);
             updateThankYouListRequest.AddParameter("thankyou",
                 JsonSerializer.Serialize(formDto.ThankYouList, jsonSerializerSettings));
-            var updatedThankYouList = Client.GetSingleEntity<FormDto>(updateThankYouListRequest);
+            var updatedThankYouList = await Client.ExecuteWithErrorHandlingFirst<FormDto>(updateThankYouListRequest);
             clonedForm.ThankYouList = updatedThankYouList.ThankYouList;
         }
 
         foreach (var field in formFields)
         {
-            var updateFieldRequest = new MarketoRequest($"/rest/asset/v1/form/{clonedForm.Id}/field/{field.Id}.json",
-                Method.Post, Credentials);
+            var updateFieldRequest = new RestRequest($"/rest/asset/v1/form/{clonedForm.Id}/field/{field.Id}.json",
+                Method.Post);
 
             var fieldParameters = new Dictionary<string, object?>
             {
@@ -198,11 +201,11 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
                 }
             }
 
-            Client.ExecuteWithErrorHandling(updateFieldRequest);
+            await Client.ExecuteWithErrorHandling(updateFieldRequest);
 
-            var addFieldVisibilityRequest = new MarketoRequest(
+            var addFieldVisibilityRequest = new RestRequest(
                 $"/rest/asset/v1/form/{clonedForm.Id}/field/{field.Id}/visibility.json",
-                Method.Post, Credentials);
+                Method.Post);
 
             var visibilityRules = field.VisibilityRules;
             if (visibilityRules != null)
@@ -224,19 +227,19 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
                         })
                     }, jsonSerializerSettings));
                 }
-                Client.ExecuteWithErrorHandling(addFieldVisibilityRequest);
+                await Client.ExecuteWithErrorHandling(addFieldVisibilityRequest);
             }
         }
 
         return clonedForm;
     }
 
-    private void DeleteFormWithExistingName(string formName)
+    private async Task DeleteFormWithExistingName(string formName)
     {
-        var getFormByNameRequest = new MarketoRequest($"/rest/asset/v1/form/byName.json", Method.Get, Credentials)
-                    .AddParameter("name", formName);
-        var getFormByNameResponse = Client.GetSingleEntity<FormDto>(getFormByNameRequest);
-        var deleteFormRequest = new MarketoRequest($"/rest/asset/v1/form/{getFormByNameResponse.Id}/delete.json", Method.Post, Credentials);
-        Client.ExecuteWithErrorHandling(deleteFormRequest);
+        var getFormByNameRequest = new RestRequest($"/rest/asset/v1/form/byName.json", Method.Get)
+            .AddParameter("name", formName);
+        var getFormByNameResponse = await Client.ExecuteWithErrorHandlingFirst<FormDto>(getFormByNameRequest);
+        var deleteFormRequest = new RestRequest($"/rest/asset/v1/form/{getFormByNameResponse.Id}/delete.json", Method.Post);
+        await Client.ExecuteWithErrorHandling(deleteFormRequest);
     }
 }

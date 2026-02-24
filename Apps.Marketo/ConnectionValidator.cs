@@ -1,32 +1,33 @@
-﻿using Blackbird.Applications.Sdk.Common.Authentication;
+﻿using RestSharp;
+using Apps.Marketo.Api;
 using Blackbird.Applications.Sdk.Common.Connections;
-using RestSharp;
+using Blackbird.Applications.Sdk.Common.Authentication;
 
 namespace Apps.Marketo;
 
 public class ConnectionValidator : IConnectionValidator
 {
-    public ValueTask<ConnectionValidationResponse> ValidateConnection(
+    public async ValueTask<ConnectionValidationResponse> ValidateConnection(
         IEnumerable<AuthenticationCredentialsProvider> authProviders, CancellationToken cancellationToken)
     {
         try
         {
             var client = new MarketoClient(authProviders);
-            var request = new MarketoRequest("/rest/asset/v1/files.json", Method.Get, authProviders);
-            client.ExecuteWithErrorHandling(request);
+            var request = new RestRequest("/rest/asset/v1/files.json", Method.Get);
+            await client.ExecuteWithErrorHandling(request);
 
-            return new(new ConnectionValidationResponse()
+            return new()
             {
                 IsValid = true,
-            });
+            };
         }
         catch (Exception ex)
         {
-            return new(new ConnectionValidationResponse()
+            return new() 
             {
                 IsValid = false,
                 Message = ex.Message
-            });
+            };
         }
     }
 }

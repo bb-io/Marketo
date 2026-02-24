@@ -1,4 +1,5 @@
 ﻿using Apps.Marketo.Dtos;
+using Apps.Marketo.Invocables;
 using Apps.Marketo.Models.Identifiers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
@@ -7,7 +8,7 @@ using RestSharp;
 
 namespace Apps.Marketo.DataSourceHandlers
 {
-    public class TagValueDataHandler : BaseInvocable, IAsyncDataSourceHandler
+    public class TagValueDataHandler : MarketoInvocable, IAsyncDataSourceHandler
     {
         public TagTypeIdentifier GetTagTypeRequest {  get; set; }
         public TagValueDataHandler(InvocationContext invocationContext, [ActionParameter] TagTypeIdentifier getTagTypeRequest) : base(invocationContext)
@@ -21,12 +22,10 @@ namespace Apps.Marketo.DataSourceHandlers
             if(string.IsNullOrEmpty(GetTagTypeRequest.TagType))
                 throw new ArgumentException("Fill tag type first!");
 
-            var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
-            var request = new MarketoRequest("/rest/asset/v1/tagType/byName.json", Method.Get,
-                InvocationContext.AuthenticationCredentialsProviders);
+            var request = new RestRequest("/rest/asset/v1/tagType/byName.json", Method.Get);
             request.AddQueryParameter("name", GetTagTypeRequest.TagType);
-            var items = client.ExecuteWithError<TagValueDto>(request);
-            var tagValues = items.Result.SelectMany(x => x.AllowableValues.Substring(1, x.AllowableValues.Length - 2).Split(", ")).ToList();
+            var items = await Client.ExecuteWithErrorHandling<TagValueDto>(request);
+            var tagValues = items.SelectMany(x => x.AllowableValues.Substring(1, x.AllowableValues.Length - 2).Split(", ")).ToList();
             return tagValues
                 .Where(str =>
                     context.SearchString is null ||

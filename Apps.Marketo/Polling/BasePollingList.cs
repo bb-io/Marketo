@@ -7,9 +7,9 @@ namespace Apps.Marketo.Polling;
 
 public class BasePollingList(InvocationContext invocationContext) : MarketoInvocable(invocationContext)
 {
-    protected static PollingEventResponse<DateMemory, T> HandlePolling<T>(
+    protected async Task<PollingEventResponse<DateMemory, T>> HandlePolling<T>(
         PollingEventRequest<DateMemory> request, 
-        Func<DateMemory, T> func, 
+        Func<DateMemory, Task<T>> func, 
         Func<T, bool> isResultValid)
     {
         if (request.Memory is null)
@@ -21,7 +21,7 @@ public class BasePollingList(InvocationContext invocationContext) : MarketoInvoc
             };
         }
 
-        var result = func(request.Memory);
+        var result = await func(request.Memory);
         if (!isResultValid(result))
         {
             return new()
