@@ -17,6 +17,7 @@ using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using Apps.Marketo.Models.Identifiers;
 using Apps.Marketo.Constants;
 using Blackbird.Applications.Sdk.Common.Exceptions;
+using Apps.Marketo.Helper;
 
 namespace Apps.Marketo.Actions;
 
@@ -28,7 +29,8 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
     public async Task<ListSnippetsResponse> ListSnippets([ActionParameter] ListSnippetsRequest input)
     {
         var request = new RestRequest("/rest/asset/v1/snippets.json", Method.Get);
-        if (input.Status != null) request.AddQueryParameter("status", input.Status);
+        if (input.Status != null) 
+            request.AddQueryParameter("status", input.Status);
         var response = await Client.Paginate<SnippetDto>(request);
 
         if (input.EarliestUpdatedAt != null)
@@ -36,7 +38,9 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
         if (input.LatestUpdatedAt != null)
             response = response.Where(x => x.UpdatedAt <= input.LatestUpdatedAt.Value).ToList();
 
-        response = input.NamePatterns != null ? response.Where(x => IsFilePathMatchingPattern(input.NamePatterns, x.Name, input.ExcludeMatched ?? false)).ToList() : response;
+        response = input.NamePatterns != null ? 
+            response.Where(x => FileFolderHelper.IsFilePathMatchingPattern(input.NamePatterns, x.Name, input.ExcludeMatched ?? false)).ToList() : 
+            response;
 
         var result = string.IsNullOrEmpty(input.FolderId) ?
             response :

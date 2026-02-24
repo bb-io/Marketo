@@ -19,6 +19,7 @@ using Blackbird.Applications.Sdk.Common.Exceptions;
 using Apps.Marketo.Models.Identifiers;
 using Apps.Marketo.Models.Identifiers.Optional;
 using Apps.Marketo.Constants;
+using Apps.Marketo.Helper;
 
 namespace Apps.Marketo.Actions;
 
@@ -30,7 +31,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
     public async Task<ListEmailsResponse> ListEmails([ActionParameter] ListEmailsRequest input)
     {
         var request = new RestRequest($"/rest/asset/v1/emails.json", Method.Get);
-        var subfolders = await AddFolderParameter(request, input.FolderId);
+        var subfolders = await FileFolderHelper.AddFolderParameter(Client, request, input.FolderId);
 
         if (input.Status != null) request.AddQueryParameter("status", input.Status);   
         if (input.EarliestUpdatedAt != null)
@@ -41,10 +42,21 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
                 ((DateTime)input.LatestUpdatedAt).ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture));
 
         var response = await Client.Paginate<EmailDto>(request);
-        response = input.NamePatterns != null ? response.Where(x => IsFilePathMatchingPattern(input.NamePatterns, x.Name, input.ExcludeMatched ?? false)).ToList() : response;
+        response = input.NamePatterns != null ? 
+            response.Where(x => FileFolderHelper.IsFilePathMatchingPattern(input.NamePatterns, x.Name, input.ExcludeMatched ?? false)).ToList() : 
+            response;
 
-        if(input.IgnoreInArchive.HasValue && input.IgnoreInArchive.Value)
-            response = response.Where(x => !IsAssetInArchieveFolder(x.Folder).Result).ToList();
+        if (input.IgnoreInArchive == true)
+        {
+            var nonArchivedEmails = new List<EmailDto>();
+            foreach (var email in response)
+            {
+                var isArchived = await FileFolderHelper.IsAssetInArchievedFolder(Client, email.Folder);
+                if (!isArchived)
+                    nonArchivedEmails.Add(email);
+            }
+            response = nonArchivedEmails;
+        }
 
         return new(response);
     }

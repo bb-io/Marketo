@@ -18,6 +18,7 @@ using Blackbird.Applications.Sdk.Common.Exceptions;
 using Apps.Marketo.Models.Identifiers;
 using Apps.Marketo.Models.Identifiers.Optional;
 using Apps.Marketo.Constants;
+using Apps.Marketo.Helper;
 
 namespace Apps.Marketo.Actions;
 
@@ -29,7 +30,7 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
     public async Task<ListLandingPagesResponse> ListLandingPages([ActionParameter] ListLandingPagesRequest input)
     {
         var request = new RestRequest($"/rest/asset/v1/landingPages.json", Method.Get);
-        await AddFolderParameter(request, input.FolderId);
+        await FileFolderHelper.AddFolderParameter(Client, request, input.FolderId);
 
         if (input.Status != null) request.AddQueryParameter("status", input.Status);
         var response = await Client.Paginate<LandingPageDto>(request);
@@ -38,10 +39,12 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
         if (input.LatestUpdatedAt != null)
             response = response.Where(x => x.UpdatedAt <= input.LatestUpdatedAt.Value).ToList();
 
-        response = input.NamePatterns != null ? response.Where(x => IsFilePathMatchingPattern(input.NamePatterns, x.Name, input.ExcludeMatched ?? false)).ToList() : response;
+        response = input.NamePatterns != null ? 
+            response.Where(x => FileFolderHelper.IsFilePathMatchingPattern(input.NamePatterns, x.Name, input.ExcludeMatched ?? false)).ToList() : 
+            response;
 
         if (input.IgnoreInArchive.HasValue && input.IgnoreInArchive.Value)
-            response = response.Where(x => !IsAssetInArchieveFolder(x.Folder).Result).ToList();
+            response = response.Where(x => !FileFolderHelper.IsAssetInArchievedFolder(Client, x.Folder).Result).ToList();
         return new(response);
     }
 

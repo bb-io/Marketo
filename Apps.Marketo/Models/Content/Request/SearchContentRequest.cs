@@ -1,17 +1,19 @@
 ﻿using Apps.Marketo.DataSourceHandlers;
 using Apps.Marketo.DataSourceHandlers.FolderDataHandlers;
+using Apps.Marketo.DataSourceHandlers.Static;
 using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Dictionaries;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 
-namespace Apps.Marketo.Models.Emails.Requests;
+namespace Apps.Marketo.Models.Content.Request;
 
-public class ListEmailsRequest
+public class SearchContentRequest
 {
-    [DataSource(typeof(StatusDataHandler))]
+    [Display("Status"), DataSource(typeof(StatusDataHandler))]
     public string? Status { get; set; }
 
-    [Display("Folder", Description = "Folders list with \"Email\" type")]
-    [DataSource(typeof(EmailFolderDataHandler))]
+    [Display("Folder ID")]
+    [DataSource(typeof(SnippetFolderDataHandler))]
     public string? FolderId { get; set; }
 
     [Display("Earliest updated at")]
@@ -26,6 +28,12 @@ public class ListEmailsRequest
     [Display("Exclude assets matched by patterns", Description = "Exclude assets matched by patterns")]
     public bool? ExcludeMatched { get; set; }
 
-    [Display("Ignore in archive folders")]
-    public bool? IgnoreInArchive { get; set; }
+    [Display("Content types", Description = "Content types to search. Searches all types by default")]
+    [StaticDataSource(typeof(ContentTypeDataHandler))]
+    public IEnumerable<string>? ContentTypes { get; set; }
+
+    public void ApplyDefaultValues()
+    {
+        ContentTypes ??= Constants.ContentTypes.SupportedContentTypes;
+    }
 }

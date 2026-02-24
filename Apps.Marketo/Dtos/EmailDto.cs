@@ -20,6 +20,9 @@ public class EmailDto
     [Display("Email ID")]
     public string Id { get; set; }
     public string Name { get; set; }
+
+    public string Description { get; set; }
+
     public bool Operational { get; set; }
 
     [Display("Published to MSI")]

@@ -11,7 +11,7 @@ namespace Tests.Marketo
         public async Task GetEmailInfo_IsSuccess()
         {
             var action = new EmailActions(InvocationContext, FileManager);
-            var result = action.GetEmailInfo(new EmailIdentifier { EmailId = "1015" });
+            var result = await action.GetEmailInfo(new EmailIdentifier { EmailId = "1057" });
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(result, Newtonsoft.Json.Formatting.Indented);
             Console.WriteLine(json);
             Assert.IsNotNull(result);
