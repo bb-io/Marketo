@@ -1,12 +1,13 @@
 ﻿using System.Text;
 using Apps.Marketo.Dtos;
+using Apps.Marketo.Models.Entities.Form;
 using Apps.Marketo.Models.Forms.Requests;
 
 namespace Apps.Marketo.HtmlHelpers.Forms;
 
 public static class FormToHtmlConverter
 {
-    public static string ConvertToHtml(FormDto formDto, IEnumerable<FormFieldDto> formData, IgnoreFieldsRequest ignoreFieldsRequest)
+    public static string ConvertToHtml(FormEntity formDto, IEnumerable<FormFieldDto> formData, IgnoreFieldsRequest ignoreFieldsRequest)
     {
         const string formElementAttribute = "data-marketo-form-element";
         

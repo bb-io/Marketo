@@ -1,4 +1,4 @@
-﻿using Apps.Marketo.Dtos;
+﻿using Apps.Marketo.Dtos.Form;
 using Apps.Marketo.Invocables;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Invocation;

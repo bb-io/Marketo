@@ -1,3 +1,4 @@
+using Apps.Marketo.Models.Entities;
 using Blackbird.Applications.Sdk.Common;
 using Newtonsoft.Json;
 
@@ -18,7 +19,7 @@ public class SnippetDto
     [Display("URL")]
     public string Url { get; set; }
     
-    public FormFolderDto Folder { get; set; }
+    public AssetFolder Folder { get; set; }
 
     [Display("Status")]
     public string Status { get; set; }

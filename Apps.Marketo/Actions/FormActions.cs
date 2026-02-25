@@ -1,10 +1,13 @@
 ﻿using Apps.Marketo.DataSourceHandlers.FolderDataHandlers;
 using Apps.Marketo.Dtos;
+using Apps.Marketo.Dtos.Form;
 using Apps.Marketo.Extensions;
 using Apps.Marketo.Helper;
+using Apps.Marketo.Helper.Filter;
 using Apps.Marketo.HtmlHelpers.Forms;
 using Apps.Marketo.Invocables;
 using Apps.Marketo.Models;
+using Apps.Marketo.Models.Entities.Form;
 using Apps.Marketo.Models.Forms.Requests;
 using Apps.Marketo.Models.Forms.Responses;
 using Apps.Marketo.Models.Identifiers;
@@ -34,8 +37,8 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
     {
         var endpoint = $"/rest/asset/v1/form/{input.FormId}.json";
         var request = new RestRequest(endpoint, Method.Get);
-
-        return await Client.ExecuteWithErrorHandlingFirst<FormDto>(request);
+        var result = await Client.ExecuteWithErrorHandlingFirst<FormEntity>(request);
+        return new(result);
     }
 
     [Action("Search forms", Description = "Search all forms")]
@@ -45,17 +48,15 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
         await FileFolderHelper.AddFolderParameter(Client, request, input.FolderId);
         request.AddQueryParameterIfNotNull("status", input.Status);
 
-        var forms = await Client.Paginate<FormDto>(request);
+        var forms = await Client.Paginate<FormEntity>(request);
         if (input.EarliestUpdatedAt != null)
             forms = forms.Where(x => x.UpdatedAt >= input.EarliestUpdatedAt.Value).ToList();
         if (input.LatestUpdatedAt != null)
             forms = forms.Where(x => x.UpdatedAt <= input.LatestUpdatedAt.Value).ToList();
 
-        forms = input.NamePatterns != null ? 
-            forms.Where(x => FileFolderHelper.IsFilePathMatchingPattern(input.NamePatterns, x.Name, input.ExcludeMatched ?? false)).ToList() : 
-            forms; 
+        forms = forms.ApplyNamePatternFilter(input.NamePatterns, input.ExcludeMatched); 
 
-        return new(forms);
+        return new(forms.Select(x => new FormDto(x)).ToList());
     }
 
     [Action("Search forms fields", Description = "Search forms fields")]
@@ -71,12 +72,12 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
         [ActionParameter] FormIdentifier input,
         [ActionParameter] UpdateFormMetadataRequest updateFormMetadata)
     {
-        var request = new RestRequest($"/rest/asset/v1/form/{input.FormId}.json", Method.Post);       
-        if(!string.IsNullOrEmpty(updateFormMetadata.Name))
-            request.AddParameter("name", updateFormMetadata.Name);
-        if (!string.IsNullOrEmpty(updateFormMetadata.Description))
-            request.AddParameter("description", updateFormMetadata.Description);
-        return await Client.ExecuteWithErrorHandlingFirst<FormDto>(request);
+        var request = new RestRequest($"/rest/asset/v1/form/{input.FormId}.json", Method.Post); 
+        request.AddParameterIfNotNull("name", updateFormMetadata.Name);
+        request.AddParameterIfNotNull("description", updateFormMetadata.Description);
+
+        var result = await Client.ExecuteWithErrorHandlingFirst<FormEntity>(request);
+        return new(result);
     }
 
     [Action("Get form as HTML for translation", Description = "Retrieve a form as HTML file for translation.")]
@@ -85,7 +86,7 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
         [ActionParameter] IgnoreFieldsRequest ignoreFieldsRequest)
     {
         var getFormRequest = new RestRequest($"/rest/asset/v1/form/{input.FormId}.json", Method.Get);
-        var form = await Client.ExecuteWithErrorHandlingFirst<FormDto>(getFormRequest);
+        var form = await Client.ExecuteWithErrorHandlingFirst<FormEntity>(getFormRequest);
 
         var getFieldsRequest = new RestRequest($"/rest/asset/v1/form/{input.FormId}/fields.json", Method.Get);
         var formFields = await Client.ExecuteWithErrorHandling<FormFieldDto>(getFieldsRequest);
@@ -141,8 +142,8 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
                 .AddParameter("folder", JsonSerializer.Serialize(folder, jsonSerializerSettings))
                 .AddParameter("description", formDto.Description);
 
-        var cloneFormResult = await Client.ExecuteNoErrorHandling<FormDto>(cloneFormRequest);
-        FormDto clonedForm;
+        var cloneFormResult = await Client.ExecuteNoErrorHandling<FormEntity>(cloneFormRequest);
+        FormEntity clonedForm;
         if (cloneFormResult?.Errors != null && cloneFormResult.Errors.Count != 0)
         {
             if (cloneFormResult.Errors.Any(x => x.Message.Contains("Form name already exists")))
@@ -151,7 +152,7 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
                     ? Path.GetFileNameWithoutExtension(form.File.Name)
                     : updateFormRequest.FormName);
 
-                clonedForm = await Client.ExecuteWithErrorHandlingFirst<FormDto>(cloneFormRequest);
+                clonedForm = await Client.ExecuteWithErrorHandlingFirst<FormEntity>(cloneFormRequest);
             }
             else
             {
@@ -165,7 +166,7 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
         var updateSubmitButtonRequest = new RestRequest($"/rest/asset/v1/form/{clonedForm.Id}/submitButton.json", Method.Post);
         updateSubmitButtonRequest.AddParameter("label", formDto.ButtonLabel);
         updateSubmitButtonRequest.AddParameter("waitingLabel", formDto.WaitingLabel);
-        clonedForm = await Client.ExecuteWithErrorHandlingFirst<FormDto>(updateSubmitButtonRequest);
+        clonedForm = await Client.ExecuteWithErrorHandlingFirst<FormEntity>(updateSubmitButtonRequest);
 
         if (formDto.ThankYouList.Any())
         {
@@ -174,7 +175,7 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
                 Method.Post);
             updateThankYouListRequest.AddParameter("thankyou",
                 JsonSerializer.Serialize(formDto.ThankYouList, jsonSerializerSettings));
-            var updatedThankYouList = await Client.ExecuteWithErrorHandlingFirst<FormDto>(updateThankYouListRequest);
+            var updatedThankYouList = await Client.ExecuteWithErrorHandlingFirst<FormEntity>(updateThankYouListRequest);
             clonedForm.ThankYouList = updatedThankYouList.ThankYouList;
         }
 
@@ -235,7 +236,7 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
             }
         }
 
-        return clonedForm;
+        return new(clonedForm);
     }
 
     private async Task DeleteFormWithExistingName(string formName)

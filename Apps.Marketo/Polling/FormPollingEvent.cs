@@ -1,9 +1,9 @@
 ﻿using RestSharp;
-using Apps.Marketo.Dtos;
 using Apps.Marketo.Models.Forms.Responses;
 using Apps.Marketo.Polling.Models.Memories;
 using Blackbird.Applications.Sdk.Common.Polling;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Apps.Marketo.Dtos.Form;
 
 namespace Apps.Marketo.Polling;
 

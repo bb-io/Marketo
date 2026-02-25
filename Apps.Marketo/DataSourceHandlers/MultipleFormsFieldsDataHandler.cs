@@ -1,4 +1,5 @@
 ﻿using Apps.Marketo.Dtos;
+using Apps.Marketo.Dtos.Form;
 using Apps.Marketo.Invocables;
 using Apps.Marketo.Models.Forms.Requests;
 using Blackbird.Applications.Sdk.Common;

@@ -1,5 +1,6 @@
 ﻿using Apps.Marketo.Api;
 using Apps.Marketo.Dtos;
+using Apps.Marketo.Models.Entities.Form;
 using HtmlAgilityPack;
 using RestSharp;
 
@@ -7,7 +8,7 @@ namespace Apps.Marketo.HtmlHelpers.Forms;
 
 public static class HtmlToFormConverter
 { 
-    public static (FormDto, IEnumerable<FormFieldDto>) ConvertToForm(string html, MarketoClient client)
+    public static (FormEntity, IEnumerable<FormFieldDto>) ConvertToForm(string html, MarketoClient client)
     {
         var htmlDocument = new HtmlDocument();
         htmlDocument.LoadHtml(html);
@@ -16,7 +17,7 @@ public static class HtmlToFormConverter
         var formId = outerDiv.Attributes["id"].Value;
 
         var getFormRequest = new RestRequest($"/rest/asset/v1/form/{formId}.json", Method.Get);
-        var originalForm = client.ExecuteWithErrorHandling<FormDto>(getFormRequest).Result.First();
+        var originalForm = client.ExecuteWithErrorHandling<FormEntity>(getFormRequest).Result.First();
         
         var getFieldsRequest = new RestRequest($"/rest/asset/v1/form/{formId}/fields.json", Method.Get);
         var originalFields = client.ExecuteWithErrorHandling<FormFieldDto>(getFieldsRequest).Result;
@@ -49,7 +50,7 @@ public static class HtmlToFormConverter
                 case "thankYouList":
                     var thankYouPagesDivs = div.ChildNodes;
                     var originalFormThankYouListCounter = 0;
-                    var originalFormThankYouList = originalForm.ThankYouList.Where(x => x.FollowupType != "none").ToArray();
+                    var originalFormThankYouList = originalForm.ThankYouList.Where(x => x.FollowupType != "none").ToList();
 
                     foreach (var pageDiv in thankYouPagesDivs)
                     {
