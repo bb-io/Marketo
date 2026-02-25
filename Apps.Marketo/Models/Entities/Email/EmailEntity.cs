@@ -1,8 +1,9 @@
 ﻿using Newtonsoft.Json;
+using Apps.Marketo.Helper.Filter.Interfaces;
 
 namespace Apps.Marketo.Models.Entities.Email;
 
-public class EmailEntity
+public class EmailEntity : IEntityName, IEntityFolder
 {
     [JsonProperty("id")]
     public string Id { get; set; } = string.Empty;

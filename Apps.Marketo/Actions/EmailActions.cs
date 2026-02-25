@@ -3,6 +3,7 @@ using Apps.Marketo.Dtos;
 using Apps.Marketo.Dtos.Email;
 using Apps.Marketo.Extensions;
 using Apps.Marketo.Helper;
+using Apps.Marketo.Helper.Filter;
 using Apps.Marketo.HtmlHelpers;
 using Apps.Marketo.Invocables;
 using Apps.Marketo.Models;
@@ -39,30 +40,8 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
         request.AddQueryParameterIfNotNull("latestUpdatedAt", input.LatestUpdatedAt);
 
         var emails = await Client.Paginate<EmailEntity>(request);
-        emails = input.NamePatterns != null ? 
-            emails.Where(x => FileFolderHelper.IsFilePathMatchingPattern(input.NamePatterns, x.Name, input.ExcludeMatched ?? false)).ToList() : 
-            emails;
-
-        if (input.IgnoreInArchive == true)
-        {
-            var nonArchivedEmails = new List<EmailEntity>();
-            var folderArchiveCache = new Dictionary<string, bool>();
-
-            foreach (var email in emails)
-            {
-                string folderId = email.Folder.Value.ToString();
-
-                if (!folderArchiveCache.TryGetValue(folderId, out bool isArchived))
-                {
-                    isArchived = await FileFolderHelper.IsAssetInArchievedFolder(Client, email.Folder);
-                    folderArchiveCache[folderId] = isArchived;
-                }
-
-                if (!isArchived)
-                    nonArchivedEmails.Add(email);
-            }
-            emails = nonArchivedEmails;
-        }
+        emails = emails.ApplyNamePatternFilter(input.NamePatterns, input.ExcludeMatched);
+        emails = await emails.ApplyIgnoreInArchiveFilter(Client, input.IgnoreInArchive);
 
         return new(emails.Select(x => new EmailDto(x)).ToList());
     }
