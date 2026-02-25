@@ -1,5 +1,6 @@
 ﻿using Apps.Marketo.DataSourceHandlers.FolderDataHandlers;
 using Apps.Marketo.Dtos;
+using Apps.Marketo.Extensions;
 using Apps.Marketo.Helper;
 using Apps.Marketo.HtmlHelpers.Forms;
 using Apps.Marketo.Invocables;
@@ -38,13 +39,12 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
     }
 
     [Action("Search forms", Description = "Search all forms")]
-    public async Task<ListFormsResponse> ListRecentlyCreatedOrUpdatedForms([ActionParameter] ListFormsRequest input)
+    public async Task<SearchFormsResponse> ListRecentlyCreatedOrUpdatedForms([ActionParameter] SearchFormsRequest input)
     {
         var request = new RestRequest($"/rest/asset/v1/forms.json", Method.Get);
         await FileFolderHelper.AddFolderParameter(Client, request, input.FolderId);
+        request.AddQueryParameterIfNotNull("status", input.Status);
 
-        if (input.Status != null) 
-            request.AddQueryParameter("status", input.Status);
         var forms = await Client.Paginate<FormDto>(request);
         if (input.EarliestUpdatedAt != null)
             forms = forms.Where(x => x.UpdatedAt >= input.EarliestUpdatedAt.Value).ToList();

@@ -1,23 +1,24 @@
+using Apps.Marketo.Constants;
 using Apps.Marketo.Dtos;
+using Apps.Marketo.Extensions;
+using Apps.Marketo.Helper;
 using Apps.Marketo.HtmlHelpers;
 using Apps.Marketo.Invocables;
 using Apps.Marketo.Models;
+using Apps.Marketo.Models.Entities;
+using Apps.Marketo.Models.Identifiers;
 using Apps.Marketo.Models.Snippets.Request;
 using Apps.Marketo.Models.Snippets.Response;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Newtonsoft.Json;
 using RestSharp;
 using System.Net.Mime;
 using System.Text;
-using Apps.Marketo.Models.Entities;
-using Blackbird.Applications.Sdk.Utils.Extensions.Files;
-using Apps.Marketo.Models.Identifiers;
-using Apps.Marketo.Constants;
-using Blackbird.Applications.Sdk.Common.Exceptions;
-using Apps.Marketo.Helper;
 
 namespace Apps.Marketo.Actions;
 
@@ -26,11 +27,10 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
     : MarketoInvocable(invocationContext)
 {    
     [Action("Search snippets", Description = "Search snippets")]
-    public async Task<ListSnippetsResponse> ListSnippets([ActionParameter] ListSnippetsRequest input)
+    public async Task<SearchSnippetsResponse> ListSnippets([ActionParameter] SearchSnippetsRequest input)
     {
         var request = new RestRequest("/rest/asset/v1/snippets.json", Method.Get);
-        if (input.Status != null) 
-            request.AddQueryParameter("status", input.Status);
+        request.AddQueryParameterIfNotNull("status", input.Status);
         var response = await Client.Paginate<SnippetDto>(request);
 
         if (input.EarliestUpdatedAt != null)

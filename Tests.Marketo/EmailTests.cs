@@ -1,20 +1,44 @@
-﻿using Apps.Marketo.Actions;
+﻿using Tests.Marketo.Base;
+using Apps.Marketo.Actions;
 using Apps.Marketo.Models.Identifiers;
-using Tests.Marketo.Base;
+using Apps.Marketo.Models.Emails.Requests;
 
-namespace Tests.Marketo
+namespace Tests.Marketo;
+
+[TestClass]
+public class EmailTests : TestBase
 {
-    [TestClass]
-    public class EmailTests : TestBase
+    [TestMethod]
+    public async Task GetEmailInfo_ReturnsEmailInfo()
     {
-        [TestMethod]
-        public async Task GetEmailInfo_IsSuccess()
+        // Arrange
+        var action = new EmailActions(InvocationContext, FileManager);
+        var emailId = new EmailIdentifier { EmailId = "1057" };
+
+        // Act
+        var result = await action.GetEmailInfo(emailId);
+
+        // Assert
+        PrintJsonResult(result);
+        Assert.IsNotNull(result);
+    }
+
+    [TestMethod]
+    public async Task ListEmails_ReturnsEmails()
+    {
+        // Arrange
+        var action = new EmailActions(InvocationContext, FileManager);
+        var input = new SearchEmailsRequest
         {
-            var action = new EmailActions(InvocationContext, FileManager);
-            var result = await action.GetEmailInfo(new EmailIdentifier { EmailId = "1057" });
-            var json = Newtonsoft.Json.JsonConvert.SerializeObject(result, Newtonsoft.Json.Formatting.Indented);
-            Console.WriteLine(json);
-            Assert.IsNotNull(result);
-        }
+            EarliestUpdatedAt = DateTime.UtcNow - TimeSpan.FromDays(1),
+        };
+
+        // Act
+        var result = await action.ListEmails(input);
+
+        // Assert
+        Console.WriteLine($"Count: {result.Emails.Count}");
+        PrintJsonResult(result);
+        Assert.IsNotNull(result);
     }
 }

@@ -11,10 +11,10 @@ namespace Apps.Marketo.Polling;
 public class LandingPagePollingList(InvocationContext invocationContext) : BasePollingList(invocationContext)
 {
     [PollingEvent("On landing pages created or updated", "On any landing pages are created or updated")]
-    public async Task<PollingEventResponse<DateMemory, ListLandingPagesResponse>> OnLandingPagesCreatedOrUpdated(
+    public async Task<PollingEventResponse<DateMemory, SearchLandingPagesResponse>> OnLandingPagesCreatedOrUpdated(
         PollingEventRequest<DateMemory> request)
     {
-        return await HandlePolling<ListLandingPagesResponse>(request, async memory =>
+        return await HandlePolling<SearchLandingPagesResponse>(request, async memory =>
         {
             var endpoint = "/rest/asset/v1/landingPages.json";
             var request = new RestRequest(endpoint, Method.Get);

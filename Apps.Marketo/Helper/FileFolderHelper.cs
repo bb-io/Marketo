@@ -1,5 +1,6 @@
 ﻿using Apps.Marketo.Api;
 using Apps.Marketo.Dtos;
+using Apps.Marketo.Models.Entities;
 using Blackbird.Applications.Sdk.Utils.Extensions.String;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Newtonsoft.Json;

@@ -2,4 +2,4 @@
 
 namespace Apps.Marketo.Models.Forms.Responses;
 
-public record ListFormsResponse(List<FormDto> Forms);
+public record SearchFormsResponse(List<FormDto> Forms);

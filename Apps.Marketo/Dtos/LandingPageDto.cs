@@ -1,4 +1,5 @@
-﻿using Blackbird.Applications.Sdk.Common;
+﻿using Apps.Marketo.Models.Entities;
+using Blackbird.Applications.Sdk.Common;
 using Newtonsoft.Json;
 
 

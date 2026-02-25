@@ -1,25 +1,27 @@
-﻿using Apps.Marketo.Dtos;
+﻿using Apps.Marketo.Constants;
+using Apps.Marketo.Dtos;
+using Apps.Marketo.Dtos.Email;
+using Apps.Marketo.Extensions;
+using Apps.Marketo.Helper;
+using Apps.Marketo.HtmlHelpers;
+using Apps.Marketo.Invocables;
+using Apps.Marketo.Models;
 using Apps.Marketo.Models.Emails.Requests;
 using Apps.Marketo.Models.Emails.Responses;
-using Blackbird.Applications.Sdk.Common;
-using Blackbird.Applications.Sdk.Common.Actions;
-using Blackbird.Applications.Sdk.Common.Invocation;
-using Newtonsoft.Json;
-using RestSharp;
-using System.Globalization;
-using Apps.Marketo.Invocables;
-using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
-using System.Net.Mime;
-using System.Text;
-using Apps.Marketo.Models;
-using Apps.Marketo.HtmlHelpers;
-using Blackbird.Applications.Sdk.Utils.Extensions.Files;
-using HtmlAgilityPack;
-using Blackbird.Applications.Sdk.Common.Exceptions;
+using Apps.Marketo.Models.Entities.Email;
 using Apps.Marketo.Models.Identifiers;
 using Apps.Marketo.Models.Identifiers.Optional;
-using Apps.Marketo.Constants;
-using Apps.Marketo.Helper;
+using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Actions;
+using Blackbird.Applications.Sdk.Common.Exceptions;
+using Blackbird.Applications.Sdk.Common.Invocation;
+using Blackbird.Applications.Sdk.Utils.Extensions.Files;
+using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
+using HtmlAgilityPack;
+using Newtonsoft.Json;
+using RestSharp;
+using System.Net.Mime;
+using System.Text;
 
 namespace Apps.Marketo.Actions;
 
@@ -28,44 +30,49 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
     : MarketoInvocable(invocationContext)
 {
     [Action("Search emails", Description = "Search all emails")]
-    public async Task<ListEmailsResponse> ListEmails([ActionParameter] ListEmailsRequest input)
+    public async Task<SearchEmailsResponse> ListEmails([ActionParameter] SearchEmailsRequest input)
     {
         var request = new RestRequest($"/rest/asset/v1/emails.json", Method.Get);
         var subfolders = await FileFolderHelper.AddFolderParameter(Client, request, input.FolderId);
+        request.AddQueryParameterIfNotNull("status", input.Status);           
+        request.AddQueryParameterIfNotNull("earliestUpdatedAt", input.EarliestUpdatedAt);
+        request.AddQueryParameterIfNotNull("latestUpdatedAt", input.LatestUpdatedAt);
 
-        if (input.Status != null) request.AddQueryParameter("status", input.Status);   
-        if (input.EarliestUpdatedAt != null)
-            request.AddQueryParameter("earliestUpdatedAt",
-                ((DateTime)input.EarliestUpdatedAt).ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture));
-        if (input.LatestUpdatedAt != null)
-            request.AddQueryParameter("latestUpdatedAt",
-                ((DateTime)input.LatestUpdatedAt).ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture));
-
-        var response = await Client.Paginate<EmailDto>(request);
-        response = input.NamePatterns != null ? 
-            response.Where(x => FileFolderHelper.IsFilePathMatchingPattern(input.NamePatterns, x.Name, input.ExcludeMatched ?? false)).ToList() : 
-            response;
+        var emails = await Client.Paginate<EmailEntity>(request);
+        emails = input.NamePatterns != null ? 
+            emails.Where(x => FileFolderHelper.IsFilePathMatchingPattern(input.NamePatterns, x.Name, input.ExcludeMatched ?? false)).ToList() : 
+            emails;
 
         if (input.IgnoreInArchive == true)
         {
-            var nonArchivedEmails = new List<EmailDto>();
-            foreach (var email in response)
+            var nonArchivedEmails = new List<EmailEntity>();
+            var folderArchiveCache = new Dictionary<string, bool>();
+
+            foreach (var email in emails)
             {
-                var isArchived = await FileFolderHelper.IsAssetInArchievedFolder(Client, email.Folder);
+                string folderId = email.Folder.Value.ToString();
+
+                if (!folderArchiveCache.TryGetValue(folderId, out bool isArchived))
+                {
+                    isArchived = await FileFolderHelper.IsAssetInArchievedFolder(Client, email.Folder);
+                    folderArchiveCache[folderId] = isArchived;
+                }
+
                 if (!isArchived)
                     nonArchivedEmails.Add(email);
             }
-            response = nonArchivedEmails;
+            emails = nonArchivedEmails;
         }
 
-        return new(response);
+        return new(emails.Select(x => new EmailDto(x)).ToList());
     }
 
     [Action("Get email info", Description = "Get email info")]
     public async Task<EmailDto> GetEmailInfo([ActionParameter] EmailIdentifier input)
     {
         var request = new RestRequest($"/rest/asset/v1/email/{input.EmailId}.json", Method.Get);
-        return await Client.ExecuteWithErrorHandlingFirst<EmailDto>(request);
+        var result = await Client.ExecuteWithErrorHandlingFirst<EmailEntity>(request);
+        return new(result);
     }
 
     [Action("Update email metadata", Description = "Update email metadata")]
@@ -73,15 +80,12 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
         [ActionParameter] EmailIdentifier input,
         [ActionParameter] UpdateEmailMetadataRequest updateEmailMetadata)
     {
-        if (string.IsNullOrEmpty(input.EmailId))
-            throw new PluginMisconfigurationException("EmailId cannot be null or empty. Please check your input and try again");
-
         var request = new RestRequest($"/rest/asset/v1/email/{input.EmailId}.json", Method.Post);
-        if (!string.IsNullOrEmpty(updateEmailMetadata.Name))
-            request.AddParameter("name", updateEmailMetadata.Name);
-        if (!string.IsNullOrEmpty(updateEmailMetadata.Description))
-            request.AddParameter("description", updateEmailMetadata.Description);
-        return await Client.ExecuteWithErrorHandlingFirst<EmailDto>(request);
+        request.AddParameterIfNotNull("name", updateEmailMetadata.Name);
+        request.AddParameterIfNotNull("description", updateEmailMetadata.Description);
+
+        var result = await Client.ExecuteWithErrorHandlingFirst<EmailEntity>(request);
+        return new(result);
     }
 
     [Action("Get email content", Description = "Get email content")]
@@ -101,13 +105,14 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
 
     [Action("Get email as HTML for translation", Description = "Get email as HTML for translation")]
     public async Task<FileWrapper> GetEmailAsHtml(
-        [ActionParameter] EmailIdentifier getEmailInfoRequest,
+        [ActionParameter] EmailIdentifier emailInput,
         [ActionParameter] SegmentationIdentifier getSegmentationRequest,
         [ActionParameter] SegmentIdentifier getSegmentBySegmentationRequest,
         [ActionParameter] GetEmailAsHtmlRequest getEmailAsHtmlRequest)
     {
-        var emailInfo = await GetEmailInfo(getEmailInfoRequest);
-        var emailContentResponse = await GetEmailContentAll(getEmailInfoRequest);
+        var emailInfoRequest = new RestRequest($"/rest/asset/v1/email/{emailInput.EmailId}.json", Method.Post);
+        var emailInfo = await Client.ExecuteWithErrorHandlingFirst<EmailEntity>(emailInfoRequest);
+        var emailContentResponse = await GetEmailContentAll(emailInput);
         var onlyDynamic = getEmailAsHtmlRequest.GetOnlyDynamicContent.HasValue && getEmailAsHtmlRequest.GetOnlyDynamicContent.Value;
         var includeImages = getEmailAsHtmlRequest.IncludeImages.HasValue && getEmailAsHtmlRequest.IncludeImages.Value;
         
@@ -120,7 +125,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
         var contentTasks = targetItems.Select(async item =>
         {
             var content = await GetEmailSectionContent(
-                getEmailInfoRequest,
+                emailInput,
                 getSegmentationRequest,
                 getSegmentBySegmentationRequest,
                 item,
@@ -140,7 +145,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
         }
         else if (emailInfo.Subject.Type == "DynamicContent")
         {
-            var subjectContent = await GetEmailSectionContent(getEmailInfoRequest, getSegmentationRequest, getSegmentBySegmentationRequest, new EmailContentDto()
+            var subjectContent = await GetEmailSectionContent(emailInput, getSegmentationRequest, getSegmentBySegmentationRequest, new EmailContentDto()
             {
                 ContentType = "DynamicContent",
                 Value = emailInfo.Subject.Value
@@ -152,7 +157,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
             sectionContent, 
             emailInfo.Name, 
             getSegmentBySegmentationRequest.Segment, 
-            new(MetadataConstants.BlackbirdEmailIdAttribute, getEmailInfoRequest.EmailId));
+            new(MetadataConstants.BlackbirdEmailIdAttribute, emailInput.EmailId));
         
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
         var file = await fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html, $"{emailInfo.Name}.html");
@@ -175,7 +180,13 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
 
         var infoRequest = new EmailIdentifier
         {
-            EmailId = getEmailInfoRequest.EmailId ?? extractedMeta ?? throw new Exception("Email ID is not provided and not found in the HTML file. Please provide value in the optional input Email ID.") 
+            EmailId = 
+                getEmailInfoRequest.EmailId ?? 
+                extractedMeta ?? 
+                throw new PluginMisconfigurationException(
+                    "Email ID is not provided and not found in the HTML file. " +
+                    "Please provide value in the optional input Email ID."
+                ) 
         };
         
         var emailContentResponse = await GetEmailContentAll(infoRequest);
@@ -196,7 +207,8 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
         var updateEmailSubject = translateEmailWithHtmlRequest.UpdateEmailSubject.HasValue ? translateEmailWithHtmlRequest.UpdateEmailSubject.Value : true;
         if(translatedContent.TryGetValue("data-subject-value", out var subjectContent) && updateEmailSubject)
         {
-            var emailInfo = await GetEmailInfo(infoRequest);
+            var emailInfoRequest = new RestRequest($"/rest/asset/v1/email/{getEmailInfoRequest.EmailId}.json", Method.Post);
+            var emailInfo = await Client.ExecuteWithErrorHandlingFirst<EmailEntity>(emailInfoRequest);
             if (emailInfo.Subject?.Type == "Text" && translateEmailWithHtmlRequest.TranslateOnlyDynamic.HasValue
                                                   && !translateEmailWithHtmlRequest.TranslateOnlyDynamic.Value)
             {

@@ -3,15 +3,15 @@ using Apps.Marketo.DataSourceHandlers.FolderDataHandlers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 
-namespace Apps.Marketo.Models.Emails.Requests;
+namespace Apps.Marketo.Models.Snippets.Request;
 
-public class ListEmailsRequest
+public class SearchSnippetsRequest
 {
-    [DataSource(typeof(StatusDataHandler))]
+    [Display("Status"), DataSource(typeof(StatusDataHandler))]
     public string? Status { get; set; }
 
-    [Display("Folder", Description = "Folders list with \"Email\" type")]
-    [DataSource(typeof(EmailFolderDataHandler))]
+    [Display("Folder", Description = "Folders list with \"Snippet\" type")]
+    [DataSource(typeof(SnippetFolderDataHandler))]
     public string? FolderId { get; set; }
 
     [Display("Earliest updated at")]
@@ -25,7 +25,4 @@ public class ListEmailsRequest
 
     [Display("Exclude assets matched by patterns", Description = "Exclude assets matched by patterns")]
     public bool? ExcludeMatched { get; set; }
-
-    [Display("Ignore in archive folders")]
-    public bool? IgnoreInArchive { get; set; }
 }

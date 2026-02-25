@@ -19,6 +19,7 @@ using Apps.Marketo.Models.Identifiers;
 using Apps.Marketo.Models.Identifiers.Optional;
 using Apps.Marketo.Constants;
 using Apps.Marketo.Helper;
+using Apps.Marketo.Extensions;
 
 namespace Apps.Marketo.Actions;
 
@@ -27,12 +28,12 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
     : MarketoInvocable(invocationContext)
 {
     [Action("Search landing pages", Description = "Search landing pages")]
-    public async Task<ListLandingPagesResponse> ListLandingPages([ActionParameter] ListLandingPagesRequest input)
+    public async Task<SearchLandingPagesResponse> ListLandingPages([ActionParameter] SearchLandingPagesRequest input)
     {
         var request = new RestRequest($"/rest/asset/v1/landingPages.json", Method.Get);
         await FileFolderHelper.AddFolderParameter(Client, request, input.FolderId);
+        request.AddQueryParameterIfNotNull("status", input.Status);
 
-        if (input.Status != null) request.AddQueryParameter("status", input.Status);
         var response = await Client.Paginate<LandingPageDto>(request);
         if (input.EarliestUpdatedAt != null)
             response = response.Where(x => x.UpdatedAt >= input.EarliestUpdatedAt.Value).ToList();
@@ -43,8 +44,27 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
             response.Where(x => FileFolderHelper.IsFilePathMatchingPattern(input.NamePatterns, x.Name, input.ExcludeMatched ?? false)).ToList() : 
             response;
 
-        if (input.IgnoreInArchive.HasValue && input.IgnoreInArchive.Value)
-            response = response.Where(x => !FileFolderHelper.IsAssetInArchievedFolder(Client, x.Folder).Result).ToList();
+        if (input.IgnoreInArchive == true)
+        {
+            var nonArchivedPages = new List<LandingPageDto>();
+            var archiveCache = new Dictionary<string, bool>();
+
+            foreach (var page in response)
+            {
+                string folderId = page.Folder.Value.ToString();
+
+                if (!archiveCache.TryGetValue(folderId, out bool isArchived))
+                {
+                    isArchived = await FileFolderHelper.IsAssetInArchievedFolder(Client, page.Folder);
+                    archiveCache[folderId] = isArchived;
+                }
+
+                if (!isArchived)
+                    nonArchivedPages.Add(page);
+            }
+            response = nonArchivedPages;
+        }
+
         return new(response);
     }
 
