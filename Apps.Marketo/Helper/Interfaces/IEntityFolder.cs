@@ -1,6 +1,6 @@
 ﻿using Apps.Marketo.Models.Entities;
 
-namespace Apps.Marketo.Helper.Filter.Interfaces;
+namespace Apps.Marketo.Helper.Interfaces;
 
 public interface IEntityFolder
 {

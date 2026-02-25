@@ -49,11 +49,7 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
         request.AddQueryParameterIfNotNull("status", input.Status);
 
         var forms = await Client.Paginate<FormEntity>(request);
-        if (input.EarliestUpdatedAt != null)
-            forms = forms.Where(x => x.UpdatedAt >= input.EarliestUpdatedAt.Value).ToList();
-        if (input.LatestUpdatedAt != null)
-            forms = forms.Where(x => x.UpdatedAt <= input.LatestUpdatedAt.Value).ToList();
-
+        forms = forms.ApplyUpdatedAtFilter(input.UpdatedAfter, input.UpdatedBefore);
         forms = forms.ApplyNamePatternFilter(input.NamePatterns, input.ExcludeMatched); 
 
         return new(forms.Select(x => new FormDto(x)).ToList());

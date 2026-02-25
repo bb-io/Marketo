@@ -33,6 +33,6 @@ public class FormFieldDataHandler(
     {
         var getFieldsRequest = new RestRequest($"/rest/asset/v1/form/{formId}/fields.json", Method.Get);
         var formFields = await Client.ExecuteWithErrorHandling<FormFieldDto>(getFieldsRequest);
-        return formFields;
+        return formFields.ToList();
     }
 }

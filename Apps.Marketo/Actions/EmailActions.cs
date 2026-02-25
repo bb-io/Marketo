@@ -36,8 +36,8 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
         var request = new RestRequest($"/rest/asset/v1/emails.json", Method.Get);
         var subfolders = await FileFolderHelper.AddFolderParameter(Client, request, input.FolderId);
         request.AddQueryParameterIfNotNull("status", input.Status);           
-        request.AddQueryParameterIfNotNull("earliestUpdatedAt", input.EarliestUpdatedAt);
-        request.AddQueryParameterIfNotNull("latestUpdatedAt", input.LatestUpdatedAt);
+        request.AddQueryParameterIfNotNull("earliestUpdatedAt", input.UpdatedAfter);
+        request.AddQueryParameterIfNotNull("latestUpdatedAt", input.UpdatedBefore);
 
         var emails = await Client.Paginate<EmailEntity>(request);
         emails = emails.ApplyNamePatternFilter(input.NamePatterns, input.ExcludeMatched);
@@ -72,7 +72,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
     {
         var request = new RestRequest($"/rest/asset/v1/email/{input.EmailId}/content.json", Method.Get);
         var response = await Client.ExecuteWithErrorHandling<EmailContentDto>(request);
-        return new(response);
+        return new(response.ToList());
     }
 
     [Action("Delete email", Description = "Delete email")]
@@ -399,7 +399,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
     {
         var request = new RestRequest($"/rest/asset/v1/email/{input.EmailId}/content.json", Method.Get);
         var response = await Client.ExecuteWithErrorHandling<EmailContentDto>(request);
-        return new(response);
+        return new(response.ToList());
     }
 
     private async Task<string> RecreateModuleWithIssue(

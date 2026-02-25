@@ -1,4 +1,4 @@
-﻿namespace Apps.Marketo.Helper.Filter.Interfaces;
+﻿namespace Apps.Marketo.Helper.Interfaces;
 
 public interface IEntityName
 {

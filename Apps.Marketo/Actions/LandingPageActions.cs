@@ -65,7 +65,7 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
             response = nonArchivedPages;
         }
 
-        return new(response);
+        return new(response.ToList());
     }
 
     [Action("Get landing page info", Description = "Get landing page info")]
@@ -80,7 +80,7 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
     {
         var request = new RestRequest($"/rest/asset/v1/landingPage/{input.LandingPageId}/content.json", Method.Get);
         var response = await Client.ExecuteWithErrorHandling<LandingPageContentDto>(request);
-        return new(response);
+        return new(response.ToList());
     }
 
     [Action("Update landing page metadata", Description = "Update landing page metadata")]

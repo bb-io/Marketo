@@ -45,7 +45,7 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
         var result = string.IsNullOrEmpty(input.FolderId) ?
             response :
             response.Where(x => x.Folder.Value.ToString() == input.FolderId.Split("_").First()).ToList();
-        return new(result);
+        return new(result.ToList());
     }
 
     [Action("Get snippet info", Description = "Get snippet info")]

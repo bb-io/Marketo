@@ -1,12 +1,12 @@
 ﻿using Apps.Marketo.Api;
-using Apps.Marketo.Helper.Filter.Interfaces;
+using Apps.Marketo.Helper.Interfaces;
 
 namespace Apps.Marketo.Helper.Filter;
 
 public static class FilterHelper
 {
-    public static List<T> ApplyNamePatternFilter<T>(
-        this List<T> items, 
+    public static IEnumerable<T> ApplyNamePatternFilter<T>(
+        this IEnumerable<T> items, 
         List<string>? namePatterns, 
         bool? excludeMatched) where T : IEntityName
     {
@@ -20,8 +20,8 @@ public static class FilterHelper
         ).ToList();
     }
 
-    public static async Task<List<T>> ApplyIgnoreInArchiveFilter<T>(
-        this List<T> items,
+    public static async Task<IEnumerable<T>> ApplyIgnoreInArchiveFilter<T>(
+        this IEnumerable<T> items,
         MarketoClient client,
         bool? ignoreInArchive) where T : IEntityFolder
     {
@@ -46,5 +46,22 @@ public static class FilterHelper
         }
 
         return nonArchivedItems;
+    }
+
+    public static IEnumerable<T> ApplyUpdatedAtFilter<T>(
+        this IEnumerable<T> items, 
+        DateTime? updatedAfter, 
+        DateTime? updatedBefore) where T : IEntityUpdatedAt
+    {
+        if (updatedAfter == null && updatedBefore == null) 
+            return items;
+
+        if (updatedAfter != null)
+            items = items.Where(x => x.UpdatedAt >= updatedAfter.Value);
+
+        if (updatedBefore != null)
+            items = items.Where(x => x.UpdatedAt <= updatedBefore.Value);
+
+        return items;
     }
 }

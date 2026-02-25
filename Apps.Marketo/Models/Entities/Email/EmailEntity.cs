@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json;
-using Apps.Marketo.Helper.Filter.Interfaces;
+using Apps.Marketo.Helper.Interfaces;
 
 namespace Apps.Marketo.Models.Entities.Email;
 

@@ -1,9 +1,9 @@
-﻿using Apps.Marketo.Helper.Filter.Interfaces;
+﻿using Apps.Marketo.Helper.Interfaces;
 using Newtonsoft.Json;
 
 namespace Apps.Marketo.Models.Entities.Form;
 
-public class FormEntity : IEntityName
+public class FormEntity : IEntityName, IEntityUpdatedAt
 {
     [JsonProperty("id")]
     public string Id { get; set; } = string.Empty;

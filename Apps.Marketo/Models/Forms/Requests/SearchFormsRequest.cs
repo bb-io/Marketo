@@ -1,18 +1,19 @@
 ﻿using Apps.Marketo.DataSourceHandlers.FolderDataHandlers;
 using Apps.Marketo.DataSourceHandlers.Static;
+using Apps.Marketo.Helper.Interfaces;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dictionaries;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Marketo.Models.Forms.Requests;
 
-public class SearchFormsRequest
+public class SearchFormsRequest : IUpdatedDateRange
 {
-    [Display("Earliest updated at")]
-    public DateTime? EarliestUpdatedAt { get; set; }
-    
-    [Display("Latest updated at")]
-    public DateTime? LatestUpdatedAt { get; set; }
+    [Display("Updated after")]
+    public DateTime? UpdatedAfter { get; set; }
+
+    [Display("Updated before")]
+    public DateTime? UpdatedBefore { get; set; }
 
     [Display("Status"), StaticDataSource(typeof(StatusDataHandler))]
     public string? Status { get; set; }

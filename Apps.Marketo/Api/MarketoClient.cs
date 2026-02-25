@@ -42,7 +42,7 @@ public class MarketoClient : BlackBirdRestClient
         return authResponse.Data.AccessToken;
     }
 
-    public async Task<List<T>> Paginate<T>(RestRequest request)
+    public async Task<IEnumerable<T>> Paginate<T>(RestRequest request)
     {
         var offset = 0;
         var limit = 200;
@@ -50,16 +50,16 @@ public class MarketoClient : BlackBirdRestClient
         var baseUrl = request.Resource.SetQueryParameter("maxReturn", limit.ToString());
 
         var result = new List<T>();
-        List<T>? response;
+        IEnumerable<T> response;
         do
         {
             request.Resource = baseUrl.SetQueryParameter("offset", offset.ToString());
 
             response = await ExecuteWithErrorHandling<T>(request);
-            result.AddRange(response ?? []);
+            result.AddRange(response);
 
             offset += limit;
-        } while (response?.Count != 0);
+        } while (response.Any());
 
         return result;
     }
@@ -67,13 +67,13 @@ public class MarketoClient : BlackBirdRestClient
     public async Task<T> ExecuteWithErrorHandlingFirst<T>(RestRequest request)
     {
         var result = await ExecuteWithErrorHandling<T>(request);
-        if (result == null || result.Count == 0)
+        if (result == null || result.Any())
             throw new PluginApplicationException("The requested data was not found");
 
         return result.First();
     }
 
-    public new async Task<List<T>> ExecuteWithErrorHandling<T>(RestRequest request)
+    public new async Task<IEnumerable<T>> ExecuteWithErrorHandling<T>(RestRequest request)
     {
         var response = await ExecuteWithErrorHandling(request);
         var result = JsonConvert.DeserializeObject<BaseResponseDto<T>>(response.Content!);

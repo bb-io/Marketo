@@ -42,7 +42,7 @@ public class FolderActions(InvocationContext invocationContext) : MarketoInvocab
         if (input.IncludeArchive == null || !input.IncludeArchive.Value)
             response = response.Where(x => !x.IsArchive).ToList();
 
-        response.ForEach(x =>
+        response.ToList().ForEach(x =>
         {
             x.SearchId = $"{x.Id}_{x.FolderId.Type}"; // TODO: This really shouldn't be necessary anymore. Check if that's true.
         });
@@ -64,7 +64,8 @@ public class FolderActions(InvocationContext invocationContext) : MarketoInvocab
     {
         var endpoint = $"/rest/asset/v1/folder/byName.json".SetQueryParameter("name", folderName);
         var request = new RestRequest(endpoint, Method.Get);
-        return await Client.ExecuteWithErrorHandling<FolderInfoDto>(request);
+        var result = await Client.ExecuteWithErrorHandling<FolderInfoDto>(request);
+        return result.ToList();
     }
 
     [Action("Create folder", Description = "Create folder")]

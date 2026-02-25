@@ -30,7 +30,7 @@ public class EmailTests : TestBase
         var action = new EmailActions(InvocationContext, FileManager);
         var input = new SearchEmailsRequest
         {
-            EarliestUpdatedAt = DateTime.UtcNow - TimeSpan.FromDays(1),
+            UpdatedAfter = DateTime.UtcNow - TimeSpan.FromDays(1),
         };
 
         // Act

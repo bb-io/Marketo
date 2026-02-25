@@ -21,7 +21,7 @@ public class EmailTemplateActions(InvocationContext invocationContext) : Marketo
         var request = new RestRequest($"/rest/asset/v1/emailTemplates.json", Method.Get);
 
         if (!string.IsNullOrEmpty(input.Status)) request.AddQueryParameter("status", input.Status);
-        var response = await Client.Paginate<EmailTemplateDto>(request);
+        var response = (await Client.Paginate<EmailTemplateDto>(request)).ToList();
 
         if (string.IsNullOrEmpty(input.Status)) 
         {
