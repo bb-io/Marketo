@@ -1,5 +1,4 @@
-﻿using Apps.Marketo.DataSourceHandlers;
-using Apps.Marketo.DataSourceHandlers.FolderDataHandlers;
+﻿using Apps.Marketo.DataSourceHandlers.FolderDataHandlers;
 using Apps.Marketo.DataSourceHandlers.Static;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dictionaries;
@@ -9,7 +8,7 @@ namespace Apps.Marketo.Models.Content.Request;
 
 public class SearchContentRequest
 {
-    [Display("Status"), DataSource(typeof(StatusDataHandler))]
+    [Display("Status"), StaticDataSource(typeof(StatusDataHandler))]
     public string? Status { get; set; }
 
     [Display("Folder ID")]

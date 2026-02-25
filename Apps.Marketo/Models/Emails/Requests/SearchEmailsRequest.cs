@@ -1,14 +1,14 @@
-﻿using Apps.Marketo.DataSourceHandlers;
-using Apps.Marketo.DataSourceHandlers.FolderDataHandlers;
+﻿using Apps.Marketo.DataSourceHandlers.FolderDataHandlers;
+using Apps.Marketo.DataSourceHandlers.Static;
 using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Dictionaries;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Marketo.Models.Emails.Requests;
 
 public class SearchEmailsRequest
 {
-    [Display("Status")]
-    [DataSource(typeof(StatusDataHandler))]
+    [Display("Status"), StaticDataSource(typeof(StatusDataHandler))]
     public string? Status { get; set; }
 
     [Display("Folder", Description = "Folders list with \"Email\" type")]
