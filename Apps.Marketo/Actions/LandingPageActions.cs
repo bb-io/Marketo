@@ -20,6 +20,9 @@ using Apps.Marketo.Models.Identifiers.Optional;
 using Apps.Marketo.Constants;
 using Apps.Marketo.Helper;
 using Apps.Marketo.Extensions;
+using Apps.Marketo.Dtos.LandingPage;
+using Apps.Marketo.Models.Entities.LandingPage;
+using Apps.Marketo.Helper.Filter;
 
 namespace Apps.Marketo.Actions;
 
@@ -34,45 +37,20 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
         await FileFolderHelper.AddFolderParameter(Client, request, input.FolderId);
         request.AddQueryParameterIfNotNull("status", input.Status);
 
-        var response = await Client.Paginate<LandingPageDto>(request);
-        if (input.EarliestUpdatedAt != null)
-            response = response.Where(x => x.UpdatedAt >= input.EarliestUpdatedAt.Value).ToList();
-        if (input.LatestUpdatedAt != null)
-            response = response.Where(x => x.UpdatedAt <= input.LatestUpdatedAt.Value).ToList();
+        var pages = await Client.Paginate<LandingPageEntity>(request);
+        pages = pages.ApplyUpdatedAtFilter(input.UpdatedAfter, input.UpdatedBefore);
+        pages = pages.ApplyNamePatternFilter(input.NamePatterns, input.ExcludeMatched);
+        pages = await pages.ApplyIgnoreInArchiveFilter(Client, input.IgnoreInArchive);
 
-        response = input.NamePatterns != null ? 
-            response.Where(x => FileFolderHelper.IsFilePathMatchingPattern(input.NamePatterns, x.Name, input.ExcludeMatched ?? false)).ToList() : 
-            response;
-
-        if (input.IgnoreInArchive == true)
-        {
-            var nonArchivedPages = new List<LandingPageDto>();
-            var archiveCache = new Dictionary<string, bool>();
-
-            foreach (var page in response)
-            {
-                string folderId = page.Folder.Value.ToString();
-
-                if (!archiveCache.TryGetValue(folderId, out bool isArchived))
-                {
-                    isArchived = await FileFolderHelper.IsAssetInArchievedFolder(Client, page.Folder);
-                    archiveCache[folderId] = isArchived;
-                }
-
-                if (!isArchived)
-                    nonArchivedPages.Add(page);
-            }
-            response = nonArchivedPages;
-        }
-
-        return new(response.ToList());
+        return new(pages.Select(x => new LandingPageDto(x)).ToList());
     }
 
     [Action("Get landing page info", Description = "Get landing page info")]
     public async Task<LandingPageDto> GetLandingInfo([ActionParameter] LandingPageIdentifier input)
     {
         var request = new RestRequest($"/rest/asset/v1/landingPage/{input.LandingPageId}.json", Method.Get);
-        return await Client.ExecuteWithErrorHandlingFirst<LandingPageDto>(request);
+        var result = await Client.ExecuteWithErrorHandlingFirst<LandingPageEntity>(request);
+        return new(result);
     }
 
     [Action("Get landing page content", Description = "Get landing page content")]
@@ -89,35 +67,37 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
         [ActionParameter] UpdateLandingMetadataRequest updateLandingMetadata)
     {
         var request = new RestRequest($"/rest/asset/v1/landingPage/{input.LandingPageId}.json", Method.Post);
-        if (!string.IsNullOrEmpty(updateLandingMetadata.Name))
-            request.AddParameter("name", updateLandingMetadata.Name);
-        if (!string.IsNullOrEmpty(updateLandingMetadata.Description))
-            request.AddParameter("description", updateLandingMetadata.Description);
-        return await Client.ExecuteWithErrorHandlingFirst<LandingPageDto>(request);
+        request.AddParameterIfNotNull("name", updateLandingMetadata.Name);
+        request.AddParameterIfNotNull("description", updateLandingMetadata.Description);
+
+        var result = await Client.ExecuteWithErrorHandlingFirst<LandingPageEntity>(request);
+        return new(result);
     }
 
     [Action("Create landing page", Description = "Create landing page")]
     public async Task<LandingPageDto> CreateLandingPage([ActionParameter] CreateLandingRequest input)
     {
         var request = new RestRequest($"/rest/asset/v1/landingPages.json", Method.Post);
-        if (input.CustomHeadHTML != null) request.AddParameter("customHeadHTML", input.CustomHeadHTML);
-        if (input.Description != null) request.AddParameter("description", input.Description);
-        if (input.FacebookOgTags != null) request.AddParameter("facebookOgTags", input.FacebookOgTags);
-        if (input.Keywords != null) request.AddParameter("keywords", input.Keywords);
+        request.AddParameterIfNotNull("customHeadHTML", input.CustomHeadHTML);
+        request.AddParameterIfNotNull("description", input.Description);
+        request.AddParameterIfNotNull("facebookOgTags", input.FacebookOgTags);
+        request.AddParameterIfNotNull("keywords", input.Keywords);
         request.AddParameter("mobileEnabled", input.MobileEnabled ?? false);
         request.AddParameter("prefillForm", input.PrefillForm ?? false);
-        if (input.Robots != null) request.AddParameter("robots", input.Robots);
+        request.AddParameterIfNotNull("robots", input.Robots);
         request.AddParameter("template", int.Parse(input.Template));
-        if (input.Title != null) request.AddParameter("title", input.Title);
-        if (input.UrlPageName != null) request.AddParameter("urlPageName", input.UrlPageName);
-        if (input.Workspace != null) request.AddParameter("workspace", input.Workspace);
+        request.AddParameterIfNotNull("title", input.Title);
+        request.AddParameterIfNotNull("urlPageName", input.UrlPageName);
+        request.AddParameterIfNotNull("workspace", input.Workspace);
         request.AddParameter("folder", JsonConvert.SerializeObject(new
         {
             id = int.Parse(input.FolderId.Split("_").First()),
             type = input.FolderId.Split("_").Last()
         }));
         request.AddParameter("name", input.Name);
-        return await Client.ExecuteWithErrorHandlingFirst<LandingPageDto>(request);
+
+        var result = await Client.ExecuteWithErrorHandlingFirst<LandingPageEntity>(request);
+        return new(result);
     }
 
     [Action("Delete landing page", Description = "Delete landing page")]

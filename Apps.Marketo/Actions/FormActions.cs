@@ -239,7 +239,7 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
     {
         var getFormByNameRequest = new RestRequest($"/rest/asset/v1/form/byName.json", Method.Get)
             .AddParameter("name", formName);
-        var getFormByNameResponse = await Client.ExecuteWithErrorHandlingFirst<FormDto>(getFormByNameRequest);
+        var getFormByNameResponse = await Client.ExecuteWithErrorHandlingFirst<FormEntity>(getFormByNameRequest);
         var deleteFormRequest = new RestRequest($"/rest/asset/v1/form/{getFormByNameResponse.Id}/delete.json", Method.Post);
         await Client.ExecuteWithErrorHandling(deleteFormRequest);
     }

@@ -1,14 +1,12 @@
-﻿using Blackbird.Applications.Sdk.Common;
+﻿using Newtonsoft.Json;
 
 namespace Apps.Marketo.Models.Entities;
 
 public class AssetFolder
 {
-    public string Type { get; set; }
-    
-    [Display("Id")]
-    public string Value { get; set; }
+    [JsonProperty("value")]
+    public string Value { get; set; } = string.Empty;
 
-    [Display("Folder name")]
-    public string FolderName { get; set; }
+    [JsonProperty("type")]
+    public string Type { get; set; } = string.Empty;
 }

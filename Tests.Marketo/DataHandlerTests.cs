@@ -1,5 +1,7 @@
 ﻿using Apps.Marketo.DataSourceHandlers;
+using Apps.Marketo.DataSourceHandlers.FolderDataHandlers;
 using Blackbird.Applications.Sdk.Common.Dynamic;
+using Newtonsoft.Json;
 using Tests.Marketo.Base;
 
 namespace Tests.Marketo;
@@ -55,4 +57,17 @@ public class DataHandlerTests : TestBase
         Assert.IsNotNull(result);
     }
 
+    [TestMethod]
+    public async Task LandingPageFolderDataHandler_ReturnsFolders()
+    {
+        // Arrange
+        var handler = new LandingPageFolderDataHandler(InvocationContext);
+
+        // Act
+        var result = await handler.GetDataAsync(new DataSourceContext(), CancellationToken.None);
+
+        // Assert
+        PrintJsonResult(result);
+        Assert.IsNotNull(result);
+    }
 }

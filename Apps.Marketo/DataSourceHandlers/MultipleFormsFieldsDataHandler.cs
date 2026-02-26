@@ -1,6 +1,7 @@
 ﻿using Apps.Marketo.Dtos;
 using Apps.Marketo.Dtos.Form;
 using Apps.Marketo.Invocables;
+using Apps.Marketo.Models.Entities.Form;
 using Apps.Marketo.Models.Forms.Requests;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
@@ -33,7 +34,7 @@ public class MultipleFormsFieldsDataHandler(
     private async Task<List<FormFieldDto>> GetFormFieldsFromAllForms(List<string> formIds)
     {
         var request = new RestRequest($"/rest/asset/v1/forms.json", Method.Get);
-        var forms = (await Client.Paginate<FormDto>(request)).Where(x => formIds.Contains(x.Id.ToString())).ToList();
+        var forms = (await Client.Paginate<FormEntity>(request)).Where(x => formIds.Contains(x.Id.ToString())).ToList();
         var allFormFields = new List<FormFieldDto>();
         foreach (var form in forms)
         {

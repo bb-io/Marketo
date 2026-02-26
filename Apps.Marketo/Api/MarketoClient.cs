@@ -67,7 +67,7 @@ public class MarketoClient : BlackBirdRestClient
     public async Task<T> ExecuteWithErrorHandlingFirst<T>(RestRequest request)
     {
         var result = await ExecuteWithErrorHandling<T>(request);
-        if (result == null || result.Any())
+        if (result == null || !result.Any())
             throw new PluginApplicationException("The requested data was not found");
 
         return result.First();

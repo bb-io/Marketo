@@ -13,7 +13,7 @@ public class EmailTests : TestBase
     {
         // Arrange
         var action = new EmailActions(InvocationContext, FileManager);
-        var emailId = new EmailIdentifier { EmailId = "1057" };
+        var emailId = new EmailIdentifier { EmailId = "1008" };
 
         // Act
         var result = await action.GetEmailInfo(emailId);
@@ -30,7 +30,7 @@ public class EmailTests : TestBase
         var action = new EmailActions(InvocationContext, FileManager);
         var input = new SearchEmailsRequest
         {
-            UpdatedAfter = DateTime.UtcNow - TimeSpan.FromDays(1),
+            NamePatterns = ["Test3423"]
         };
 
         // Act

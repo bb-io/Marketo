@@ -3,6 +3,7 @@ using Apps.Marketo.Models.Forms.Responses;
 using Apps.Marketo.Polling.Models.Memories;
 using Blackbird.Applications.Sdk.Common.Polling;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Apps.Marketo.Models.Entities.Form;
 using Apps.Marketo.Dtos.Form;
 
 namespace Apps.Marketo.Polling;
@@ -18,12 +19,12 @@ public class FormPollingEvent(InvocationContext invocationContext) : BasePolling
         {
             var endpoint = "/rest/asset/v1/forms.json";
             var request = new RestRequest(endpoint, Method.Get);
-            var response = await Client.Paginate<FormDto>(request);
+            var response = await Client.Paginate<FormEntity>(request);
 
             var forms = response
                 .Where(x => x.CreatedAt >= memory.LastInteractionDate || x.UpdatedAt >= memory.LastInteractionDate)
                 .ToList();
-            return new(forms);
+            return new(forms.Select(x => new FormDto(x)).ToList());
         }, result => result.Forms.Count != 0);
     }
 }

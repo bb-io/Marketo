@@ -1,12 +1,13 @@
 ﻿using Apps.Marketo.DataSourceHandlers.FolderDataHandlers;
 using Apps.Marketo.DataSourceHandlers.Static;
+using Apps.Marketo.Helper.Interfaces;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dictionaries;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Marketo.Models.LandingPages.Requests;
 
-public class SearchLandingPagesRequest
+public class SearchLandingPagesRequest : IUpdatedDateRange
 {
     [Display("Status"), StaticDataSource(typeof(StatusDataHandler))]
     public string? Status { get; set; }
@@ -15,11 +16,11 @@ public class SearchLandingPagesRequest
     [DataSource(typeof(LandingPageFolderDataHandler))]
     public string? FolderId { get; set; }
 
-    [Display("Earliest updated at")]
-    public DateTime? EarliestUpdatedAt { get; set; }
+    [Display("Updated after")]
+    public DateTime? UpdatedAfter { get; set; }
 
-    [Display("Latest updated at")]
-    public DateTime? LatestUpdatedAt { get; set; }
+    [Display("Updated before")]
+    public DateTime? UpdatedBefore { get; set; }
 
     [Display("Name patterns", Description = "Use '*' to represent wildcards in name")]
     public List<string>? NamePatterns { get; set; }

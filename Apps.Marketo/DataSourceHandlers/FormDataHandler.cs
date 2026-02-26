@@ -1,5 +1,6 @@
 ﻿using Apps.Marketo.Dtos.Form;
 using Apps.Marketo.Invocables;
+using Apps.Marketo.Models.Entities.Form;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using RestSharp;
@@ -12,7 +13,7 @@ public class FormDataHandler(InvocationContext invocationContext)
     public async Task<IEnumerable<DataSourceItem>> GetDataAsync(DataSourceContext context, CancellationToken ct)
     {
         var request = new RestRequest("/rest/asset/v1/forms.json", Method.Get);
-        var response = await Client.Paginate<FormDto>(request);
+        var response = await Client.Paginate<FormEntity>(request);
         
         var filtered = response.Where(form => 
             context.SearchString == null ||
