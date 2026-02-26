@@ -31,6 +31,8 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
     [Action("Search snippets", Description = "Search snippets")]
     public async Task<SearchSnippetsResponse> ListSnippets([ActionParameter] SearchSnippetsRequest input)
     {
+        input.Validate();
+
         var request = new RestRequest("/rest/asset/v1/snippets.json", Method.Get);
         request.AddQueryParameterIfNotNull("status", input.Status);
 

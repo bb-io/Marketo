@@ -1,6 +1,7 @@
 ﻿using Apps.Marketo.DataSourceHandlers.FolderDataHandlers;
 using Apps.Marketo.DataSourceHandlers.Static;
 using Apps.Marketo.Helper.Interfaces;
+using Apps.Marketo.Helper.Validator;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dictionaries;
 using Blackbird.Applications.Sdk.Common.Dynamic;
@@ -36,4 +37,9 @@ public class SearchLandingPagesRequest : IUpdatedDateRange, ICreatedDateRange
 
     [Display("Ignore in archive folders")]
     public bool? IgnoreInArchive { get; set; }
+
+    public void Validate()
+    {
+        this.ValidateDates();
+    }
 }

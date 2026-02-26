@@ -1,6 +1,7 @@
 ﻿using Apps.Marketo.DataSourceHandlers.FolderDataHandlers;
 using Apps.Marketo.DataSourceHandlers.Static;
 using Apps.Marketo.Helper.Interfaces;
+using Apps.Marketo.Helper.Validator;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dictionaries;
 using Blackbird.Applications.Sdk.Common.Dynamic;
@@ -33,4 +34,9 @@ public class SearchFormsRequest : IUpdatedDateRange, ICreatedDateRange
 
     [Display("Exclude assets matched by patterns", Description = "Exclude assets matched by patterns")]
     public bool? ExcludeMatched { get; set; }
+
+    public void Validate()
+    {
+        this.ValidateDates();
+    }
 }

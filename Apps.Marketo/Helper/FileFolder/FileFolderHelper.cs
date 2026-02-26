@@ -6,7 +6,7 @@ using Microsoft.Extensions.FileSystemGlobbing;
 using Newtonsoft.Json;
 using RestSharp;
 
-namespace Apps.Marketo.Helper;
+namespace Apps.Marketo.Helper.FileFolder;
 
 public static class FileFolderHelper
 {

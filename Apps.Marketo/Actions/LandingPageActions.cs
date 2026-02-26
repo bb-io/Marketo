@@ -18,11 +18,11 @@ using Blackbird.Applications.Sdk.Common.Exceptions;
 using Apps.Marketo.Models.Identifiers;
 using Apps.Marketo.Models.Identifiers.Optional;
 using Apps.Marketo.Constants;
-using Apps.Marketo.Helper;
 using Apps.Marketo.Extensions;
 using Apps.Marketo.Dtos.LandingPage;
 using Apps.Marketo.Models.Entities.LandingPage;
 using Apps.Marketo.Helper.Filter;
+using Apps.Marketo.Helper.FileFolder;
 
 namespace Apps.Marketo.Actions;
 
@@ -33,6 +33,8 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
     [Action("Search landing pages", Description = "Search landing pages")]
     public async Task<SearchLandingPagesResponse> ListLandingPages([ActionParameter] SearchLandingPagesRequest input)
     {
+        input.Validate();
+
         var request = new RestRequest($"/rest/asset/v1/landingPages.json", Method.Get);
         await FileFolderHelper.AddFolderParameter(Client, request, input.FolderId);
         request.AddQueryParameterIfNotNull("status", input.Status);

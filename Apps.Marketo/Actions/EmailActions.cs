@@ -2,7 +2,7 @@
 using Apps.Marketo.Dtos;
 using Apps.Marketo.Dtos.Email;
 using Apps.Marketo.Extensions;
-using Apps.Marketo.Helper;
+using Apps.Marketo.Helper.FileFolder;
 using Apps.Marketo.Helper.Filter;
 using Apps.Marketo.HtmlHelpers;
 using Apps.Marketo.Invocables;
@@ -33,6 +33,8 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
     [Action("Search emails", Description = "Search all emails")]
     public async Task<SearchEmailsResponse> ListEmails([ActionParameter] SearchEmailsRequest input)
     {
+        input.Validate();
+
         var request = new RestRequest($"/rest/asset/v1/emails.json", Method.Get);
         var subfolders = await FileFolderHelper.AddFolderParameter(Client, request, input.FolderId);
         request.AddQueryParameterIfNotNull("status", input.Status);           

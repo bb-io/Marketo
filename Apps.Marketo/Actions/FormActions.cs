@@ -2,7 +2,7 @@
 using Apps.Marketo.Dtos;
 using Apps.Marketo.Dtos.Form;
 using Apps.Marketo.Extensions;
-using Apps.Marketo.Helper;
+using Apps.Marketo.Helper.FileFolder;
 using Apps.Marketo.Helper.Filter;
 using Apps.Marketo.HtmlHelpers.Forms;
 using Apps.Marketo.Invocables;
@@ -44,6 +44,8 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
     [Action("Search forms", Description = "Search all forms")]
     public async Task<SearchFormsResponse> ListRecentlyCreatedOrUpdatedForms([ActionParameter] SearchFormsRequest input)
     {
+        input.Validate();
+
         var request = new RestRequest($"/rest/asset/v1/forms.json", Method.Get);
         await FileFolderHelper.AddFolderParameter(Client, request, input.FolderId);
         request.AddQueryParameterIfNotNull("status", input.Status);
