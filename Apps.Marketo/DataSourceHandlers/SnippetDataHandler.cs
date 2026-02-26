@@ -1,5 +1,5 @@
-using Apps.Marketo.Dtos;
 using Apps.Marketo.Invocables;
+using Apps.Marketo.Models.Entities.Snippet;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using RestSharp;
@@ -16,7 +16,7 @@ public class SnippetDataHandler : MarketoInvocable, IAsyncDataSourceHandler
         CancellationToken cancellationToken)
     {
         var request = new RestRequest("/rest/asset/v1/snippets.json", Method.Get);
-        var items = await Client.Paginate<SnippetDto>(request);
+        var items = await Client.Paginate<SnippetEntity>(request);
 
         return items
             .Where(str =>

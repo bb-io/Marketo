@@ -1,4 +1,4 @@
-using Apps.Marketo.Dtos;
+using Apps.Marketo.Dtos.Snippet;
 
 namespace Apps.Marketo.Models.Snippets.Response;
 

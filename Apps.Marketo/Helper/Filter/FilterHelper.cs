@@ -64,4 +64,14 @@ public static class FilterHelper
 
         return items;
     }
+
+    public static IEnumerable<T> ApplyFolderIdFilter<T>(
+        this IEnumerable<T> items,
+        string? folderId) where T : IEntityFolder
+    {
+        if (string.IsNullOrEmpty(folderId))
+            return items;
+
+        return items.Where(x => x.Folder.Value.ToString() == folderId.Split("_").First()).ToList();
+    }
 }

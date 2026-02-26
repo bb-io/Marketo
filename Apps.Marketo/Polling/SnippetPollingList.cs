@@ -1,9 +1,10 @@
 ﻿using RestSharp;
-using Apps.Marketo.Dtos;
 using Apps.Marketo.Models.Snippets.Response;
 using Apps.Marketo.Polling.Models.Memories;
 using Blackbird.Applications.Sdk.Common.Polling;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Apps.Marketo.Models.Entities.Snippet;
+using Apps.Marketo.Dtos.Snippet;
 
 namespace Apps.Marketo.Polling;
 
@@ -18,12 +19,12 @@ public class SnippetPollingList(InvocationContext invocationContext) : BasePolli
         {
             var endpoint = "/rest/asset/v1/snippets.json";
             var request = new RestRequest(endpoint, Method.Get);
-            var response = await Client.Paginate<SnippetDto>(request);
+            var response = await Client.Paginate<SnippetEntity>(request);
 
             var snippets = response
                 .Where(x => x.CreatedAt >= memory.LastInteractionDate || x.UpdatedAt >= memory.LastInteractionDate)
                 .ToList();
-            return new(snippets);
+            return new(snippets.Select(x => new SnippetDto(x)).ToList());
         }, result => result.Snippets.Count != 0);
     }
 }

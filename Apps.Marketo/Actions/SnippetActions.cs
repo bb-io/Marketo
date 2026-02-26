@@ -1,11 +1,13 @@
 using Apps.Marketo.Constants;
 using Apps.Marketo.Dtos;
+using Apps.Marketo.Dtos.Snippet;
 using Apps.Marketo.Extensions;
-using Apps.Marketo.Helper;
+using Apps.Marketo.Helper.Filter;
 using Apps.Marketo.HtmlHelpers;
 using Apps.Marketo.Invocables;
 using Apps.Marketo.Models;
 using Apps.Marketo.Models.Entities;
+using Apps.Marketo.Models.Entities.Snippet;
 using Apps.Marketo.Models.Identifiers;
 using Apps.Marketo.Models.Snippets.Request;
 using Apps.Marketo.Models.Snippets.Response;
@@ -31,21 +33,13 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
     {
         var request = new RestRequest("/rest/asset/v1/snippets.json", Method.Get);
         request.AddQueryParameterIfNotNull("status", input.Status);
-        var response = await Client.Paginate<SnippetDto>(request);
 
-        if (input.EarliestUpdatedAt != null)
-            response = response.Where(x => x.UpdatedAt >= input.EarliestUpdatedAt.Value).ToList();
-        if (input.LatestUpdatedAt != null)
-            response = response.Where(x => x.UpdatedAt <= input.LatestUpdatedAt.Value).ToList();
+        var snippets = await Client.Paginate<SnippetEntity>(request);
+        snippets = snippets.ApplyUpdatedAtFilter(input.UpdatedAfter, input.UpdatedBefore);
+        snippets = snippets.ApplyNamePatternFilter(input.NamePatterns, input.ExcludeMatched);
+        snippets = snippets.ApplyFolderIdFilter(input.FolderId);
 
-        response = input.NamePatterns != null ? 
-            response.Where(x => FileFolderHelper.IsFilePathMatchingPattern(input.NamePatterns, x.Name, input.ExcludeMatched ?? false)).ToList() : 
-            response;
-
-        var result = string.IsNullOrEmpty(input.FolderId) ?
-            response :
-            response.Where(x => x.Folder.Value.ToString() == input.FolderId.Split("_").First()).ToList();
-        return new(result.ToList());
+        return new(snippets.Select(x => new SnippetDto(x)).ToList());
     }
 
     [Action("Get snippet info", Description = "Get snippet info")]
@@ -54,7 +48,8 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
         var endpoit = $"/rest/asset/v1/snippet/{snippetRequest.SnippetId}.json";
         var request = new RestRequest(endpoit, Method.Get);
 
-        return await Client.ExecuteWithErrorHandlingFirst<SnippetDto>(request);
+        var result = await Client.ExecuteWithErrorHandlingFirst<SnippetEntity>(request);
+        return new(result);
     }
 
     [Action("Get snippet content", Description = "Get content of a specific snippet")]
@@ -81,7 +76,8 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
                 type = snippetRequest.FolderId.Split("_").Last()
             }));
 
-        return await Client.ExecuteWithErrorHandlingFirst<SnippetDto>(request);
+        var result = await Client.ExecuteWithErrorHandlingFirst<SnippetEntity>(request);
+        return new(result);
     }
 
     [Action("Update snippet metadata", Description = "Update snippet metadata")]
@@ -90,11 +86,11 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
         [ActionParameter] UpdateSnippetMetadataRequest updateSnippetMetadata)
     {
         var request = new RestRequest($"/rest/asset/v1/snippet/{input.SnippetId}.json", Method.Post);
-        if (!string.IsNullOrEmpty(updateSnippetMetadata.Name))
-            request.AddParameter("name", updateSnippetMetadata.Name);
-        if (!string.IsNullOrEmpty(updateSnippetMetadata.Description))
-            request.AddParameter("description", updateSnippetMetadata.Description);
-        return await Client.ExecuteWithErrorHandlingFirst<SnippetDto>(request);
+        request.AddParameterIfNotNull("name", updateSnippetMetadata.Name);
+        request.AddParameterIfNotNull("description", updateSnippetMetadata.Description);
+
+        var result = await Client.ExecuteWithErrorHandlingFirst<SnippetEntity>(request);
+        return new(result);
     }
 
     [Action("Get snippet as HTML for translation", Description = "Get snippet as HTML for translation")]
