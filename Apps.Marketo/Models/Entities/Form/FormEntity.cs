@@ -3,7 +3,7 @@ using Apps.Marketo.Helper.Interfaces;
 
 namespace Apps.Marketo.Models.Entities.Form;
 
-public class FormEntity : IEntityName, IEntityUpdatedAt, IEntityCreatedAt
+public class FormEntity : IEntityName, IEntityUpdatedAt, IEntityCreatedAt, IEntityFolder
 {
     [JsonProperty("id")]
     public string Id { get; set; } = string.Empty;

@@ -41,6 +41,7 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
         snippets = snippets.ApplyCreatedAtFilter(input.CreatedAfter, input.CreatedBefore);
         snippets = snippets.ApplyNamePatternFilter(input.NamePatterns, input.ExcludeMatched);
         snippets = snippets.ApplyFolderIdFilter(input.FolderId);
+        snippets = await snippets.ApplyIgnoreInArchiveFilter(Client, input.IgnoreInArchive);
 
         return new(snippets.Select(x => new SnippetDto(x)).ToList());
     }

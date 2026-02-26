@@ -35,6 +35,9 @@ public class SearchSnippetsRequest : IUpdatedDateRange, ICreatedDateRange
     [Display("Exclude assets matched by patterns", Description = "Exclude assets matched by patterns")]
     public bool? ExcludeMatched { get; set; }
 
+    [Display("Ignore in archive folders")]
+    public bool? IgnoreInArchive { get; set; }
+
     public void Validate()
     {
         this.ValidateDates();
