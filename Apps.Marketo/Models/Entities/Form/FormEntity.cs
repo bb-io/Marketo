@@ -1,9 +1,9 @@
-﻿using Apps.Marketo.Helper.Interfaces;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
+using Apps.Marketo.Helper.Interfaces;
 
 namespace Apps.Marketo.Models.Entities.Form;
 
-public class FormEntity : IEntityName, IEntityUpdatedAt
+public class FormEntity : IEntityName, IEntityUpdatedAt, IEntityCreatedAt
 {
     [JsonProperty("id")]
     public string Id { get; set; } = string.Empty;
@@ -48,7 +48,7 @@ public class FormEntity : IEntityName, IEntityUpdatedAt
     public string FontSize { get; set; } = string.Empty;
 
     [JsonProperty("folder")]
-    public AssetFolder Folder { get; set; }
+    public AssetFolder Folder { get; set; } = null!;
 
     [JsonProperty("knownVisitor")]
     public KnownVisitor KnownVisitor { get; set; }

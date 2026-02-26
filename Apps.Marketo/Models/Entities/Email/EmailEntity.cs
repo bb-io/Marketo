@@ -3,7 +3,7 @@ using Apps.Marketo.Helper.Interfaces;
 
 namespace Apps.Marketo.Models.Entities.Email;
 
-public class EmailEntity : IEntityName, IEntityFolder
+public class EmailEntity : IEntityName, IEntityFolder, IEntityCreatedAt
 {
     [JsonProperty("id")]
     public string Id { get; set; } = string.Empty;

@@ -30,7 +30,8 @@ public class EmailTests : TestBase
         var action = new EmailActions(InvocationContext, FileManager);
         var input = new SearchEmailsRequest
         {
-            NamePatterns = ["Test3423"]
+            CreatedAfter = new DateTime(2024, 07, 25, 19, 0, 0, DateTimeKind.Utc),
+            CreatedBefore = new DateTime(2024, 07, 25, 19, 5, 0, DateTimeKind.Utc),
         };
 
         // Act

@@ -65,6 +65,23 @@ public static class FilterHelper
         return items;
     }
 
+    public static IEnumerable<T> ApplyCreatedAtFilter<T>(
+        this IEnumerable<T> items,
+        DateTime? createdAfter,
+        DateTime? createdBefore) where T : IEntityCreatedAt
+    {
+        if (createdAfter == null && createdBefore == null)
+            return items;
+
+        if (createdAfter != null)
+            items = items.Where(x => x.CreatedAt >= createdAfter.Value);
+
+        if (createdBefore != null)
+            items = items.Where(x => x.CreatedAt <= createdBefore.Value);
+
+        return items;
+    }
+
     public static IEnumerable<T> ApplyFolderIdFilter<T>(
         this IEnumerable<T> items,
         string? folderId) where T : IEntityFolder

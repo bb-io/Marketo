@@ -41,6 +41,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
 
         var emails = await Client.Paginate<EmailEntity>(request);
         emails = emails.ApplyNamePatternFilter(input.NamePatterns, input.ExcludeMatched);
+        emails = emails.ApplyCreatedAtFilter(input.CreatedAfter, input.CreatedBefore);
         emails = await emails.ApplyIgnoreInArchiveFilter(Client, input.IgnoreInArchive);
 
         return new(emails.Select(x => new EmailDto(x)).ToList());

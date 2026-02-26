@@ -36,6 +36,7 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
 
         var snippets = await Client.Paginate<SnippetEntity>(request);
         snippets = snippets.ApplyUpdatedAtFilter(input.UpdatedAfter, input.UpdatedBefore);
+        snippets = snippets.ApplyCreatedAtFilter(input.CreatedAfter, input.CreatedBefore);
         snippets = snippets.ApplyNamePatternFilter(input.NamePatterns, input.ExcludeMatched);
         snippets = snippets.ApplyFolderIdFilter(input.FolderId);
 

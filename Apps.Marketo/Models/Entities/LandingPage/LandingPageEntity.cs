@@ -3,7 +3,7 @@ using Apps.Marketo.Helper.Interfaces;
 
 namespace Apps.Marketo.Models.Entities.LandingPage;
 
-public class LandingPageEntity : IEntityName, IEntityUpdatedAt, IEntityFolder
+public class LandingPageEntity : IEntityName, IEntityUpdatedAt, IEntityCreatedAt, IEntityFolder
 {
     [JsonProperty("id")]
     public string Id { get; set; } = string.Empty;
@@ -27,19 +27,19 @@ public class LandingPageEntity : IEntityName, IEntityUpdatedAt, IEntityFolder
     public DateTime UpdatedAt { get; set; }
 
     [JsonProperty("customHeadHTML")]
-    public string CustomHeadHTML { get; set; } = string.Empty;
+    public string? CustomHeadHTML { get; set; }
 
     [JsonProperty("facebookOgTags")]
-    public string FacebookOgTags { get; set; } = string.Empty;
+    public string? FacebookOgTags { get; set; }
 
     [JsonProperty("folder")]
-    public AssetFolder Folder { get; set; }
+    public AssetFolder Folder { get; set; } = null!;
 
     [JsonProperty("formPrefill")]
     public bool FormPrefill { get; set; }
 
     [JsonProperty("keywords")]
-    public string Keywords { get; set; } = string.Empty;
+    public string? Keywords { get; set; }
 
     [JsonProperty("mobileEnabled")]
     public bool MobileEnabled { get; set; }
@@ -51,10 +51,10 @@ public class LandingPageEntity : IEntityName, IEntityUpdatedAt, IEntityFolder
     public string Status { get; set; } = string.Empty;
 
     [JsonProperty("templateId")]
-    public string TemplateId { get; set; } = string.Empty;
+    public string? TemplateId { get; set; }
 
     [JsonProperty("title")]
-    public string Title { get; set; } = string.Empty;
+    public string? Title { get; set; }
 
     [JsonProperty("workspace")]
     public string Workspace { get; set; } = string.Empty;

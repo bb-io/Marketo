@@ -7,13 +7,19 @@ using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Marketo.Models.Forms.Requests;
 
-public class SearchFormsRequest : IUpdatedDateRange
+public class SearchFormsRequest : IUpdatedDateRange, ICreatedDateRange
 {
     [Display("Updated after")]
     public DateTime? UpdatedAfter { get; set; }
 
     [Display("Updated before")]
     public DateTime? UpdatedBefore { get; set; }
+
+    [Display("Created after")]
+    public DateTime? CreatedAfter { get; set; }
+
+    [Display("Created before")]
+    public DateTime? CreatedBefore { get; set; }
 
     [Display("Status"), StaticDataSource(typeof(StatusDataHandler))]
     public string? Status { get; set; }

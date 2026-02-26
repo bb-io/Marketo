@@ -7,7 +7,7 @@ using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Marketo.Models.LandingPages.Requests;
 
-public class SearchLandingPagesRequest : IUpdatedDateRange
+public class SearchLandingPagesRequest : IUpdatedDateRange, ICreatedDateRange
 {
     [Display("Status"), StaticDataSource(typeof(StatusDataHandler))]
     public string? Status { get; set; }
@@ -15,6 +15,12 @@ public class SearchLandingPagesRequest : IUpdatedDateRange
     [Display("Folder", Description = "Folders list with \"Landing Page\" type")]
     [DataSource(typeof(LandingPageFolderDataHandler))]
     public string? FolderId { get; set; }
+
+    [Display("Created after")]
+    public DateTime? CreatedAfter { get; set; }
+
+    [Display("Created after")]
+    public DateTime? CreatedBefore { get; set; }
 
     [Display("Updated after")]
     public DateTime? UpdatedAfter { get; set; }

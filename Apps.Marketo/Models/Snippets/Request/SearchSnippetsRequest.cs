@@ -7,7 +7,7 @@ using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Marketo.Models.Snippets.Request;
 
-public class SearchSnippetsRequest : IUpdatedDateRange
+public class SearchSnippetsRequest : IUpdatedDateRange, ICreatedDateRange
 {
     [Display("Status"), StaticDataSource(typeof(StatusDataHandler))]
     public string? Status { get; set; }
@@ -15,6 +15,12 @@ public class SearchSnippetsRequest : IUpdatedDateRange
     [Display("Folder ID", Description = "Folders list with \"Snippet\" type")]
     [DataSource(typeof(SnippetFolderDataHandler))]
     public string? FolderId { get; set; }
+
+    [Display("Created after")]
+    public DateTime? CreatedAfter { get; set; }
+
+    [Display("Created before")]
+    public DateTime? CreatedBefore { get; set; }
 
     [Display("Updated after")]
     public DateTime? UpdatedAfter { get; set; }

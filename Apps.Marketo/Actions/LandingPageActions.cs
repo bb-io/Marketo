@@ -39,6 +39,7 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
 
         var pages = await Client.Paginate<LandingPageEntity>(request);
         pages = pages.ApplyUpdatedAtFilter(input.UpdatedAfter, input.UpdatedBefore);
+        pages = pages.ApplyCreatedAtFilter(input.CreatedAfter, input.CreatedBefore);
         pages = pages.ApplyNamePatternFilter(input.NamePatterns, input.ExcludeMatched);
         pages = await pages.ApplyIgnoreInArchiveFilter(Client, input.IgnoreInArchive);
 

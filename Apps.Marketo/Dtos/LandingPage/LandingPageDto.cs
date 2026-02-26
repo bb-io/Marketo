@@ -12,7 +12,7 @@ public class LandingPageDto(LandingPageEntity pageEntity)
     public string Name { get; set; } = pageEntity.Name;
 
     [Display("Landing page description")]
-    public string? Description { get; set; } = pageEntity.Description;
+    public string? Description { get; set; } = !string.IsNullOrEmpty(pageEntity.Description) ? pageEntity.Description : null;
 
     [Display("Landing page URL")]
     public string Url { get; set; } = pageEntity.Url;
@@ -27,10 +27,10 @@ public class LandingPageDto(LandingPageEntity pageEntity)
     public DateTime UpdatedAt { get; set; } = pageEntity.UpdatedAt;
 
     [Display("Custom head HTML")]
-    public string CustomHeadHTML { get; set; } = pageEntity.CustomHeadHTML;
+    public string? CustomHeadHTML { get; set; } = !string.IsNullOrEmpty(pageEntity.CustomHeadHTML) ? pageEntity.CustomHeadHTML : null;
 
     [Display("Facebook OG tags")]
-    public string FacebookOgTags { get; set; } = pageEntity.FacebookOgTags;
+    public string? FacebookOgTags { get; set; } = !string.IsNullOrEmpty(pageEntity.FacebookOgTags) ? pageEntity.FacebookOgTags : null;
 
     [Display("Folder ID")]
     public string FolderId { get; set; } = pageEntity.Folder.Value;
@@ -39,7 +39,7 @@ public class LandingPageDto(LandingPageEntity pageEntity)
     public bool FormPrefill { get; set; } = pageEntity.FormPrefill;
 
     [Display("Keywords")]
-    public string Keywords { get; set; } = pageEntity.Keywords;
+    public string? Keywords { get; set; } = !string.IsNullOrEmpty(pageEntity.Keywords) ? pageEntity.Keywords : null;
 
     [Display("Mobile viewing enabled")]
     public bool MobileEnabled { get; set; } = pageEntity.MobileEnabled;
@@ -51,10 +51,10 @@ public class LandingPageDto(LandingPageEntity pageEntity)
     public string Status { get; set; } = pageEntity.Status;
 
     [Display("Template ID")]
-    public string TemplateId { get; set; } = pageEntity.TemplateId;
+    public string? TemplateId { get; set; } = !string.IsNullOrEmpty(pageEntity.TemplateId) ? pageEntity.TemplateId : null;
 
     [Display("Landing page title element")]
-    public string Title { get; set; } = pageEntity.Title;
+    public string? Title { get; set; } = !string.IsNullOrEmpty(pageEntity.Title) ? pageEntity.Title : null;
 
     [Display("Workspace")]
     public string Workspace { get; set; } = pageEntity.Workspace;
