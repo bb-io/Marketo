@@ -21,7 +21,7 @@ public class ContentActions(InvocationContext invocationContext, IFileManagement
     [Display("Search content", Description = "Search different content types")]
     public async Task<SearchContentResponse> SearchContent([ActionParameter] SearchContentRequest input)
     {
-        input.ApplyDefaultValues();
+        input.Validate().ApplyDefaultValues();
 
         var services = _factory.GetContentServices(input.ContentTypes!);
         return await services.ExecuteManySearch(input);

@@ -90,6 +90,6 @@ public static class FilterHelper
         if (string.IsNullOrEmpty(folderId))
             return items;
 
-        return items.Where(x => x.Folder.Value.ToString() == folderId.Split("_").First()).ToList();
+        return items.Where(x => x.Folder.Value.ToString() == folderId.Split("_").First());
     }
 }

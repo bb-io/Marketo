@@ -40,9 +40,12 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
         request.AddQueryParameterIfNotNull("status", input.Status);
 
         var pages = await Client.Paginate<LandingPageEntity>(request);
-        pages = pages.ApplyUpdatedAtFilter(input.UpdatedAfter, input.UpdatedBefore);
-        pages = pages.ApplyCreatedAtFilter(input.CreatedAfter, input.CreatedBefore);
-        pages = pages.ApplyNamePatternFilter(input.NamePatterns, input.ExcludeMatched);
+
+        pages = pages
+            .ApplyUpdatedAtFilter(input.UpdatedAfter, input.UpdatedBefore)
+            .ApplyCreatedAtFilter(input.CreatedAfter, input.CreatedBefore)
+            .ApplyNamePatternFilter(input.NamePatterns, input.ExcludeMatched);
+
         pages = await pages.ApplyIgnoreInArchiveFilter(Client, input.IgnoreInArchive);
 
         return new(pages.Select(x => new LandingPageDto(x)).ToList());
@@ -69,9 +72,9 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
         [ActionParameter] LandingPageIdentifier input,
         [ActionParameter] UpdateLandingMetadataRequest updateLandingMetadata)
     {
-        var request = new RestRequest($"/rest/asset/v1/landingPage/{input.LandingPageId}.json", Method.Post);
-        request.AddParameterIfNotNull("name", updateLandingMetadata.Name);
-        request.AddParameterIfNotNull("description", updateLandingMetadata.Description);
+        var request = new RestRequest($"/rest/asset/v1/landingPage/{input.LandingPageId}.json", Method.Post)
+            .AddParameterIfNotNull("name", updateLandingMetadata.Name)
+            .AddParameterIfNotNull("description", updateLandingMetadata.Description);
 
         var result = await Client.ExecuteWithErrorHandlingFirst<LandingPageEntity>(request);
         return new(result);

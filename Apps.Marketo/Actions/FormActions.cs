@@ -51,9 +51,12 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
         request.AddQueryParameterIfNotNull("status", input.Status);
 
         var forms = await Client.Paginate<FormEntity>(request);
-        forms = forms.ApplyUpdatedAtFilter(input.UpdatedAfter, input.UpdatedBefore);
-        forms = forms.ApplyCreatedAtFilter(input.CreatedAfter, input.CreatedBefore);
-        forms = forms.ApplyNamePatternFilter(input.NamePatterns, input.ExcludeMatched);
+
+        forms = forms
+            .ApplyUpdatedAtFilter(input.UpdatedAfter, input.UpdatedBefore)
+            .ApplyCreatedAtFilter(input.CreatedAfter, input.CreatedBefore)
+            .ApplyNamePatternFilter(input.NamePatterns, input.ExcludeMatched);
+
         forms = await forms.ApplyIgnoreInArchiveFilter(Client, input.IgnoreInArchive);
 
         return new(forms.Select(x => new FormDto(x)).ToList());
@@ -72,9 +75,9 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
         [ActionParameter] FormIdentifier input,
         [ActionParameter] UpdateFormMetadataRequest updateFormMetadata)
     {
-        var request = new RestRequest($"/rest/asset/v1/form/{input.FormId}.json", Method.Post); 
-        request.AddParameterIfNotNull("name", updateFormMetadata.Name);
-        request.AddParameterIfNotNull("description", updateFormMetadata.Description);
+        var request = new RestRequest($"/rest/asset/v1/form/{input.FormId}.json", Method.Post)
+            .AddParameterIfNotNull("name", updateFormMetadata.Name)
+            .AddParameterIfNotNull("description", updateFormMetadata.Description);
 
         var result = await Client.ExecuteWithErrorHandlingFirst<FormEntity>(request);
         return new(result);

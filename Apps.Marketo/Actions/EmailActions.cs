@@ -37,13 +37,17 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
 
         var request = new RestRequest($"/rest/asset/v1/emails.json", Method.Get);
         var subfolders = await FileFolderHelper.AddFolderParameter(Client, request, input.FolderId);
-        request.AddQueryParameterIfNotNull("status", input.Status);           
-        request.AddQueryParameterIfNotNull("earliestUpdatedAt", input.UpdatedAfter);
-        request.AddQueryParameterIfNotNull("latestUpdatedAt", input.UpdatedBefore);
+        request
+            .AddQueryParameterIfNotNull("status", input.Status)       
+            .AddQueryParameterIfNotNull("earliestUpdatedAt", input.UpdatedAfter)
+            .AddQueryParameterIfNotNull("latestUpdatedAt", input.UpdatedBefore);
 
         var emails = await Client.Paginate<EmailEntity>(request);
-        emails = emails.ApplyNamePatternFilter(input.NamePatterns, input.ExcludeMatched);
-        emails = emails.ApplyCreatedAtFilter(input.CreatedAfter, input.CreatedBefore);
+
+        emails = emails
+            .ApplyNamePatternFilter(input.NamePatterns, input.ExcludeMatched)
+            .ApplyCreatedAtFilter(input.CreatedAfter, input.CreatedBefore);
+
         emails = await emails.ApplyIgnoreInArchiveFilter(Client, input.IgnoreInArchive);
 
         return new(emails.Select(x => new EmailDto(x)).ToList());
@@ -62,9 +66,9 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
         [ActionParameter] EmailIdentifier input,
         [ActionParameter] UpdateEmailMetadataRequest updateEmailMetadata)
     {
-        var request = new RestRequest($"/rest/asset/v1/email/{input.EmailId}.json", Method.Post);
-        request.AddParameterIfNotNull("name", updateEmailMetadata.Name);
-        request.AddParameterIfNotNull("description", updateEmailMetadata.Description);
+        var request = new RestRequest($"/rest/asset/v1/email/{input.EmailId}.json", Method.Post)
+            .AddParameterIfNotNull("name", updateEmailMetadata.Name)
+            .AddParameterIfNotNull("description", updateEmailMetadata.Description);
 
         var result = await Client.ExecuteWithErrorHandlingFirst<EmailEntity>(request);
         return new(result);

@@ -37,10 +37,13 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
         request.AddQueryParameterIfNotNull("status", input.Status);
 
         var snippets = await Client.Paginate<SnippetEntity>(request);
-        snippets = snippets.ApplyUpdatedAtFilter(input.UpdatedAfter, input.UpdatedBefore);
-        snippets = snippets.ApplyCreatedAtFilter(input.CreatedAfter, input.CreatedBefore);
-        snippets = snippets.ApplyNamePatternFilter(input.NamePatterns, input.ExcludeMatched);
-        snippets = snippets.ApplyFolderIdFilter(input.FolderId);
+
+        snippets = snippets
+            .ApplyUpdatedAtFilter(input.UpdatedAfter, input.UpdatedBefore)
+            .ApplyCreatedAtFilter(input.CreatedAfter, input.CreatedBefore)
+            .ApplyNamePatternFilter(input.NamePatterns, input.ExcludeMatched)
+            .ApplyFolderIdFilter(input.FolderId);
+
         snippets = await snippets.ApplyIgnoreInArchiveFilter(Client, input.IgnoreInArchive);
 
         return new(snippets.Select(x => new SnippetDto(x)).ToList());
@@ -89,9 +92,9 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
         [ActionParameter] SnippetIdentifier input,
         [ActionParameter] UpdateSnippetMetadataRequest updateSnippetMetadata)
     {
-        var request = new RestRequest($"/rest/asset/v1/snippet/{input.SnippetId}.json", Method.Post);
-        request.AddParameterIfNotNull("name", updateSnippetMetadata.Name);
-        request.AddParameterIfNotNull("description", updateSnippetMetadata.Description);
+        var request = new RestRequest($"/rest/asset/v1/snippet/{input.SnippetId}.json", Method.Post)
+            .AddParameterIfNotNull("name", updateSnippetMetadata.Name)
+            .AddParameterIfNotNull("description", updateSnippetMetadata.Description);
 
         var result = await Client.ExecuteWithErrorHandlingFirst<SnippetEntity>(request);
         return new(result);
