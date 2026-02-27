@@ -1,4 +1,5 @@
 ﻿using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
@@ -34,5 +35,12 @@ public class TestBase
     protected static void PrintJsonResult(object result)
     {
         Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
+    }
+
+    protected static void PrintDataHandlerResult(IEnumerable<DataSourceItem> items)
+    {
+        Console.WriteLine($"Count: {items.Count()}");
+        foreach (DataSourceItem item in items)
+            Console.WriteLine($"{item.Value} - {item.DisplayName}");
     }
 }

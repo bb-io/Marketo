@@ -1,11 +1,11 @@
-﻿using Blackbird.Applications.Sdk.Common;
+﻿using Apps.Marketo.Models.Entities;
+using Blackbird.Applications.Sdk.Common;
 using Newtonsoft.Json;
 
 namespace Apps.Marketo.Dtos;
 
 public class FolderInfoDto
-{
-    
+{    
     [Display("Access zone ID")]
     public string AccessZoneId { get; set; }
 
@@ -15,10 +15,10 @@ public class FolderInfoDto
     public string Description { get; set; }
 
     [Display("Folder")]
-    public Folder FolderId { get; set; }
+    public AssetFolder FolderId { get; set; }
 
     [Display("Parent folder")]
-    public Folder? Parent { get; set; }
+    public AssetFolder? Parent { get; set; }
 
     [Display("Folder type")]
     public string FolderType { get; set; }
@@ -41,11 +41,4 @@ public class FolderInfoDto
 
     [Display("Search ID", Description = "Pass this ID in \"Search\" action")]
     public string SearchId { get; set; }
-}
-
-public class Folder {
-
-    [Display("Folder ID")]
-    public string Id { get; set; }
-    public string Type { get; set; }
 }

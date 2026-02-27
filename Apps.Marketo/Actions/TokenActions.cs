@@ -40,7 +40,7 @@ public class TokenActions(InvocationContext invocationContext) : MarketoInvocabl
             var response = await Client.ExecuteWithErrorHandlingFirst<FolderInfoDto>(folderRequest);
             if (response.Parent != null)
             {
-                return await GetToken(new GetTokenRequest { FolderId = response.Parent.Id, FolderType = response.Parent.Type, Recursive = true, TokenName = input.TokenName });
+                return await GetToken(new GetTokenRequest { FolderId = response.Parent.Value, FolderType = response.Parent.Type, Recursive = true, TokenName = input.TokenName });
             }
         }
 

@@ -2,6 +2,7 @@
 using Apps.Marketo.Invocables;
 using Apps.Marketo.Models.Content.Request;
 using Apps.Marketo.Models.Content.Response;
+using Apps.Marketo.Models.Identifiers.Optional;
 using Apps.Marketo.Services.Content;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
@@ -19,11 +20,14 @@ public class ContentActions(InvocationContext invocationContext, IFileManagement
 
     [BlueprintActionDefinition(BlueprintAction.SearchContent)]
     [Display("Search content", Description = "Search different content types")]
-    public async Task<SearchContentResponse> SearchContent([ActionParameter] SearchContentRequest input)
+    public async Task<SearchContentResponse> SearchContent(
+        [ActionParameter] OptionalContentTypesIdentifier contentTypesInput,
+        [ActionParameter] SearchContentRequest input)
     {
-        input.Validate().ApplyDefaultValues();
+        input.Validate();
+        contentTypesInput.ApplyDefaultValues();
 
-        var services = _factory.GetContentServices(input.ContentTypes!);
+        var services = _factory.GetContentServices(contentTypesInput.ContentTypes!);
         return await services.ExecuteManySearch(input);
     }
 }

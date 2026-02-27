@@ -1,4 +1,5 @@
-﻿using Blackbird.Applications.Sdk.Common;
+﻿using Apps.Marketo.Models.Entities;
+using Blackbird.Applications.Sdk.Common;
 
 
 namespace Apps.Marketo.Dtos;
@@ -11,7 +12,7 @@ public class LandingPageTemplateDto
 
     [Display("Enable munchkin")]
     public bool EnableMunchkin { get; set; }
-    public Folder Folder { get; set; }
+    public AssetFolder Folder { get; set; }
 
     
     public string Id { get; set; }

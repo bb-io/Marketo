@@ -11,10 +11,10 @@ public class ContentServiceFactory(InvocationContext invocationContext, IFileMan
     {
         return contentType switch
         {
-            ContentTypes.Emails => new EmailContentService(invocationContext, fileManagementClient),
-            ContentTypes.Snippets => new SnippetContentService(invocationContext, fileManagementClient),
-            ContentTypes.LandingPages => new LandingPageContentService(invocationContext, fileManagementClient),
-            ContentTypes.Forms => new FormContentService(invocationContext, fileManagementClient),
+            ContentTypes.Email => new EmailContentService(invocationContext, fileManagementClient),
+            ContentTypes.Snippet => new SnippetContentService(invocationContext, fileManagementClient),
+            ContentTypes.LandingPage => new LandingPageContentService(invocationContext, fileManagementClient),
+            ContentTypes.Form => new FormContentService(invocationContext, fileManagementClient),
             _ => throw new Exception($"Unsupported content type '{contentType}' was passed in ContentServiceFactory")
         };
     }

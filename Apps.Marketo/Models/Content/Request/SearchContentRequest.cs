@@ -10,15 +10,11 @@ namespace Apps.Marketo.Models.Content.Request;
 
 public class SearchContentRequest : IUpdatedDateRange, ICreatedDateRange
 {
-    [Display("Content types", Description = "Content types to search. Searches all types by default")]
-    [StaticDataSource(typeof(ContentTypeDataHandler))]
-    public IEnumerable<string>? ContentTypes { get; set; }
-
     [Display("Status"), StaticDataSource(typeof(StatusDataHandler))]
     public string? Status { get; set; }
 
     [Display("Folder ID")]
-    [DataSource(typeof(SnippetFolderDataHandler))]
+    [DataSource(typeof(ContentFolderDataHandler))]
     public string? FolderId { get; set; }
 
     [Display("Created after")]
@@ -41,12 +37,6 @@ public class SearchContentRequest : IUpdatedDateRange, ICreatedDateRange
 
     [Display("Ignore in archive folders")]
     public bool? IgnoreInArchive { get; set; }
-
-    public SearchContentRequest ApplyDefaultValues()
-    {
-        ContentTypes ??= Constants.ContentTypes.SupportedContentTypes;
-        return this;
-    }
 
     public SearchContentRequest Validate()
     {

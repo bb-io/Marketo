@@ -1,5 +1,7 @@
-﻿using Apps.Marketo.DataSourceHandlers;
+﻿using Apps.Marketo.Constants;
+using Apps.Marketo.DataSourceHandlers;
 using Apps.Marketo.DataSourceHandlers.FolderDataHandlers;
+using Apps.Marketo.Models.Identifiers.Optional;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Newtonsoft.Json;
 using Tests.Marketo.Base;
@@ -67,7 +69,78 @@ public class DataHandlerTests : TestBase
         var result = await handler.GetDataAsync(new DataSourceContext(), CancellationToken.None);
 
         // Assert
-        PrintJsonResult(result);
+        PrintDataHandlerResult(result);
+        Assert.IsNotNull(result);
+    }
+
+    [TestMethod]
+    public async Task EmailFolderDataHandler_ReturnsEmailFolders()
+    {
+        // Arrange
+        var handler = new EmailFolderDataHandler(InvocationContext);
+
+        // Act
+        var result = await handler.GetDataAsync(new DataSourceContext(), CancellationToken.None);
+
+        // Assert
+        PrintDataHandlerResult(result);
+        Assert.IsNotNull(result);
+    }
+
+    [TestMethod]
+    public async Task FormFolderDataHandler_ReturnsFormFolders()
+    {
+        // Arrange
+        var handler = new FormFolderDataHandler(InvocationContext);
+
+        // Act
+        var result = await handler.GetDataAsync(new DataSourceContext(), CancellationToken.None);
+
+        // Assert
+        PrintDataHandlerResult(result);
+        Assert.IsNotNull(result);
+    }
+
+    [TestMethod]
+    public async Task SnippetFolderDataHandler_ReturnsSnippetFolders()
+    {
+        // Arrange
+        var handler = new SnippetFolderDataHandler(InvocationContext);
+
+        // Act
+        var result = await handler.GetDataAsync(new DataSourceContext(), CancellationToken.None);
+
+        // Assert
+        PrintDataHandlerResult(result);
+        Assert.IsNotNull(result);
+    }
+
+    [TestMethod]
+    public async Task EmailTemplateFolderDataHandler_ReturnsEmailTemplateFolders()
+    {
+        // Arrange
+        var handler = new EmailTemplateFolderDataHandler(InvocationContext);
+
+        // Act
+        var result = await handler.GetDataAsync(new DataSourceContext(), CancellationToken.None);
+
+        // Assert
+        PrintDataHandlerResult(result);
+        Assert.IsNotNull(result);
+    }
+
+    [TestMethod]
+    public async Task ContentFolderDataHandler_ReturnsFoldersForSpecificContentTypes()
+    {
+        // Arrange
+        var types = new OptionalContentTypesIdentifier { ContentTypes = [ContentTypes.Form, ContentTypes.Email] };
+        var handler = new ContentFolderDataHandler(InvocationContext, types);
+
+        // Act
+        var result = await handler.GetDataAsync(new DataSourceContext(), CancellationToken.None);
+
+        // Assert
+        PrintDataHandlerResult(result);
         Assert.IsNotNull(result);
     }
 }

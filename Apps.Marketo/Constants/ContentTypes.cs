@@ -2,10 +2,10 @@
 
 public static class ContentTypes
 {
-    public const string Emails = "Emails";
-    public const string LandingPages = "Landind Pages";
-    public const string Forms = "Forms";
-    public const string Snippets = "Snippets";
+    public const string Email = "Email";
+    public const string LandingPage = "Landing Page";
+    public const string Form = "Landing Page Form";
+    public const string Snippet = "Snippet";
 
-    public static readonly string[] SupportedContentTypes = [Emails, LandingPages, Forms, Snippets];
+    public static readonly string[] SupportedContentTypes = [Email, LandingPage, Form, Snippet];
 }
