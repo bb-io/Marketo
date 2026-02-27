@@ -9,4 +9,9 @@ public class AssetFolder
 
     [JsonProperty("type")]
     public string Type { get; set; } = string.Empty;
+
+    public string GetCompositeId()
+    {
+        return $"{Value}_{Type}";
+    }
 }

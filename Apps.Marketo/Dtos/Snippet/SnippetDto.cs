@@ -18,7 +18,7 @@ public class SnippetDto(SnippetEntity snippetEntity)
     public string Url { get; set; } = snippetEntity.Url;
 
     [Display("Folder ID")]
-    public string FolderId { get; set; } = snippetEntity.Folder.Value;
+    public string FolderId { get; set; } = snippetEntity.Folder.GetCompositeId();
 
     [Display("Snippet status")]
     public string Status { get; set; } = snippetEntity.Status;

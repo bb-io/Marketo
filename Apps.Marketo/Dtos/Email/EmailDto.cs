@@ -21,7 +21,7 @@ public class EmailDto(EmailEntity emailEntity)
     public DateTime UpdatedAt { get; set; } = emailEntity.UpdatedAt;
 
     [Display("Folder ID")]
-    public string FolderId { get; set; } = emailEntity.Folder.Value;
+    public string FolderId { get; set; } = emailEntity.Folder.GetCompositeId();
 
     [Display("Sender email")]
     public string SenderEmail { get; set; } = emailEntity.FromEmail.Value;

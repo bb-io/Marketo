@@ -48,7 +48,7 @@ public class FormDto(FormEntity formEntity)
     public string FontSize { get; set; } = formEntity.FontSize;
 
     [Display("Folder ID")]
-    public string FolderId { get; set; } = formEntity.Folder.Value;
+    public string FolderId { get; set; } = formEntity.Folder.GetCompositeId();
 
     [Display("Known visitor template")]
     public string? KnownVisitorTemplate { get; set; } = formEntity.KnownVisitor.Template;

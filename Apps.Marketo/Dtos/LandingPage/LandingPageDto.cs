@@ -33,7 +33,7 @@ public class LandingPageDto(LandingPageEntity pageEntity)
     public string? FacebookOgTags { get; set; } = !string.IsNullOrEmpty(pageEntity.FacebookOgTags) ? pageEntity.FacebookOgTags : null;
 
     [Display("Folder ID")]
-    public string FolderId { get; set; } = pageEntity.Folder.Value;
+    public string FolderId { get; set; } = pageEntity.Folder.GetCompositeId();
 
     [Display("Form prefill")]
     public bool FormPrefill { get; set; } = pageEntity.FormPrefill;
