@@ -1,3 +1,5 @@
-﻿namespace Apps.Marketo.Models.Content.Response;
+﻿using Apps.Marketo.Dtos.Content;
 
-public record SearchContentResponse(List<ContentResponse> Items);
+namespace Apps.Marketo.Models.Content.Response;
+
+public record SearchContentResponse(List<ContentDto> Items);

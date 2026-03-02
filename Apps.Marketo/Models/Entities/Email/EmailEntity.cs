@@ -11,7 +11,7 @@ public class EmailEntity
     public string Name { get; set; } = string.Empty;
 
     [JsonProperty("description")]
-    public string Description { get; set; } = string.Empty;
+    public string? Description { get; set; }
 
     [JsonProperty("createdAt"), JsonConverter(typeof(DateTimeConverter))]
     public DateTime CreatedAt { get; set; }
