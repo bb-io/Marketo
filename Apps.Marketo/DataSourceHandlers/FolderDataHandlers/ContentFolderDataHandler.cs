@@ -21,7 +21,9 @@ public class ContentFolderDataHandler(
         request.AddQueryParameter("maxDepth", 10);
         var response = await Client.Paginate<FolderInfoDto>(request);
 
-        var allowedTypes = contentTypesIdentifier.ContentTypes!;
+        var allowedTypes = contentTypesIdentifier.ContentTypes!.ToList();
+        if (allowedTypes.Contains(Constants.ContentTypes.Form))
+            allowedTypes.Add("Landing Page Form");  // Because there's no 'Forms' in the folder type enum in the Marketo API
 
         var filteredFolders = response
             .DistinctBy(x => x.Id)

@@ -6,12 +6,14 @@ using Apps.Marketo.Helper.FileFolder;
 using Apps.Marketo.Helper.Filter;
 using Apps.Marketo.HtmlHelpers;
 using Apps.Marketo.Invocables;
-using Apps.Marketo.Models;
+using Apps.Marketo.Models.Content.Request;
+using Apps.Marketo.Models.Content.Response;
 using Apps.Marketo.Models.Emails.Requests;
 using Apps.Marketo.Models.Emails.Responses;
 using Apps.Marketo.Models.Entities.Email;
 using Apps.Marketo.Models.Identifiers;
 using Apps.Marketo.Models.Identifiers.Optional;
+using Apps.Marketo.Services.Content;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Exceptions;
@@ -21,7 +23,6 @@ using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using HtmlAgilityPack;
 using Newtonsoft.Json;
 using RestSharp;
-using System.Net.Mime;
 using System.Text;
 
 namespace Apps.Marketo.Actions;
@@ -30,6 +31,8 @@ namespace Apps.Marketo.Actions;
 public class EmailActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : MarketoInvocable(invocationContext)
 {
+    private readonly ContentServiceFactory _factory = new(invocationContext, fileManagementClient);
+
     [Action("Search emails", Description = "Search all emails")]
     public async Task<SearchEmailsResponse> ListEmails([ActionParameter] SearchEmailsRequest input)
     {
@@ -90,65 +93,22 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
         await Client.ExecuteWithErrorHandling<IdDto>(request);
     }
 
-    [Action("Get email as HTML for translation", Description = "Get email as HTML for translation")]
-    public async Task<FileWrapper> GetEmailAsHtml(
+    [Action("Download email content", Description = "Download email content")]
+    public async Task<DownloadContentResponse> GetEmailAsHtml(
         [ActionParameter] EmailIdentifier emailInput,
-        [ActionParameter] SegmentationIdentifier getSegmentationRequest,
-        [ActionParameter] SegmentIdentifier getSegmentBySegmentationRequest,
-        [ActionParameter] GetEmailAsHtmlRequest getEmailAsHtmlRequest)
+        [ActionParameter] DownloadEmailRequest downloadInput)
     {
-        var emailInfoRequest = new RestRequest($"/rest/asset/v1/email/{emailInput.EmailId}.json", Method.Post);
-        var emailInfo = await Client.ExecuteWithErrorHandlingFirst<EmailEntity>(emailInfoRequest);
-        var emailContentResponse = await GetEmailContentAll(emailInput);
-        var onlyDynamic = getEmailAsHtmlRequest.GetOnlyDynamicContent.HasValue && getEmailAsHtmlRequest.GetOnlyDynamicContent.Value;
-        var includeImages = getEmailAsHtmlRequest.IncludeImages.HasValue && getEmailAsHtmlRequest.IncludeImages.Value;
-        
-        var targetItems = emailContentResponse.EmailContentItems!
-            .Where(x => x.ContentType == "DynamicContent"
-                     || (!onlyDynamic && x.ContentType == "Text")
-                     || (includeImages && x.ContentType == "Image"))
-            .ToList();
-
-        var contentTasks = targetItems.Select(async item =>
+        var service = _factory.GetContentService(ContentTypes.Email);
+        var input = new DownloadContentRequest
         {
-            var content = await GetEmailSectionContent(
-                emailInput,
-                getSegmentationRequest,
-                getSegmentBySegmentationRequest,
-                item,
-                includeImages);
+            ContentId = emailInput.EmailId,
+            Segment = downloadInput.Segment,
+            SegmentationId = downloadInput.SegmentationId,
+            GetOnlyDynamicContent = downloadInput.GetOnlyDynamicContent,
+            IncludeImages = downloadInput.IncludeImages,
+        };
 
-            return new KeyValuePair<string, string>(item.HtmlId, content);
-        });
-
-        var contentResults = await Task.WhenAll(contentTasks);
-        var sectionContent = contentResults
-            .Where(kvp => !string.IsNullOrEmpty(kvp.Value))
-            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-
-        if (emailInfo.Subject.Type == "Text")
-        {
-            sectionContent.Add("data-subject-value", emailInfo.Subject.Value);
-        }
-        else if (emailInfo.Subject.Type == "DynamicContent")
-        {
-            var subjectContent = await GetEmailSectionContent(emailInput, getSegmentationRequest, getSegmentBySegmentationRequest, new EmailContentDto()
-            {
-                ContentType = "DynamicContent",
-                Value = emailInfo.Subject.Value
-            }, includeImages);
-            sectionContent.Add("data-subject-value", subjectContent);
-        }
-        
-        var resultHtml = HtmlContentBuilder.GenerateHtml(
-            sectionContent, 
-            emailInfo.Name, 
-            getSegmentBySegmentationRequest.Segment, 
-            new(MetadataConstants.BlackbirdEmailIdAttribute, emailInput.EmailId));
-        
-        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
-        var file = await fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html, $"{emailInfo.Name}.html");
-        return new() { File = file };
+        return await service.DownloadContent(input);
     }
 
     [Action("Translate email from HTML file", Description = "Translate email from HTML file")]
@@ -339,67 +299,6 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
             return $"{errorMessage}, ContentId: {dynamicContentItem.Value.ToString()}, Content: {content}";
         }
 
-        return string.Empty;
-    }
-
-    private async Task<string?> GetEmailSectionContent(
-        EmailIdentifier getEmailInfoRequest,
-        SegmentationIdentifier getSegmentationRequest,
-        SegmentIdentifier getSegmentBySegmentationRequest,
-        EmailContentDto sectionContent,
-        bool includeImages = false)
-    {
-        if (sectionContent.ContentType == "DynamicContent")
-        {
-            var requestSeg = new RestRequest(
-                $"/rest/asset/v1/email/{getEmailInfoRequest.EmailId}/dynamicContent/{sectionContent.Value}.json",
-                Method.Get);
-
-            var responseSeg = await Client.ExecuteWithErrorHandlingFirst<DynamicContentDto<EmailImageSegmentDto>>(requestSeg);
-            if (responseSeg.Segmentation.ToString() == getSegmentationRequest.SegmentationId)
-            {
-                var imageSegment = responseSeg.Content.Where(x => x.SegmentName == getSegmentBySegmentationRequest.Segment).FirstOrDefault();
-                if (imageSegment != null && (imageSegment.Type == "File") && includeImages) // dynamic images
-                {
-                    var altTextAttribute = string.IsNullOrWhiteSpace(imageSegment.AltText) ? string.Empty : $" alt=\"{imageSegment.AltText}\"";
-                    var imageIdAttribute = $" {MetadataConstants.ContextImageAttribute}=\"{imageSegment.Content}\"";
-                    var widthAttribute = string.IsNullOrWhiteSpace(imageSegment.Width) ? string.Empty : $" width=\"{imageSegment.Width}\"";
-                    var heightAttribute = string.IsNullOrWhiteSpace(imageSegment.Height) ? string.Empty : $" height=\"{imageSegment.Height}\"";
-                    return $"<img src=\"{imageSegment.ContentUrl}\" style=\"{imageSegment.Style}\"{altTextAttribute}{imageIdAttribute}{widthAttribute}{heightAttribute}>";
-                }
-                else if(imageSegment != null && (imageSegment.Type == "Image") && includeImages)
-                {
-                    var altTextAttribute = string.IsNullOrWhiteSpace(imageSegment.AltText) ? string.Empty : $" alt=\"{imageSegment.AltText}\"";
-                    var imageIdAttribute = $" {MetadataConstants.ContextImageAttribute}=\"{imageSegment.Content}\"";
-                    var widthAttribute = string.IsNullOrWhiteSpace(imageSegment.Width) ? string.Empty : $" width=\"{imageSegment.Width}\"";
-                    var heightAttribute = string.IsNullOrWhiteSpace(imageSegment.Height) ? string.Empty : $" height=\"{imageSegment.Height}\"";
-                    return $"<img src=\"{imageSegment.Content}\" style=\"{imageSegment.Style}\"{altTextAttribute}{imageIdAttribute}{widthAttribute}{heightAttribute}>";
-                }
-                else if(imageSegment != null && imageSegment.Type == "Text")
-                {
-                    return imageSegment.Content;
-                }
-                else 
-                {
-                    return responseSeg.Content
-                    .Where(x => x.Type == "HTML" && x.SegmentName == getSegmentBySegmentationRequest.Segment)
-                    .Select(x => new GetEmailDynamicContentResponse(x)
-                    { DynamicContentId = sectionContent.Value.ToString()! }).FirstOrDefault()?.Content;
-                }
-            }
-                
-        }
-        else if(sectionContent.ContentType == "Text") // Static text
-        {
-            return JsonConvert.DeserializeObject<List<EmailContentValueDto>>(sectionContent.Value.ToString()).First(x => x.Type == "HTML").Value;
-        }
-        else if(sectionContent.ContentType == "Image") // Static images
-        {
-            var imageDto = JsonConvert.DeserializeObject<ImageDto>(sectionContent.Value.ToString());
-            var imageUrl = string.IsNullOrWhiteSpace(imageDto.ContentUrl) ? imageDto.Value : imageDto.ContentUrl;
-            var altTextAttribute = string.IsNullOrWhiteSpace(imageDto.AltText) ? "" : $" alt=\"{imageDto.AltText}\"";
-            return $"<img src=\"{imageUrl}\" style=\"{imageDto.Style}\"{altTextAttribute}>";
-        }
         return string.Empty;
     }
 

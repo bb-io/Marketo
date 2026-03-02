@@ -30,8 +30,7 @@ public class EmailTests : TestBase
         var action = new EmailActions(InvocationContext, FileManager);
         var input = new SearchEmailsRequest
         {
-            CreatedAfter = new DateTime(2024, 07, 25, 19, 0, 0, DateTimeKind.Utc),
-            CreatedBefore = new DateTime(2024, 07, 25, 19, 5, 0, DateTimeKind.Utc),
+            NamePatterns = ["*sky*"]
         };
 
         // Act
@@ -40,6 +39,25 @@ public class EmailTests : TestBase
         // Assert
         Console.WriteLine($"Count: {result.Emails.Count}");
         PrintJsonResult(result);
+        Assert.IsNotNull(result);
+    }
+
+    [TestMethod]
+    public async Task DownloadEmail_IsSuccess()
+    {
+        // Arrange
+        var actions = new EmailActions(InvocationContext, FileManager);
+        var emailId = new EmailIdentifier { EmailId = "1063" };
+        var input = new DownloadEmailRequest
+        {
+
+        };
+
+        // Act
+        var result = await actions.GetEmailAsHtml(emailId, input);
+
+        // Assert
+        Console.WriteLine(result.Content.Name);
         Assert.IsNotNull(result);
     }
 }

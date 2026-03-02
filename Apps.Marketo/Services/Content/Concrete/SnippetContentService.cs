@@ -14,6 +14,11 @@ namespace Apps.Marketo.Services.Content.Concrete;
 public class SnippetContentService(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : MarketoInvocable(invocationContext), IContentService
 {
+    public Task<DownloadContentResponse> DownloadContent(DownloadContentRequest input)
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task<SearchContentResponse> SearchContent(SearchContentRequest input)
     {
         var request = new RestRequest("/rest/asset/v1/snippets.json", Method.Get);

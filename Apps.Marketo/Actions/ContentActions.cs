@@ -2,6 +2,7 @@
 using Apps.Marketo.Invocables;
 using Apps.Marketo.Models.Content.Request;
 using Apps.Marketo.Models.Content.Response;
+using Apps.Marketo.Models.Identifiers;
 using Apps.Marketo.Models.Identifiers.Optional;
 using Apps.Marketo.Services.Content;
 using Blackbird.Applications.Sdk.Common;
@@ -29,5 +30,15 @@ public class ContentActions(InvocationContext invocationContext, IFileManagement
 
         var services = _factory.GetContentServices(contentTypesInput.ContentTypes!);
         return await services.ExecuteManySearch(input);
+    }
+
+    [BlueprintActionDefinition(BlueprintAction.DownloadContent)]
+    [Display("Download content", Description = "Download content")]
+    public async Task<DownloadContentResponse> DownloadContent(
+        [ActionParameter] ContentTypeIdentifier contentType,
+        [ActionParameter] DownloadContentRequest input)
+    {
+        var service = _factory.GetContentService(contentType.ContentType);
+        return await service.DownloadContent(input);
     }
 }
