@@ -1,23 +1,81 @@
-﻿using Apps.Marketo.Dtos.Content;
+﻿using Apps.Marketo.Constants;
+using Apps.Marketo.Dtos;
+using Apps.Marketo.Dtos.Content;
 using Apps.Marketo.Extensions;
 using Apps.Marketo.Helper.FileFolder;
 using Apps.Marketo.Helper.Filter;
+using Apps.Marketo.Helper.Json;
+using Apps.Marketo.HtmlHelpers;
 using Apps.Marketo.Invocables;
 using Apps.Marketo.Models.Content.Request;
 using Apps.Marketo.Models.Content.Response;
 using Apps.Marketo.Models.Entities.LandingPage;
+using Apps.Marketo.Models.Identifiers;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Blackbird.Applications.Sdk.Utils.Extensions.Sdk;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
+using Newtonsoft.Json;
 using RestSharp;
+using System.Net.Mime;
+using System.Text;
 
 namespace Apps.Marketo.Services.Content.Concrete;
 
 public class LandingPageContentService(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : MarketoInvocable(invocationContext), IContentService
 {
-    public Task<DownloadContentResponse> DownloadContent(DownloadContentRequest input)
+    public async Task<DownloadContentResponse> DownloadContent(DownloadContentRequest input)
     {
-        throw new NotImplementedException();
+        var landingInfoRequest = new RestRequest($"/rest/asset/v1/landingPage/{input.ContentId}.json", Method.Get);
+        var landingInfoResponse = await Client.ExecuteWithErrorHandlingFirst<LandingPageEntity>(landingInfoRequest);
+
+        var landingContentRequest = new RestRequest($"/rest/asset/v1/landingPage/{input.ContentId}/content.json", Method.Get);
+        var landingContentResponse = await Client.ExecuteWithErrorHandling<LandingPageContentDto>(landingContentRequest);
+
+        if (landingContentResponse == null || !landingContentResponse.Any())
+            throw new PluginMisconfigurationException($"No assets found for landing page ID {input.ContentId}");
+
+        bool onlyDynamic = input.GetOnlyDynamicContent ?? false;
+        bool includeImages = input.IncludeImages ?? false;
+
+        var contentTasks = landingContentResponse
+            .Where(x => (x.Type == "HTML" || x.Type == "RichText" || (includeImages && x.Type == "Image")) &&
+                        (!onlyDynamic || JsonHelper.IsJsonObject(x.Content.ToString()!)))
+            .Select(async item =>
+            {
+                var content = await GetLandingSectionContent(
+                    landingInfoResponse.Id,
+                    input.SegmentationId,
+                    input.Segment,
+                    item,
+                    includeImages);
+
+                return new KeyValuePair<string, string?>(item.Id, content);
+            });
+
+        var contentResults = await Task.WhenAll(contentTasks);
+
+        var sectionContent = contentResults
+            .Where(kvp => !string.IsNullOrEmpty(kvp.Value))
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value!);
+
+        if (sectionContent.Count == 0)
+            throw new PluginMisconfigurationException($"No matching content items found for landing page ID {input.ContentId} with the current filters.");
+
+        var resultHtml = HtmlContentBuilder.GenerateHtml(
+            sectionContent,
+            landingInfoResponse.Name,
+            input.Segment ?? string.Empty,
+            new(MetadataConstants.BlackbirdLandingPageId, input.ContentId));
+
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
+        var file = await fileManagementClient.UploadAsync(
+            stream, 
+            MediaTypeNames.Text.Html, 
+            landingInfoResponse.Name.ToHtmlFileName());
+
+        return new(file);
     }
 
     public async Task<SearchContentResponse> SearchContent(SearchContentRequest input)
@@ -38,5 +96,75 @@ public class LandingPageContentService(InvocationContext invocationContext, IFil
         pages = await pages.ApplyIgnoreInArchiveFilter(Client, input.IgnoreInArchive, x => x.Folder);
 
         return new(pages.Select(x => new ContentDto(x)).ToList());
+    }
+
+    private async Task<string?> GetLandingSectionContent(
+        string landingPageId,
+        string segmentationId,
+        string segment,
+        LandingPageContentDto sectionContent,
+        bool includeImages = false)
+    {
+        var domain = InvocationContext.AuthenticationCredentialsProviders.First(v => v.KeyName == "Munchkin Account ID").Value;
+        if (JsonHelper.IsJsonObject(sectionContent.Content.ToString()) && JsonConvert.DeserializeObject<LandingPageContentValueDto>(sectionContent.Content.ToString()).ContentType == "DynamicContent")
+        {
+            var landingPageContent = JsonConvert.DeserializeObject<LandingPageContentValueDto>(sectionContent.Content.ToString());
+            var requestSeg = new RestRequest(
+                    $"/rest/asset/v1/landingPage/{landingPageId}/dynamicContent/{landingPageContent.Content}.json",
+                    Method.Get);
+
+            var responseSeg = await Client.ExecuteWithErrorHandling<LandingDynamicContentDto<LandingPageImageSegmentDto<object>>>(requestSeg);
+            if (responseSeg.First().Segmentation.ToString() == segmentationId)
+            {
+                var imageSegment = responseSeg.First().Segments.Where(x => x.SegmentName == segment).FirstOrDefault();
+
+                if (imageSegment != null && (imageSegment.Type == "Image") && includeImages)
+                {
+                    var imageDto = JsonConvert.DeserializeObject<LandingPageImageContent>(imageSegment.Content.ToString());
+                    var imageUrl = string.IsNullOrWhiteSpace(imageDto.ContentUrl) ? imageDto.Content : imageDto.ContentUrl;
+
+                    var builder = new UriBuilder(imageUrl);
+                    builder.Host = $"{domain}.mktoweb.com";
+
+                    string styleAttr = "";
+                    if (imageSegment.FormattingOptions != null)
+                        styleAttr = $" style=\"width:{imageSegment.FormattingOptions.Width};height:{imageSegment.FormattingOptions.Height};left:{imageSegment.FormattingOptions.Left ?? "0px"};top:{imageSegment.FormattingOptions.Top ?? "0px"};position:absolute\"";
+
+                    return $"<img src=\"{builder.Uri}\"{styleAttr}>";
+                }
+                else if (imageSegment != null && imageSegment.Type == "Text")
+                {
+                    if (imageSegment.FormattingOptions != null)
+                        return $"<div style=\"left:{imageSegment.FormattingOptions.Left ?? "0px"};top:{imageSegment.FormattingOptions.Top ?? "0px"};position:absolute\">{imageSegment.Content.ToString()}</div>";
+                    else
+                        return imageSegment.Content.ToString();
+                }
+                else
+                {
+                    var res = responseSeg.First().Segments
+                    .Where(x => x.SegmentName == segment).First().Content.ToString();
+                    if (imageSegment?.FormattingOptions != null)
+                        return $"<div style=\"left:{imageSegment.FormattingOptions.Left ?? "0px"};top:{imageSegment.FormattingOptions.Top ?? "0px"};position:absolute\">{res}</div>";
+                    else
+                        return res;
+                }
+            }
+            return string.Empty;
+        }
+        else if (sectionContent.Type == "Image") // Static images
+        {
+            var imageDto = JsonConvert.DeserializeObject<LandingPageImageContent>(sectionContent.Content.ToString());
+            var imageUrl = string.IsNullOrWhiteSpace(imageDto.ContentUrl) ? imageDto.Content : imageDto.ContentUrl;
+
+            var builder = new UriBuilder(imageUrl);
+            builder.Host = $"{domain}.mktoweb.com";
+
+            var styleAttr = "";
+            if (sectionContent.FormattingOptions != null)
+                styleAttr = $" style=\"width:{sectionContent.FormattingOptions.Width};height:{sectionContent.FormattingOptions.Height};left:{sectionContent.FormattingOptions.Left ?? "0px"};top:{sectionContent.FormattingOptions.Top ?? "0px"};position:absolute\"";
+
+            return $"<img src=\"{builder.Uri}\"{styleAttr}>";
+        }
+        return sectionContent.Content.ToString();
     }
 }

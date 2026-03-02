@@ -9,14 +9,24 @@ namespace Tests.Marketo;
 public class LandingPageTests : TestBase
 {
     [TestMethod]
-    public async Task GetLandingPages()
+    public async Task DownloadLandingPage_IsSuccess()
     {
-        var action = new LandingPageActions(InvocationContext,FileManager);
-        var response = await action.GetLandingPageAsHtml(new LandingPageIdentifier { LandingPageId = "1006" },
-            new SegmentationIdentifier { SegmentationId= "1002" },
-            new SegmentIdentifier { Segment = "Test" },
-            new GetLandingPageAsHtmlRequest { });
-        Assert.IsNotNull(response);
+        // Arrange
+        var action = new LandingPageActions(InvocationContext, FileManager);
+        var landingId = new LandingPageIdentifier { LandingPageId = "1007" };
+        var input = new DownloadLandingPageRequest
+        {
+            IncludeImages = true,
+            SegmentationId = "1002",
+            Segment = "Default"
+        };
+
+        // Act
+        var result = await action.GetLandingPageAsHtml(landingId, input);
+
+        // Assert
+        Console.WriteLine(result.Content.Name);
+        Assert.IsNotNull(result);
     }
 
     [TestMethod]
