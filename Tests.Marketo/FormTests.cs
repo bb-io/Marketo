@@ -1,6 +1,7 @@
-﻿using Apps.Marketo.Actions;
+﻿using Tests.Marketo.Base;
+using Apps.Marketo.Actions;
+using Apps.Marketo.Models.Identifiers;
 using Apps.Marketo.Models.Forms.Requests;
-using Tests.Marketo.Base;
 
 namespace Tests.Marketo;
 
@@ -24,6 +25,25 @@ public class FormTests : TestBase
         // Assert
         Console.WriteLine($"Count: {result.Forms.Count}");
 		PrintJsonResult(result);
+		Assert.IsNotNull(result);
+	}
+
+	[TestMethod]
+	public async Task DownloadForm_IsSuccess()
+	{
+		// Arrange
+		var action = new FormActions(InvocationContext, FileManager);
+		var formId = new FormIdentifier { FormId = "1005" };
+		var input = new DownloadFormRequest
+		{
+			IgnoreVisibilityRules = true
+		};
+
+		// Act
+		var result = await action.GetFormAsHtml(formId, input);
+
+        // Assert
+        Console.WriteLine(result.Content.Name);
 		Assert.IsNotNull(result);
 	}
 }

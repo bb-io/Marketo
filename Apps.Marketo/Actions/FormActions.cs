@@ -1,5 +1,5 @@
-﻿using Apps.Marketo.DataSourceHandlers.FolderDataHandlers;
-using Apps.Marketo.Dtos;
+﻿using Apps.Marketo.Constants;
+using Apps.Marketo.DataSourceHandlers.FolderDataHandlers;
 using Apps.Marketo.Dtos.Form;
 using Apps.Marketo.Extensions;
 using Apps.Marketo.Helper.FileFolder;
@@ -7,10 +7,13 @@ using Apps.Marketo.Helper.Filter;
 using Apps.Marketo.HtmlHelpers.Forms;
 using Apps.Marketo.Invocables;
 using Apps.Marketo.Models;
+using Apps.Marketo.Models.Content.Request;
+using Apps.Marketo.Models.Content.Response;
 using Apps.Marketo.Models.Entities.Form;
 using Apps.Marketo.Models.Forms.Requests;
 using Apps.Marketo.Models.Forms.Responses;
 using Apps.Marketo.Models.Identifiers;
+using Apps.Marketo.Services.Content;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Dynamic;
@@ -19,7 +22,6 @@ using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using RestSharp;
-using System.Net.Mime;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
@@ -32,6 +34,8 @@ namespace Apps.Marketo.Actions;
 public class FormActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) 
     : MarketoInvocable(invocationContext)
 {
+    private readonly ContentServiceFactory _factory = new(invocationContext, fileManagementClient);
+
     [Action("Get form", Description = "Get specified form.")]
     public async Task<FormDto> GetForm([ActionParameter] FormIdentifier input)
     {
@@ -85,23 +89,20 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
         return new(result);
     }
 
-    [Action("Get form as HTML for translation", Description = "Retrieve a form as HTML file for translation.")]
-    public async Task<FileWrapper> GetFormAsHtml(
-        [ActionParameter] FormIdentifier input,
-        [ActionParameter] IgnoreFieldsRequest ignoreFieldsRequest)
+    [Action("Download form content", Description = "Download form content")]
+    public async Task<DownloadContentResponse> GetFormAsHtml(
+        [ActionParameter] FormIdentifier formInput,
+        [ActionParameter] DownloadFormRequest downloadInput)
     {
-        var getFormRequest = new RestRequest($"/rest/asset/v1/form/{input.FormId}.json", Method.Get);
-        var form = await Client.ExecuteWithErrorHandlingFirst<FormEntity>(getFormRequest);
+        var service = _factory.GetContentService(ContentTypes.Form);
+        var input = new DownloadContentRequest
+        {
+            ContentId = formInput.FormId,
+            IgnoreFormFields = downloadInput.IgnoreFields,
+            IgnoreVisibilityRules = downloadInput.IgnoreVisibilityRules,
+        };
 
-        var getFieldsRequest = new RestRequest($"/rest/asset/v1/form/{input.FormId}/fields.json", Method.Get);
-        var formFields = await Client.ExecuteWithErrorHandling<FormFieldDto>(getFieldsRequest);
-        var fieldsHtml = FormToHtmlConverter.ConvertToHtml(form, formFields, ignoreFieldsRequest);
-        var resultHtml = $"<html><body>{fieldsHtml}</body></html>";
-
-        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
-        var file = fileManagementClient
-            .UploadAsync(stream, MediaTypeNames.Text.Html, $"{form.Name.Replace(" ", "_")}.html").Result;
-        return new() { File = file };
+        return await service.DownloadContent(input);
     }
 
     [Action("Create or update form from translated HTML", Description = "Create or update form from translated HTML.")]

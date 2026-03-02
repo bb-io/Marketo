@@ -19,7 +19,9 @@ public class FormFieldDataHandler(
         if (formIdentifier == null || string.IsNullOrWhiteSpace(formIdentifier.FormId))
             throw new PluginMisconfigurationException("Please provide the 'Form ID' input first");
 
-        var formFields = await GetFormFieldsFromSingleForm(formIdentifier.FormId);
+        var getFieldsRequest = new RestRequest($"/rest/asset/v1/form/{formIdentifier.FormId}/fields.json", Method.Get);
+        var formFields = await Client.ExecuteWithErrorHandling<FormFieldDto>(getFieldsRequest);
+
         var filtered = formFields?
             .Where(formField => 
                 context.SearchString == null || 
@@ -27,12 +29,5 @@ public class FormFieldDataHandler(
                 formField.Label.Contains(context.SearchString, StringComparison.OrdinalIgnoreCase))) ?? [];
 
         return filtered.Select(x => new DataSourceItem(x.Id, x.Label ?? $"Empty label (id: {x.Id})")).ToList();
-    }
-
-    private async Task<List<FormFieldDto>?> GetFormFieldsFromSingleForm(string formId)
-    {
-        var getFieldsRequest = new RestRequest($"/rest/asset/v1/form/{formId}/fields.json", Method.Get);
-        var formFields = await Client.ExecuteWithErrorHandling<FormFieldDto>(getFieldsRequest);
-        return formFields.ToList();
     }
 }

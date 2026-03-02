@@ -191,4 +191,19 @@ public class DataHandlerTests : TestBase
         PrintDataHandlerResult(result);
         Assert.IsNotNull(result);
     }
+
+    [TestMethod]
+    public async Task FormFieldDataHandler_ReturnsFormFields()
+    {
+        // Arrange
+        var formId = new FormIdentifier { FormId = "1005" };
+        var handler = new FormFieldDataHandler(InvocationContext, formId);
+
+        // Act
+        var result = await handler.GetDataAsync(new DataSourceContext(), CancellationToken.None);
+
+        // Assert
+        PrintDataHandlerResult(result);
+        Assert.IsNotNull(result);
+    }
 }

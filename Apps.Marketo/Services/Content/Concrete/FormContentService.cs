@@ -1,7 +1,9 @@
-﻿using Apps.Marketo.Dtos.Content;
+﻿using Apps.Marketo.Dtos;
+using Apps.Marketo.Dtos.Content;
 using Apps.Marketo.Extensions;
 using Apps.Marketo.Helper.FileFolder;
 using Apps.Marketo.Helper.Filter;
+using Apps.Marketo.HtmlHelpers.Forms;
 using Apps.Marketo.Invocables;
 using Apps.Marketo.Models.Content.Request;
 using Apps.Marketo.Models.Content.Response;
@@ -9,15 +11,31 @@ using Apps.Marketo.Models.Entities.Form;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using RestSharp;
+using System.Net.Mime;
+using System.Text;
 
 namespace Apps.Marketo.Services.Content.Concrete;
 
 public class FormContentService(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : MarketoInvocable(invocationContext), IContentService
 {
-    public Task<DownloadContentResponse> DownloadContent(DownloadContentRequest input)
+    public async Task<DownloadContentResponse> DownloadContent(DownloadContentRequest input)
     {
-        throw new NotImplementedException();
+        var getFormRequest = new RestRequest($"/rest/asset/v1/form/{input.ContentId}.json", Method.Get);
+        var form = await Client.ExecuteWithErrorHandlingFirst<FormEntity>(getFormRequest);
+
+        var getFieldsRequest = new RestRequest($"/rest/asset/v1/form/{input.ContentId}/fields.json", Method.Get);
+        var formFields = await Client.ExecuteWithErrorHandling<FormFieldDto>(getFieldsRequest);
+
+        string resultHtml = FormToHtmlConverter.ConvertToHtml(
+            form,
+            formFields, 
+            input.IgnoreVisibilityRules, 
+            input.IgnoreFormFields);
+
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
+        var file = await fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html, form.Name.ToHtmlFileName());
+        return new(file);
     }
 
     public async Task<SearchContentResponse> SearchContent(SearchContentRequest input)

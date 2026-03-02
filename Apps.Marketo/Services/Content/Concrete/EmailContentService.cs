@@ -78,7 +78,7 @@ public class EmailContentService(InvocationContext invocationContext, IFileManag
             new(MetadataConstants.BlackbirdEmailIdAttribute, input.ContentId));
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
-        var file = await fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html, $"{emailInfo.Name}.html");
+        var file = await fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html, emailInfo.Name.ToHtmlFileName());
         return new(file);
     }
 
