@@ -23,11 +23,11 @@ public class EmailContentService(InvocationContext invocationContext, IFileManag
 {
     public async Task<DownloadContentResponse> DownloadContent(DownloadContentRequest input)
     {
-        var emailInfoRequest = new RestRequest($"/rest/asset/v1/emails/{input.ContentId}.json", Method.Get);
+        var emailInfoRequest = new RestRequest($"/rest/asset/v1/email/{input.ContentId}.json", Method.Get);
         var emailInfo = await Client.ExecuteWithErrorHandlingFirst<EmailEntity>(emailInfoRequest);
 
-        var emailContentRequest = new RestRequest($"/rest/asset/v1/emails/{input.ContentId}/content.json", Method.Get);
-        var emailContentResponse = await Client.ExecuteWithErrorHandlingFirst<List<EmailContentDto>>(emailContentRequest);
+        var emailContentRequest = new RestRequest($"/rest/asset/v1/email/{input.ContentId}/content.json", Method.Get);
+        var emailContentResponse = await Client.ExecuteWithErrorHandling<EmailContentDto>(emailContentRequest);
 
         bool onlyDynamic = input.GetOnlyDynamicContent ?? false;
         bool includeImages = input.IncludeImages ?? false;

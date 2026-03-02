@@ -50,7 +50,9 @@ public class EmailTests : TestBase
         var emailId = new EmailIdentifier { EmailId = "1063" };
         var input = new DownloadEmailRequest
         {
-
+            IncludeImages = true,
+            SegmentationId = "1003",
+            Segment = "Dutch",
         };
 
         // Act
