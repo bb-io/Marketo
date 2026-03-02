@@ -13,10 +13,12 @@ namespace Apps.Marketo.Api;
 
 public class MarketoClient : BlackBirdRestClient
 {
+    private readonly IEnumerable<AuthenticationCredentialsProvider> _creds;
+
     public MarketoClient(IEnumerable<AuthenticationCredentialsProvider> creds)
         : base(new RestClientOptions { BaseUrl = GetUri(creds) })
     {
-        this.AddDefaultHeader("Authorization", $"Bearer {GetAccessToken(creds).GetAwaiter().GetResult()}");
+        _creds = creds;
         this.AddDefaultHeader("accept", "*/*");
     }
 
@@ -26,26 +28,10 @@ public class MarketoClient : BlackBirdRestClient
         return new($"https://{url}.mktorest.com");
     }
 
-    private async Task<string> GetAccessToken(IEnumerable<AuthenticationCredentialsProvider> creds)
-    {
-        string clientId = creds.Get(CredsNames.ClientId).Value;
-        string clientSecret = creds.Get(CredsNames.ClientSecret).Value;
-
-        var authRequest = new RestRequest("/identity/oauth/token", Method.Get);
-        authRequest.AddQueryParameter("grant_type", "client_credentials");
-        authRequest.AddQueryParameter("client_id", clientId);
-        authRequest.AddQueryParameter("client_secret", clientSecret);
-
-        var authResponse = await this.ExecuteAsync<AuthDto>(authRequest);
-        if (authResponse.Data == null) 
-            throw new Exception("Auth response was null");
-        return authResponse.Data.AccessToken;
-    }
-
     public async Task<IEnumerable<T>> Paginate<T>(RestRequest request)
     {
-        var offset = 0;
-        var limit = 200;
+        int offset = 0;
+        int limit = 200;
 
         var baseUrl = request.Resource.SetQueryParameter("maxReturn", limit.ToString());
 
@@ -59,11 +45,12 @@ public class MarketoClient : BlackBirdRestClient
             result.AddRange(response);
 
             offset += limit;
-        } while (response.Any());
+        } while (result.Count == limit);
 
         return result;
     }
 
+    // Marketo ALWAYS wraps every response in an array of 'result'
     public async Task<T> ExecuteWithErrorHandlingFirst<T>(RestRequest request)
     {
         var result = await ExecuteWithErrorHandling<T>(request);
@@ -82,12 +69,13 @@ public class MarketoClient : BlackBirdRestClient
 
     public new async Task<RestResponse> ExecuteWithErrorHandling(RestRequest request)
     {
+        await AddAccessToken(request);
+
         var response = await ExecuteAsync(request);
         if (response.Content == null)
             throw new PluginApplicationException("No content received from the server");
 
-        if (!response.IsSuccessStatusCode)
-            ConfigureErrorException(response);        
+        ConfigureErrorException(response);        
 
         return response;
     }
@@ -101,17 +89,36 @@ public class MarketoClient : BlackBirdRestClient
 
     protected override Exception ConfigureErrorException(RestResponse response)
     {
-        var statusCode = response.StatusCode;
-        var errors = JsonConvert.DeserializeObject<ErrorResponse>(response.Content!) 
-            ?? throw new PluginApplicationException($"Status {statusCode}, but no errors received from the server");
+        var errorEnvelope = JsonConvert.DeserializeObject<ErrorResponse>(response.Content!);
 
-        if (errors.Errors.Count != 0)
+        if (errorEnvelope == null || errorEnvelope.Success)
+            return null!;
+
+        if (errorEnvelope.Errors != null && errorEnvelope.Errors.Count > 0)
         {
-            var errorsList = errors.Errors.Select(x => x.Message);
+            var errorsList = errorEnvelope.Errors.Select(x => x.Message);
             string errorMessage = string.Join("; ", errorsList);
+
             throw new PluginApplicationException(errorMessage);
         }
 
-        throw new PluginApplicationException($"Status {statusCode}. Unknown error");
+        throw new PluginApplicationException($"Status {response.StatusCode}. Unknown Marketo error.");
+    }
+
+    private async Task AddAccessToken(RestRequest request)
+    {
+        string clientId = _creds.Get(CredsNames.ClientId).Value;
+        string clientSecret = _creds.Get(CredsNames.ClientSecret).Value;
+
+        var authRequest = new RestRequest("/identity/oauth/token", Method.Get);
+        authRequest.AddQueryParameter("grant_type", "client_credentials");
+        authRequest.AddQueryParameter("client_id", clientId);
+        authRequest.AddQueryParameter("client_secret", clientSecret);
+
+        var authResponse = await this.ExecuteAsync<AuthDto>(authRequest);
+        if (authResponse.Data == null)
+            throw new Exception("Auth response was null");
+
+        request.AddOrUpdateHeader("Authorization", $"Bearer {authResponse.Data.AccessToken}");
     }
 }

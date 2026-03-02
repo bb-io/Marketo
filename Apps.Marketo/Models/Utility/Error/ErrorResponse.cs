@@ -6,4 +6,7 @@ public class ErrorResponse
 {
     [JsonProperty("errors")]
     public List<Error> Errors { get; set; } = [];
+
+    [JsonProperty("success")]
+    public bool Success { get; set; }
 }
