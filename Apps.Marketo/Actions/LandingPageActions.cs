@@ -42,11 +42,13 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
         var pages = await Client.Paginate<LandingPageEntity>(request);
 
         pages = pages
-            .ApplyUpdatedAtFilter(input.UpdatedAfter, input.UpdatedBefore)
-            .ApplyCreatedAtFilter(input.CreatedAfter, input.CreatedBefore)
-            .ApplyNamePatternFilter(input.NamePatterns, input.ExcludeMatched);
+            .ApplyDateAfterFilter(input.CreatedAfter, x => x.CreatedAt)
+            .ApplyDateBeforeFilter(input.CreatedBefore, x => x.CreatedAt)
+            .ApplyDateAfterFilter(input.UpdatedAfter, x => x.UpdatedAt)
+            .ApplyDateBeforeFilter(input.UpdatedBefore, x => x.UpdatedAt)
+            .ApplyNamePatternFilter(input.NamePatterns, input.ExcludeMatched, x => x.Name);
 
-        pages = await pages.ApplyIgnoreInArchiveFilter(Client, input.IgnoreInArchive);
+        pages = await pages.ApplyIgnoreInArchiveFilter(Client, input.IgnoreInArchive, x => x.Folder);
 
         return new(pages.Select(x => new LandingPageDto(x)).ToList());
     }

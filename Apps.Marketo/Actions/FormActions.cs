@@ -53,11 +53,13 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
         var forms = await Client.Paginate<FormEntity>(request);
 
         forms = forms
-            .ApplyUpdatedAtFilter(input.UpdatedAfter, input.UpdatedBefore)
-            .ApplyCreatedAtFilter(input.CreatedAfter, input.CreatedBefore)
-            .ApplyNamePatternFilter(input.NamePatterns, input.ExcludeMatched);
+            .ApplyDateAfterFilter(input.CreatedAfter, x => x.CreatedAt)
+            .ApplyDateBeforeFilter(input.CreatedBefore, x => x.CreatedAt)
+            .ApplyDateAfterFilter(input.UpdatedAfter, x => x.UpdatedAt)
+            .ApplyDateBeforeFilter(input.UpdatedBefore, x => x.UpdatedAt)
+            .ApplyNamePatternFilter(input.NamePatterns, input.ExcludeMatched, x => x.Name);
 
-        forms = await forms.ApplyIgnoreInArchiveFilter(Client, input.IgnoreInArchive);
+        forms = await forms.ApplyIgnoreInArchiveFilter(Client, input.IgnoreInArchive, x => x.Folder);
 
         return new(forms.Select(x => new FormDto(x)).ToList());
     }

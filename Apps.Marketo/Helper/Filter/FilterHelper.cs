@@ -1,6 +1,6 @@
 ﻿using Apps.Marketo.Api;
+using Apps.Marketo.Models.Entities;
 using Apps.Marketo.Helper.FileFolder;
-using Apps.Marketo.Helper.Interfaces;
 
 namespace Apps.Marketo.Helper.Filter;
 
@@ -9,22 +9,24 @@ public static class FilterHelper
     public static IEnumerable<T> ApplyNamePatternFilter<T>(
         this IEnumerable<T> items, 
         List<string>? namePatterns, 
-        bool? excludeMatched) where T : IEntityName
+        bool? excludeMatched,
+        Func<T, string> nameSelector)
     {
         if (namePatterns == null || namePatterns.Count == 0)
             return items;
 
         return items.Where(x => FileFolderHelper.IsFilePathMatchingPattern(
             namePatterns,
-            x.Name,
+            nameSelector(x),
             excludeMatched ?? false)
-        ).ToList();
+        );
     }
 
     public static async Task<IEnumerable<T>> ApplyIgnoreInArchiveFilter<T>(
         this IEnumerable<T> items,
         MarketoClient client,
-        bool? ignoreInArchive) where T : IEntityFolder
+        bool? ignoreInArchive,
+        Func<T, AssetFolder> folderSelector)
     {
         if (ignoreInArchive != true)
             return items;
@@ -34,11 +36,12 @@ public static class FilterHelper
 
         foreach (var item in items)
         {
-            string folderId = item.Folder.Value.ToString();
+            var folder = folderSelector(item);
+            string folderId = folder.Value.ToString();
 
             if (!folderArchiveCache.TryGetValue(folderId, out bool isArchived))
             {
-                isArchived = await FileFolderHelper.IsAssetInArchievedFolder(client, item.Folder);
+                isArchived = await FileFolderHelper.IsAssetInArchievedFolder(client, folder);
                 folderArchiveCache[folderId] = isArchived;
             }
 
@@ -49,47 +52,36 @@ public static class FilterHelper
         return nonArchivedItems;
     }
 
-    public static IEnumerable<T> ApplyUpdatedAtFilter<T>(
+    public static IEnumerable<T> ApplyDateAfterFilter<T>(
         this IEnumerable<T> items, 
-        DateTime? updatedAfter, 
-        DateTime? updatedBefore) where T : IEntityUpdatedAt
+        DateTime? after,
+        Func<T, DateTime?> dateSelector)
     {
-        if (updatedAfter == null && updatedBefore == null) 
+        if (after == null) 
             return items;
 
-        if (updatedAfter != null)
-            items = items.Where(x => x.UpdatedAt >= updatedAfter.Value);
-
-        if (updatedBefore != null)
-            items = items.Where(x => x.UpdatedAt <= updatedBefore.Value);
-
-        return items;
+        return items.Where(x => dateSelector(x) >= after.Value);
     }
 
-    public static IEnumerable<T> ApplyCreatedAtFilter<T>(
+    public static IEnumerable<T> ApplyDateBeforeFilter<T>(
         this IEnumerable<T> items,
-        DateTime? createdAfter,
-        DateTime? createdBefore) where T : IEntityCreatedAt
+        DateTime? before,
+        Func<T, DateTime?> dateSelector)
     {
-        if (createdAfter == null && createdBefore == null)
+        if (before == null)
             return items;
 
-        if (createdAfter != null)
-            items = items.Where(x => x.CreatedAt >= createdAfter.Value);
-
-        if (createdBefore != null)
-            items = items.Where(x => x.CreatedAt <= createdBefore.Value);
-
-        return items;
+        return items.Where(x => dateSelector(x) <= before.Value);
     }
 
     public static IEnumerable<T> ApplyFolderIdFilter<T>(
         this IEnumerable<T> items,
-        string? folderId) where T : IEntityFolder
+        string? folderId,
+        Func<T, AssetFolder> folderSelector)
     {
         if (string.IsNullOrEmpty(folderId))
             return items;
 
-        return items.Where(x => x.Folder.Value.ToString() == folderId.Split("_").First());
+        return items.Where(x => folderSelector(x).Value.ToString() == folderId.Split("_").First());
     }
 }

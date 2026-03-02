@@ -39,12 +39,14 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
         var snippets = await Client.Paginate<SnippetEntity>(request);
 
         snippets = snippets
-            .ApplyUpdatedAtFilter(input.UpdatedAfter, input.UpdatedBefore)
-            .ApplyCreatedAtFilter(input.CreatedAfter, input.CreatedBefore)
-            .ApplyNamePatternFilter(input.NamePatterns, input.ExcludeMatched)
-            .ApplyFolderIdFilter(input.FolderId);
+            .ApplyDateAfterFilter(input.CreatedAfter, x => x.CreatedAt)
+            .ApplyDateBeforeFilter(input.CreatedBefore, x => x.CreatedAt)
+            .ApplyDateAfterFilter(input.UpdatedAfter, x => x.UpdatedAt)
+            .ApplyDateBeforeFilter(input.UpdatedBefore, x => x.UpdatedAt)
+            .ApplyNamePatternFilter(input.NamePatterns, input.ExcludeMatched, x => x.Name)
+            .ApplyFolderIdFilter(input.FolderId, x => x.Folder);
 
-        snippets = await snippets.ApplyIgnoreInArchiveFilter(Client, input.IgnoreInArchive);
+        snippets = await snippets.ApplyIgnoreInArchiveFilter(Client, input.IgnoreInArchive, x => x.Folder);
 
         return new(snippets.Select(x => new SnippetDto(x)).ToList());
     }

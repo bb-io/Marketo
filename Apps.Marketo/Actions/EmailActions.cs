@@ -45,10 +45,11 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
         var emails = await Client.Paginate<EmailEntity>(request);
 
         emails = emails
-            .ApplyNamePatternFilter(input.NamePatterns, input.ExcludeMatched)
-            .ApplyCreatedAtFilter(input.CreatedAfter, input.CreatedBefore);
+            .ApplyDateAfterFilter(input.CreatedAfter, x => x.CreatedAt)
+            .ApplyDateBeforeFilter(input.CreatedBefore, x => x.CreatedAt)
+            .ApplyNamePatternFilter(input.NamePatterns, input.ExcludeMatched, x => x.Name);
 
-        emails = await emails.ApplyIgnoreInArchiveFilter(Client, input.IgnoreInArchive);
+        emails = await emails.ApplyIgnoreInArchiveFilter(Client, input.IgnoreInArchive, x => x.Folder);
 
         return new(emails.Select(x => new EmailDto(x)).ToList());
     }

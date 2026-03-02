@@ -1,9 +1,8 @@
 ﻿using Newtonsoft.Json;
-using Apps.Marketo.Helper.Interfaces;
 
 namespace Apps.Marketo.Models.Entities.Snippet;
 
-public class SnippetEntity : IEntityFolder, IEntityName, IEntityUpdatedAt, IEntityCreatedAt
+public class SnippetEntity
 {
     [JsonProperty("id")]
     public string Id { get; set; } = string.Empty;

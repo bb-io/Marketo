@@ -1,9 +1,8 @@
 ﻿using Newtonsoft.Json;
-using Apps.Marketo.Helper.Interfaces;
 
 namespace Apps.Marketo.Models.Entities.LandingPage;
 
-public class LandingPageEntity : IEntityName, IEntityUpdatedAt, IEntityCreatedAt, IEntityFolder
+public class LandingPageEntity
 {
     [JsonProperty("id")]
     public string Id { get; set; } = string.Empty;
