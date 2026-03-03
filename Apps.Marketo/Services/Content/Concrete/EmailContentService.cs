@@ -8,6 +8,7 @@ using Apps.Marketo.HtmlHelpers;
 using Apps.Marketo.Invocables;
 using Apps.Marketo.Models.Content.Request;
 using Apps.Marketo.Models.Content.Response;
+using Apps.Marketo.Models.Entities;
 using Apps.Marketo.Models.Entities.Email;
 using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
@@ -72,11 +73,18 @@ public class EmailContentService(InvocationContext invocationContext, IFileManag
                 sectionContent.Add("data-subject-value", subjectContent);
         }
 
-        var resultHtml = HtmlContentBuilder.GenerateHtml(
-            sectionContent,
-            emailInfo.Name,
-            input.Segment ?? string.Empty,
-            new(MetadataConstants.BlackbirdEmailIdAttribute, input.ContentId));
+        var metadata = new List<MetadataEntity> { new(MetadataConstants.BlackbirdEmailId, input.ContentId) };
+
+        if (emailContentResponse.Any(x => x.ContentType == "DynamicContent") || emailInfo.Subject?.Type == "DynamicContent")
+        {
+            var resolvedSegmentName = string.IsNullOrWhiteSpace(input.Segment) ? "Default" : input.Segment;
+            metadata.Add(new(MetadataConstants.BlackbirdSegmentName, resolvedSegmentName));
+
+            if (!string.IsNullOrWhiteSpace(input.SegmentationId))
+                metadata.Add(new(MetadataConstants.BlackbirdSegmentationId, input.SegmentationId));
+        }
+
+        var resultHtml = HtmlContentBuilder.GenerateHtml(sectionContent, emailInfo.Name, metadata);
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
         return await fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html, emailInfo.Name.ToHtmlFileName());
@@ -160,7 +168,7 @@ public class EmailContentService(InvocationContext invocationContext, IFileManag
         var idAttr = 
             string.IsNullOrWhiteSpace(contentId) ? 
             string.Empty : 
-            $" {MetadataConstants.ContextImageAttribute}=\"{contentId}\"";
+            $" {MetadataConstants.ContextImage}=\"{contentId}\"";
 
         return $"<img src=\"{src}\"{styleAttr}{altAttr}{idAttr}{widthAttr}{heightAttr}>";
     }

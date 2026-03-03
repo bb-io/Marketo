@@ -122,7 +122,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
         var formBytes = await stream.GetByteData();
         var html = Encoding.UTF8.GetString(formBytes);
         
-        var extractedMeta = HtmlContentBuilder.ExtractIdFromMeta(html, MetadataConstants.BlackbirdEmailIdAttribute);
+        var extractedMeta = HtmlContentBuilder.ExtractIdFromMeta(html, MetadataConstants.BlackbirdEmailId);
         var translatedContent = HtmlContentBuilder.ParseHtml(html);
 
         var infoRequest = new EmailIdentifier
@@ -231,7 +231,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
             $"/rest/asset/v1/email/{getEmailInfoRequest.EmailId}/dynamicContent/{dynamicContentItem.Value}.json";
 
         RestRequest request;
-        if (!content.Contains(MetadataConstants.ContextImageAttribute))
+        if (!content.Contains(MetadataConstants.ContextImage))
         {
             request = new RestRequest(endpoint, Method.Post)
                 .AddQueryParameter("segment", getSegmentBySegmentationRequest.Segment)
@@ -250,7 +250,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
 
             if (altTextAttribute == null)
                 return string.Empty;
-            var imageIdAttribute = htmlSnippet.DocumentNode.FirstChild.Attributes[MetadataConstants.ContextImageAttribute];
+            var imageIdAttribute = htmlSnippet.DocumentNode.FirstChild.Attributes[MetadataConstants.ContextImage];
 
             request = new RestRequest(endpoint, Method.Post)
                 .AddQueryParameter("segment", getSegmentBySegmentationRequest.Segment)

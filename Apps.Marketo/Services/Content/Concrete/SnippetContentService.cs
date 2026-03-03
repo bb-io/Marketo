@@ -30,21 +30,30 @@ public class SnippetContentService(InvocationContext invocationContext, IFileMan
         var snippetContentRequest = new RestRequest($"/rest/asset/v1/snippet/{input.ContentId}/content.json", Method.Get);
         var snippetContent = await Client.ExecuteWithErrorHandling<SnippetContentDto>(snippetContentRequest);
 
-        if (snippetContent.Count() == 1 && snippetContent.First().Type == "DynamicContent")
+        var snippetContentList = snippetContent.ToList();
+
+        var metadata = new List<MetadataEntity> { new(MetadataConstants.BlackbirdSnippetId, input.ContentId) };
+
+        if (snippetContentList.Count == 1 && snippetContentList[0].Type == "DynamicContent")
         {
-            snippetContent =
-                (await GetSnippetDynamicContent(input.ContentId, input.SegmentationId, input.Segment))
-                .Select(x => new SnippetContentDto(x.Type, x.Content)).ToList();
+            var dynamicSegments = await GetSnippetDynamicContent(input.ContentId, input.SegmentationId, input.Segment);
+            snippetContentList = dynamicSegments.Select(x => new SnippetContentDto(x.Type, x.Content)).ToList();
+
+            var resolvedSegmentName = string.IsNullOrWhiteSpace(input.Segment) ? "Default" : input.Segment;
+            metadata.Add(new(MetadataConstants.BlackbirdSegmentName, resolvedSegmentName));
+
+            if (!string.IsNullOrWhiteSpace(input.SegmentationId))
+                metadata.Add(new(MetadataConstants.BlackbirdSegmentationId, input.SegmentationId));
         }
-        var sectionContent = snippetContent
+
+        var sectionContent = snippetContentList
+            .GroupBy(x => x.Type)
             .ToDictionary(
-                x => x.Type,
-                y => y.Content);
-        var resultHtml = HtmlContentBuilder.GenerateHtml(
-            sectionContent,
-            snippetInfo.Name,
-            input.Segment ?? string.Empty,
-            new HtmlIdEntity(MetadataConstants.BlackbirdSnippetId, input.ContentId));
+                g => g.Key,
+                g => string.Join(string.Empty, g.Select(y => y.Content))
+            );
+
+        var resultHtml = HtmlContentBuilder.GenerateHtml(sectionContent, snippetInfo.Name, metadata);
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
         return await fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html, snippetInfo.Name.ToHtmlFileName());

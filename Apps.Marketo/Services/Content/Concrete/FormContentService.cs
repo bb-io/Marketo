@@ -1,12 +1,15 @@
-﻿using Apps.Marketo.Dtos;
+﻿using Apps.Marketo.Constants;
+using Apps.Marketo.Dtos;
 using Apps.Marketo.Dtos.Content;
 using Apps.Marketo.Extensions;
 using Apps.Marketo.Helper.FileFolder;
 using Apps.Marketo.Helper.Filter;
+using Apps.Marketo.HtmlHelpers;
 using Apps.Marketo.HtmlHelpers.Forms;
 using Apps.Marketo.Invocables;
 using Apps.Marketo.Models.Content.Request;
 using Apps.Marketo.Models.Content.Response;
+using Apps.Marketo.Models.Entities;
 using Apps.Marketo.Models.Entities.Form;
 using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
@@ -28,11 +31,20 @@ public class FormContentService(InvocationContext invocationContext, IFileManage
         var getFieldsRequest = new RestRequest($"/rest/asset/v1/form/{input.ContentId}/fields.json", Method.Get);
         var formFields = await Client.ExecuteWithErrorHandling<FormFieldDto>(getFieldsRequest);
 
-        string resultHtml = FormToHtmlConverter.ConvertToHtml(
-            form,
+        string fieldsInnerHtml = FormToHtmlConverter.ConvertToInnerHtml(
+            form, 
             formFields, 
             input.IgnoreVisibilityRules, 
-            input.IgnoreFormFields);
+            input.IgnoreFormFields); 
+        
+        var sections = new Dictionary<string, string> { { form.Id.ToString(), fieldsInnerHtml } };
+
+        var metadata = new List<MetadataEntity> { new(MetadataConstants.BlackbirdFormId, form.Id.ToString()) };
+
+        var resultHtml = HtmlContentBuilder.GenerateHtml(
+            sections,
+            form.Name,
+            metadata);
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
         return await fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html, form.Name.ToHtmlFileName());

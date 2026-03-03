@@ -1,6 +1,5 @@
 ﻿using HtmlAgilityPack;
 using Apps.Marketo.Dtos;
-using Apps.Marketo.Constants;
 using Apps.Marketo.Models.Entities.Form;
 
 namespace Apps.Marketo.HtmlHelpers.Forms;
@@ -10,27 +9,14 @@ public static class FormToHtmlConverter
     private const string FormElementAttribute = "data-marketo-form-element";
     private const string DataFieldDataAttribute = "data-marketo-field-data";
 
-    public static string ConvertToHtml(
+    public static string ConvertToInnerHtml(
         FormEntity form,
         IEnumerable<FormFieldDto> formData,
         bool? ignoreVisibilityRules,
         IEnumerable<string>? ignoreFields)
     {
         var doc = new HtmlDocument();
-
-        var htmlNode = doc.CreateElement("html");
-        doc.DocumentNode.AppendChild(htmlNode);
-
-        var headNode = doc.CreateElement("head");
-        htmlNode.AppendChild(headNode);
-
-        var metaNode = doc.CreateElement("meta");
-        metaNode.SetAttributeValue("name", MetadataConstants.BlackbirdFormIdAttribute);
-        metaNode.SetAttributeValue("content", form.Id.ToString());
-        headNode.AppendChild(metaNode);
-
-        var bodyNode = doc.CreateElement("body");
-        htmlNode.AppendChild(bodyNode);
+        var containerDiv = doc.CreateElement("div");
 
         var buttonDiv = doc.CreateElement("div");
         buttonDiv.SetAttributeValue(FormElementAttribute, "button");
@@ -45,7 +31,7 @@ public static class FormToHtmlConverter
         waitLabelP.InnerHtml = form.WaitingLabel;
         buttonDiv.AppendChild(waitLabelP);
 
-        bodyNode.AppendChild(buttonDiv);
+        containerDiv.AppendChild(buttonDiv);
 
         var thankYouDiv = doc.CreateElement("div");
         thankYouDiv.SetAttributeValue(FormElementAttribute, "thankYouList");
@@ -61,7 +47,7 @@ public static class FormToHtmlConverter
             }
             thankYouDiv.AppendChild(tyItemDiv);
         }
-        bodyNode.AppendChild(thankYouDiv);
+        containerDiv.AppendChild(thankYouDiv);
 
         var fieldsDiv = doc.CreateElement("div");
         fieldsDiv.SetAttributeValue(FormElementAttribute, "fields");
@@ -71,9 +57,9 @@ public static class FormToHtmlConverter
         foreach (var field in fieldsToProcess)
             fieldsDiv.AppendChild(CreateFieldNode(doc, field, ignoreVisibilityRules ?? false));
 
-        bodyNode.AppendChild(fieldsDiv);
+        containerDiv.AppendChild(fieldsDiv);
 
-        return doc.DocumentNode.OuterHtml;
+        return containerDiv.InnerHtml;
     }
 
     private static HtmlNode CreateFieldNode(HtmlDocument doc, FormFieldDto field, bool ignoreVisibilityRules)

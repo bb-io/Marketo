@@ -65,8 +65,7 @@ public class LandingPageContentService(InvocationContext invocationContext, IFil
         var resultHtml = HtmlContentBuilder.GenerateHtml(
             sectionContent,
             landingInfoResponse.Name,
-            input.Segment ?? string.Empty,
-            new(MetadataConstants.BlackbirdLandingPageId, input.ContentId));
+            [new(MetadataConstants.BlackbirdLandingPageId, input.ContentId)]);
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
         return await fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html,landingInfoResponse.Name.ToHtmlFileName());
