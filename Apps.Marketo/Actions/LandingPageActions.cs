@@ -1,28 +1,24 @@
-﻿using Apps.Marketo.Dtos;
+﻿using Apps.Marketo.Constants;
+using Apps.Marketo.Dtos;
+using Apps.Marketo.Dtos.LandingPage;
+using Apps.Marketo.Extensions;
+using Apps.Marketo.Helper.FileFolder;
+using Apps.Marketo.Helper.Filter;
 using Apps.Marketo.Invocables;
+using Apps.Marketo.Models.Content.Request;
+using Apps.Marketo.Models.Entities.LandingPage;
+using Apps.Marketo.Models.Identifiers;
+using Apps.Marketo.Models.Identifiers.Optional;
 using Apps.Marketo.Models.LandingPages.Requests;
 using Apps.Marketo.Models.LandingPages.Responses;
+using Apps.Marketo.Services.Content;
+using Apps.Marketo.Services.Content.Models;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Newtonsoft.Json;
 using RestSharp;
-using System.Text;
-using Apps.Marketo.HtmlHelpers;
-using Blackbird.Applications.Sdk.Utils.Extensions.Files;
-using Blackbird.Applications.Sdk.Common.Exceptions;
-using Apps.Marketo.Models.Identifiers;
-using Apps.Marketo.Models.Identifiers.Optional;
-using Apps.Marketo.Constants;
-using Apps.Marketo.Extensions;
-using Apps.Marketo.Dtos.LandingPage;
-using Apps.Marketo.Models.Entities.LandingPage;
-using Apps.Marketo.Helper.Filter;
-using Apps.Marketo.Helper.FileFolder;
-using Apps.Marketo.Services.Content;
-using Apps.Marketo.Models.Content.Request;
-using Apps.Marketo.Helper.Json;
 
 namespace Apps.Marketo.Actions;
 
@@ -165,86 +161,15 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
         return new(file);
     }
 
-    [Action("Translate landing page from HTML file", Description = "Translate landing page from HTML file")]
-    public async Task<TranslateLandingWithHtmlResponse> TranslateLandingWithHtml(
-        [ActionParameter] OptionalLandingPageIdentifier getLandingPageInfoRequest,
-        [ActionParameter] SegmentationIdentifier getSegmentationRequest,
-        [ActionParameter] SegmentIdentifier getSegmentBySegmentationRequest,
-        [ActionParameter] TranslateLandingPageWithHtmlRequest translateLandingWithHtmlRequest)
+    [Action("Upload landing page content", Description = "Upload landing page content")]
+    public async Task TranslateLandingWithHtml(
+        [ActionParameter] OptionalLandingPageIdentifier landingPageInput,
+        [ActionParameter] UploadLandingPageRequest uploadInput)
     {
-        var stream = await fileManagementClient.DownloadAsync(translateLandingWithHtmlRequest.File);
-        var bytes = await stream.GetByteData();
-        var html = Encoding.UTF8.GetString(bytes);
-        
-        var extractedId = HtmlContentBuilder.ExtractMeta(html, MetadataConstants.BlackbirdLandingPageId);
-        
-        var landingPageInfoRequest = new LandingPageIdentifier
-        {
-            LandingPageId = getLandingPageInfoRequest.LandingPageId ?? extractedId ?? throw new PluginMisconfigurationException("Landing page ID is not provided and not found in the HTML file. Please provide value in the optional input.")
-        };
-        
-        var landingContentResponse = await GetLandingContent(landingPageInfoRequest);
+        string html = await ContentDownloader.DownloadHtmlContent(fileManagementClient, uploadInput.File);
+        var input = new UploadContentInput(html, landingPageInput, uploadInput);
 
-        if (!translateLandingWithHtmlRequest.TranslateOnlyDynamic.HasValue ||
-            !translateLandingWithHtmlRequest.TranslateOnlyDynamic.Value)
-        {
-            foreach (var item in landingContentResponse.LandingPageContentItems)
-            {
-                if (!JsonHelper.IsJsonObject(item.Content.ToString()) &&
-                    (item.Type == "HTML" || item.Type == "RichText"))
-                {
-                    await ConvertSectionToDynamicContent(landingPageInfoRequest.LandingPageId, item.Id, getSegmentationRequest.SegmentationId);
-                }
-            }
-            landingContentResponse = await GetLandingContent(landingPageInfoRequest);
-        }
-        
-        var translatedContent = HtmlContentBuilder.ParseHtml(html);
-        var errors = new List<string>();
-        foreach (var item in landingContentResponse.LandingPageContentItems)
-        {
-            if (JsonHelper.IsJsonObject(item.Content.ToString()) &&
-                    (item.Type == "HTML" || item.Type == "RichText"))
-            {
-                var content = item.Content.ToString();
-                var landingPageContent = JsonConvert.DeserializeObject<LandingPageContentValueDto>(content!)!;
-                if (landingPageContent.ContentType == "DynamicContent" && 
-                    !string.IsNullOrWhiteSpace(content) && 
-                    translatedContent.TryGetValue(item.Id, out var translatedContentItem))
-                {
-                    await UpdateLandingDynamicContent(landingPageInfoRequest, getSegmentBySegmentationRequest, landingPageContent.Content, item.Type, translatedContentItem);
-                }
-            }
-        }
-        return new()
-        {
-            Errors = errors
-        };
-    }
-
-    private async Task<IdDto> ConvertSectionToDynamicContent(string landingId, string htmlId, string segmentationId)
-    {
-        var endpoint = $"/rest/asset/v1/landingPage/{landingId}/content/{htmlId}.json";
-        var request = new RestRequest(endpoint, Method.Post)
-            .AddParameter("value", segmentationId)
-            .AddParameter("type", "DynamicContent");
-        return await Client.ExecuteWithErrorHandlingFirst<IdDto>(request);
-    }
-
-    private async Task UpdateLandingDynamicContent(
-        LandingPageIdentifier getLandingPageInfoRequest,
-        SegmentIdentifier getSegmentBySegmentationRequest,
-        string dynamicContentId,
-        string contentType,
-        string content)
-    {
-        var endpoint =
-            $"/rest/asset/v1/landingPage/{getLandingPageInfoRequest.LandingPageId}/dynamicContent/{dynamicContentId}.json";
-        var request = new RestRequest(endpoint, Method.Post)
-            .AddQueryParameter("segment", getSegmentBySegmentationRequest.Segment)
-            .AddQueryParameter("type", contentType)
-            .AddQueryParameter("value", content);
-
-        await Client.ExecuteWithErrorHandlingFirst<IdDto>(request);
+        var service = _factory.GetContentService(ContentTypes.LandingPage);
+        await service.UploadContent(input);
     }
 }

@@ -25,7 +25,7 @@ public class UploadContentRequest : IUploadContentInput
     [Display("Content ID"), DataSource(typeof(ContentDataHandler))]
     public string? ContentId { get ; set ; }
 
-    [Display("Upload only dynamic email content")]
+    [Display("Upload only dynamic content (for emails and landing pages)")]
     public bool? UploadOnlyDynamic { get; set; }
 
     [Display("Recreate corrupted email modules", 

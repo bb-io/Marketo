@@ -26,9 +26,86 @@ namespace Apps.Marketo.Services.Content.Concrete;
 public class LandingPageContentService(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : MarketoInvocable(invocationContext), IContentService
 {
-    public Task UploadContent(UploadContentInput input)
+    public async Task UploadContent(UploadContentInput input)
     {
-        throw new NotImplementedException();
+        string pageId =
+            input.ContentId ??
+            HtmlContentBuilder.ExtractMeta(input.HtmlContent, MetadataConstants.BlackbirdLandingPageId) ??
+            throw new PluginMisconfigurationException(
+                "Landing page ID is not not found in the input file. Please provide it in the optional input"
+                );
+        string segmentationId =
+            input.SegmentationId ??
+            HtmlContentBuilder.ExtractMeta(input.HtmlContent, MetadataConstants.BlackbirdSegmentationId) ??
+            throw new PluginMisconfigurationException(
+                "Segmentation ID is not not found in the input file. Please provide it in the optional input"
+                );
+        string segment =
+            input.Segment ??
+            HtmlContentBuilder.ExtractMeta(input.HtmlContent, MetadataConstants.BlackbirdSegmentName) ??
+            throw new PluginMisconfigurationException(
+                "Segment name is not not found in the input file. Please provide it in the optional input"
+                );
+
+        var landingContentRequest = new RestRequest($"/rest/asset/v1/landingPage/{pageId}/content.json", Method.Get);
+        var landingContentResponse = await Client.ExecuteWithErrorHandling<LandingPageContentDto>(landingContentRequest);
+
+        if (input.UploadOnlyDynamicContent == false)
+        {
+            foreach (var item in landingContentResponse)
+            {
+                if (!JsonHelper.IsJsonObject(item.Content.ToString() ?? string.Empty) &&
+                    (item.Type == "HTML" || item.Type == "RichText"))
+                {
+                    await ConvertSectionToDynamicContent(pageId, item.Id, segmentationId);
+                }
+            }
+            landingContentResponse = await Client.ExecuteWithErrorHandling<LandingPageContentDto>(landingContentRequest);
+        }
+
+        var translatedContent = HtmlContentBuilder.ParseHtml(input.HtmlContent);
+        var errors = new List<string>();
+        foreach (var item in landingContentResponse)
+        {
+            if (JsonHelper.IsJsonObject(item.Content.ToString() ?? string.Empty) &&
+                    (item.Type == "HTML" || item.Type == "RichText"))
+            {
+                var content = item.Content.ToString();
+                var landingPageContent = JsonConvert.DeserializeObject<LandingPageContentValueDto>(content!)!;
+                if (landingPageContent.ContentType == "DynamicContent" &&
+                    !string.IsNullOrWhiteSpace(content) &&
+                    translatedContent.TryGetValue(item.Id, out var translatedContentItem))
+                {
+                    await UpdateLandingDynamicContent(pageId, segment, landingPageContent.Content, item.Type, translatedContentItem);
+                }
+            }
+        }
+    }
+
+    private async Task<IdDto> ConvertSectionToDynamicContent(string landingId, string htmlId, string segmentationId)
+    {
+        var endpoint = $"/rest/asset/v1/landingPage/{landingId}/content/{htmlId}.json";
+        var request = new RestRequest(endpoint, Method.Post)
+            .AddParameter("value", segmentationId)
+            .AddParameter("type", "DynamicContent");
+        return await Client.ExecuteWithErrorHandlingFirst<IdDto>(request);
+    }
+
+    private async Task UpdateLandingDynamicContent(
+        string pageId,
+        string segmentName,
+        string dynamicContentId,
+        string contentType,
+        string content)
+    {
+        var endpoint =
+            $"/rest/asset/v1/landingPage/{pageId}/dynamicContent/{dynamicContentId}.json";
+        var request = new RestRequest(endpoint, Method.Post)
+            .AddQueryParameter("segment", segmentName)
+            .AddQueryParameter("type", contentType)
+            .AddQueryParameter("value", content);
+
+        await Client.ExecuteWithErrorHandlingFirst<IdDto>(request);
     }
 
     public async Task<FileReference> DownloadContent(DownloadContentRequest input)
