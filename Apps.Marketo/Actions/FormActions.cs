@@ -8,7 +8,6 @@ using Apps.Marketo.HtmlHelpers.Forms;
 using Apps.Marketo.Invocables;
 using Apps.Marketo.Models;
 using Apps.Marketo.Models.Content.Request;
-using Apps.Marketo.Models.Content.Response;
 using Apps.Marketo.Models.Entities.Form;
 using Apps.Marketo.Models.Forms.Requests;
 using Apps.Marketo.Models.Forms.Responses;
@@ -90,7 +89,7 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
     }
 
     [Action("Download form content", Description = "Download form content")]
-    public async Task<DownloadContentResponse> GetFormAsHtml(
+    public async Task<DownloadFormResponse> GetFormAsHtml(
         [ActionParameter] FormIdentifier formInput,
         [ActionParameter] DownloadFormRequest downloadInput)
     {
@@ -102,7 +101,8 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
             IgnoreVisibilityRules = downloadInput.IgnoreVisibilityRules,
         };
 
-        return await service.DownloadContent(input);
+        var file = await service.DownloadContent(input);
+        return new(file);
     }
 
     [Action("Create or update form from translated HTML", Description = "Create or update form from translated HTML.")]

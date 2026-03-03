@@ -6,7 +6,6 @@ using Apps.Marketo.Helper.Filter;
 using Apps.Marketo.HtmlHelpers;
 using Apps.Marketo.Invocables;
 using Apps.Marketo.Models.Content.Request;
-using Apps.Marketo.Models.Content.Response;
 using Apps.Marketo.Models.Entities.Snippet;
 using Apps.Marketo.Models.Identifiers;
 using Apps.Marketo.Models.Snippets.Request;
@@ -105,7 +104,7 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
     }
 
     [Action("Download snippet content", Description = "Download snippet content")]
-    public async Task<DownloadContentResponse> GetSnippetAsHtml(
+    public async Task<DownloadSnippetResponse> GetSnippetAsHtml(
         [ActionParameter] SnippetIdentifier snippetInput,
         [ActionParameter] DownloadSnippetRequest downloadInput)
     {
@@ -117,7 +116,8 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
             Segment = downloadInput.Segment,
         };
 
-        return await service.DownloadContent(input);
+        var file = await service.DownloadContent(input);
+        return new(file);
     }
 
     [Action("Translate snippet from HTML file", Description = "Translate snippet from HTML file")]

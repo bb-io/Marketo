@@ -7,7 +7,6 @@ using Apps.Marketo.Helper.Filter;
 using Apps.Marketo.HtmlHelpers;
 using Apps.Marketo.Invocables;
 using Apps.Marketo.Models.Content.Request;
-using Apps.Marketo.Models.Content.Response;
 using Apps.Marketo.Models.Emails.Requests;
 using Apps.Marketo.Models.Emails.Responses;
 using Apps.Marketo.Models.Entities.Email;
@@ -94,7 +93,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
     }
 
     [Action("Download email content", Description = "Download email content")]
-    public async Task<DownloadContentResponse> GetEmailAsHtml(
+    public async Task<DownloadEmailResponse> GetEmailAsHtml(
         [ActionParameter] EmailIdentifier emailInput,
         [ActionParameter] DownloadEmailRequest downloadInput)
     {
@@ -108,7 +107,8 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
             IncludeImages = downloadInput.IncludeImages,
         };
 
-        return await service.DownloadContent(input);
+        var file = await service.DownloadContent(input);
+        return new(file);
     }
 
     [Action("Translate email from HTML file", Description = "Translate email from HTML file")]

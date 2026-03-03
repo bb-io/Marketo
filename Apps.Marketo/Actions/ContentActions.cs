@@ -39,6 +39,7 @@ public class ContentActions(InvocationContext invocationContext, IFileManagement
         [ActionParameter] DownloadContentRequest input)
     {
         var service = _factory.GetContentService(contentType.ContentType);
-        return await service.DownloadContent(input);
+        var file = await service.DownloadContent(input);
+        return new(file);
     }
 }

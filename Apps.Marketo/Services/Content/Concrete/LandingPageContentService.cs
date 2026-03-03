@@ -10,10 +10,9 @@ using Apps.Marketo.Invocables;
 using Apps.Marketo.Models.Content.Request;
 using Apps.Marketo.Models.Content.Response;
 using Apps.Marketo.Models.Entities.LandingPage;
-using Apps.Marketo.Models.Identifiers;
 using Blackbird.Applications.Sdk.Common.Exceptions;
+using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
-using Blackbird.Applications.Sdk.Utils.Extensions.Sdk;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Newtonsoft.Json;
 using RestSharp;
@@ -25,7 +24,7 @@ namespace Apps.Marketo.Services.Content.Concrete;
 public class LandingPageContentService(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : MarketoInvocable(invocationContext), IContentService
 {
-    public async Task<DownloadContentResponse> DownloadContent(DownloadContentRequest input)
+    public async Task<FileReference> DownloadContent(DownloadContentRequest input)
     {
         var landingInfoRequest = new RestRequest($"/rest/asset/v1/landingPage/{input.ContentId}.json", Method.Get);
         var landingInfoResponse = await Client.ExecuteWithErrorHandlingFirst<LandingPageEntity>(landingInfoRequest);
@@ -70,12 +69,7 @@ public class LandingPageContentService(InvocationContext invocationContext, IFil
             new(MetadataConstants.BlackbirdLandingPageId, input.ContentId));
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
-        var file = await fileManagementClient.UploadAsync(
-            stream, 
-            MediaTypeNames.Text.Html, 
-            landingInfoResponse.Name.ToHtmlFileName());
-
-        return new(file);
+        return await fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html,landingInfoResponse.Name.ToHtmlFileName());
     }
 
     public async Task<SearchContentResponse> SearchContent(SearchContentRequest input)
@@ -100,8 +94,8 @@ public class LandingPageContentService(InvocationContext invocationContext, IFil
 
     private async Task<string?> GetLandingSectionContent(
         string landingPageId,
-        string segmentationId,
-        string segment,
+        string? segmentationId,
+        string? segment,
         LandingPageContentDto sectionContent,
         bool includeImages = false)
     {

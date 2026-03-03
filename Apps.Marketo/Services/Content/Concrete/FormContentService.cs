@@ -8,6 +8,7 @@ using Apps.Marketo.Invocables;
 using Apps.Marketo.Models.Content.Request;
 using Apps.Marketo.Models.Content.Response;
 using Apps.Marketo.Models.Entities.Form;
+using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using RestSharp;
@@ -19,7 +20,7 @@ namespace Apps.Marketo.Services.Content.Concrete;
 public class FormContentService(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : MarketoInvocable(invocationContext), IContentService
 {
-    public async Task<DownloadContentResponse> DownloadContent(DownloadContentRequest input)
+    public async Task<FileReference> DownloadContent(DownloadContentRequest input)
     {
         var getFormRequest = new RestRequest($"/rest/asset/v1/form/{input.ContentId}.json", Method.Get);
         var form = await Client.ExecuteWithErrorHandlingFirst<FormEntity>(getFormRequest);
@@ -34,8 +35,7 @@ public class FormContentService(InvocationContext invocationContext, IFileManage
             input.IgnoreFormFields);
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
-        var file = await fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html, form.Name.ToHtmlFileName());
-        return new(file);
+        return await fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html, form.Name.ToHtmlFileName());
     }
 
     public async Task<SearchContentResponse> SearchContent(SearchContentRequest input)

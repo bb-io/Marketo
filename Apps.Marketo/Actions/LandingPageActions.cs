@@ -22,7 +22,6 @@ using Apps.Marketo.Helper.Filter;
 using Apps.Marketo.Helper.FileFolder;
 using Apps.Marketo.Services.Content;
 using Apps.Marketo.Models.Content.Request;
-using Apps.Marketo.Models.Content.Response;
 using Apps.Marketo.Helper.Json;
 
 namespace Apps.Marketo.Actions;
@@ -148,7 +147,7 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
     }
 
     [Action("Download landing page content", Description = "Download landing page content")]
-    public async Task<DownloadContentResponse> GetLandingPageAsHtml(
+    public async Task<DownloadLandingPageResponse> GetLandingPageAsHtml(
         [ActionParameter] LandingPageIdentifier landingPageId,
         [ActionParameter] DownloadLandingPageRequest downloadInput)
     {
@@ -162,7 +161,8 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
             Segment = downloadInput.Segment,
         };
 
-        return await service.DownloadContent(input);
+        var file = await service.DownloadContent(input);
+        return new(file);
     }
 
     [Action("Translate landing page from HTML file", Description = "Translate landing page from HTML file")]

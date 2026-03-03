@@ -9,6 +9,7 @@ using Apps.Marketo.Invocables;
 using Apps.Marketo.Models.Content.Request;
 using Apps.Marketo.Models.Content.Response;
 using Apps.Marketo.Models.Entities.Email;
+using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Newtonsoft.Json;
@@ -21,7 +22,7 @@ namespace Apps.Marketo.Services.Content.Concrete;
 public class EmailContentService(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : MarketoInvocable(invocationContext), IContentService
 {
-    public async Task<DownloadContentResponse> DownloadContent(DownloadContentRequest input)
+    public async Task<FileReference> DownloadContent(DownloadContentRequest input)
     {
         var emailInfoRequest = new RestRequest($"/rest/asset/v1/email/{input.ContentId}.json", Method.Get);
         var emailInfo = await Client.ExecuteWithErrorHandlingFirst<EmailEntity>(emailInfoRequest);
@@ -78,8 +79,7 @@ public class EmailContentService(InvocationContext invocationContext, IFileManag
             new(MetadataConstants.BlackbirdEmailIdAttribute, input.ContentId));
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
-        var file = await fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html, emailInfo.Name.ToHtmlFileName());
-        return new(file);
+        return await fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html, emailInfo.Name.ToHtmlFileName());
     }
 
     public async Task<SearchContentResponse> SearchContent(SearchContentRequest input)

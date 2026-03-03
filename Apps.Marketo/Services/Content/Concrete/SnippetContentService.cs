@@ -10,6 +10,7 @@ using Apps.Marketo.Models.Content.Response;
 using Apps.Marketo.Models.Entities;
 using Apps.Marketo.Models.Entities.Snippet;
 using Blackbird.Applications.Sdk.Common.Exceptions;
+using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using RestSharp;
@@ -21,7 +22,7 @@ namespace Apps.Marketo.Services.Content.Concrete;
 public class SnippetContentService(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : MarketoInvocable(invocationContext), IContentService
 {
-    public async Task<DownloadContentResponse> DownloadContent(DownloadContentRequest input)
+    public async Task<FileReference> DownloadContent(DownloadContentRequest input)
     {
         var snippetInfoRequest = new RestRequest($"/rest/asset/v1/snippet/{input.ContentId}.json", Method.Get);
         var snippetInfo = await Client.ExecuteWithErrorHandlingFirst<SnippetEntity>(snippetInfoRequest);
@@ -46,8 +47,7 @@ public class SnippetContentService(InvocationContext invocationContext, IFileMan
             new HtmlIdEntity(MetadataConstants.BlackbirdSnippetId, input.ContentId));
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
-        var file = await fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html, snippetInfo.Name.ToHtmlFileName());
-        return new(file);
+        return await fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html, snippetInfo.Name.ToHtmlFileName());
     }
 
     public async Task<SearchContentResponse> SearchContent(SearchContentRequest input)
