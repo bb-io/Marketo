@@ -64,7 +64,7 @@ public static class HtmlContentBuilder
         return result;
     }
     
-    public static string? ExtractIdFromMeta(string html, string metadataName)
+    public static string? ExtractMeta(string html, string metadataName)
     {
         var htmlDoc = new HtmlDocument();
         htmlDoc.LoadHtml(html);

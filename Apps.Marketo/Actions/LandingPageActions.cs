@@ -176,7 +176,7 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
         var bytes = await stream.GetByteData();
         var html = Encoding.UTF8.GetString(bytes);
         
-        var extractedId = HtmlContentBuilder.ExtractIdFromMeta(html, MetadataConstants.BlackbirdLandingPageId);
+        var extractedId = HtmlContentBuilder.ExtractMeta(html, MetadataConstants.BlackbirdLandingPageId);
         
         var landingPageInfoRequest = new LandingPageIdentifier
         {

@@ -122,7 +122,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
         var formBytes = await stream.GetByteData();
         var html = Encoding.UTF8.GetString(formBytes);
         
-        var extractedMeta = HtmlContentBuilder.ExtractIdFromMeta(html, MetadataConstants.BlackbirdEmailId);
+        var extractedMeta = HtmlContentBuilder.ExtractMeta(html, MetadataConstants.BlackbirdEmailId);
         var translatedContent = HtmlContentBuilder.ParseHtml(html);
 
         var infoRequest = new EmailIdentifier

@@ -131,7 +131,7 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
         var bytes = await stream.GetByteData();
         var html = Encoding.UTF8.GetString(bytes);
         
-        var extractedSnippetId = HtmlContentBuilder.ExtractIdFromMeta(html, MetadataConstants.BlackbirdSnippetId);
+        var extractedSnippetId = HtmlContentBuilder.ExtractMeta(html, MetadataConstants.BlackbirdSnippetId);
         var snippetRequest = new SnippetIdentifier
         {
             SnippetId = getSnippetRequest.SnippetId ?? extractedSnippetId ??
