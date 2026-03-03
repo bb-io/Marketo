@@ -23,9 +23,65 @@ namespace Apps.Marketo.Services.Content.Concrete;
 public class SnippetContentService(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : MarketoInvocable(invocationContext), IContentService
 {
-    public Task UploadContent(UploadContentInput input)
+    public async Task UploadContent(UploadContentInput input)
     {
-        throw new NotImplementedException();
+        string snippetId =
+            input.ContentId ??
+            HtmlContentBuilder.ExtractMeta(input.HtmlContent, MetadataConstants.BlackbirdSnippetId) ??
+            throw new PluginMisconfigurationException();
+        string segmentationId =
+            input.SegmentationId ??
+            HtmlContentBuilder.ExtractMeta(input.HtmlContent, MetadataConstants.BlackbirdSegmentationId) ??
+            throw new PluginMisconfigurationException(
+                "Segmentation ID is not not found in the input file. Please provide it in the optional input"
+                );
+        string segment =
+            input.Segment ??
+            HtmlContentBuilder.ExtractMeta(input.HtmlContent, MetadataConstants.BlackbirdSegmentName) ??
+            throw new PluginMisconfigurationException(
+                "Segment name is not not found in the input file. Please provide it in the optional input"
+                );
+
+        var snippetContentRequest = new RestRequest($"/rest/asset/v1/snippet/{snippetId}/content.json", Method.Get);
+        var snippetContentResponse = await Client.ExecuteWithErrorHandling<SnippetContentDto>(snippetContentRequest);
+
+        if (!(snippetContentResponse.Count() == 1 && snippetContentResponse.First().Type == "DynamicContent"))
+        {
+            await ConvertSnippetToDynamicContent(snippetId, segmentationId);
+        }
+        var snippetDynamicContent = await GetSnippetDynamicContent(snippetId, segmentationId, segment);
+
+        var translatedContent = HtmlContentBuilder.ParseHtml(input.HtmlContent);
+        foreach (var item in snippetDynamicContent.Where(x => x.SegmentName == segment).ToList())
+        {
+            if ((item.Type == "HTML" || item.Type == "Text") &&
+                translatedContent.TryGetValue(item.Type, out var translatedContentItem))
+            {
+                await UpdateSnippetDynamicContent(snippetId, item.SegmentId.ToString(), item.Type, translatedContentItem);
+            }
+        }
+    }
+
+    private async Task<IdDto> ConvertSnippetToDynamicContent(string snippetId, string segmentationId)
+    {
+        var endpoint = $"/rest/asset/v1/snippet/{snippetId}/content.json";
+        var request = new RestRequest(endpoint, Method.Post)
+            .AddParameter("content", segmentationId)
+            .AddParameter("type", "DynamicContent");
+        return await Client.ExecuteWithErrorHandlingFirst<IdDto>(request);
+    }
+
+    private async Task<IdDto> UpdateSnippetDynamicContent(
+        string snippetId,
+        string segmentId,
+        string contentType,
+        string content)
+    {
+        var request = new RestRequest($"/rest/asset/v1/snippet/{snippetId}/dynamicContent/{segmentId}.json", Method.Post)
+            .AddQueryParameter("type", contentType)
+            .AddQueryParameter("value", content);
+
+        return await Client.ExecuteWithErrorHandlingFirst<IdDto>(request);
     }
 
     public async Task<FileReference> DownloadContent(DownloadContentRequest input)
