@@ -181,7 +181,7 @@ public class DataHandlerTests : TestBase
     public async Task SegmentBySegmentationDataHandler_ReturnsSegmentsForSegmentation()
     {
         // Arrange
-        var segmentId = new SegmentationIdentifier { SegmentationId = "1003" };
+        var segmentId = new SegmentationIdentifier { SegmentationId = "1002" };
         var handler = new SegmentBySegmentationDataHandler(InvocationContext, segmentId);
 
         // Act
@@ -198,6 +198,20 @@ public class DataHandlerTests : TestBase
         // Arrange
         var formId = new FormIdentifier { FormId = "1005" };
         var handler = new FormFieldDataHandler(InvocationContext, formId);
+
+        // Act
+        var result = await handler.GetDataAsync(new DataSourceContext(), CancellationToken.None);
+
+        // Assert
+        PrintDataHandlerResult(result);
+        Assert.IsNotNull(result);
+    }
+
+    [TestMethod]
+    public async Task SnippetDataHandler_ReturnsSnippets()
+    {
+        // Arrange
+        var handler = new SnippetDataHandler(InvocationContext);
 
         // Act
         var result = await handler.GetDataAsync(new DataSourceContext(), CancellationToken.None);

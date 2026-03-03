@@ -5,12 +5,13 @@ using Apps.Marketo.Extensions;
 using Apps.Marketo.Helper.Filter;
 using Apps.Marketo.HtmlHelpers;
 using Apps.Marketo.Invocables;
-using Apps.Marketo.Models;
-using Apps.Marketo.Models.Entities;
+using Apps.Marketo.Models.Content.Request;
+using Apps.Marketo.Models.Content.Response;
 using Apps.Marketo.Models.Entities.Snippet;
 using Apps.Marketo.Models.Identifiers;
 using Apps.Marketo.Models.Snippets.Request;
 using Apps.Marketo.Models.Snippets.Response;
+using Apps.Marketo.Services.Content;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Exceptions;
@@ -19,7 +20,6 @@ using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Newtonsoft.Json;
 using RestSharp;
-using System.Net.Mime;
 using System.Text;
 
 namespace Apps.Marketo.Actions;
@@ -27,7 +27,9 @@ namespace Apps.Marketo.Actions;
 [ActionList("Snippets")]
 public class SnippetActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : MarketoInvocable(invocationContext)
-{    
+{
+    private readonly ContentServiceFactory _factory = new(invocationContext, fileManagementClient);
+
     [Action("Search snippets", Description = "Search snippets")]
     public async Task<SearchSnippetsResponse> ListSnippets([ActionParameter] SearchSnippetsRequest input)
     {
@@ -102,35 +104,20 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
         return new(result);
     }
 
-    [Action("Get snippet as HTML for translation", Description = "Get snippet as HTML for translation")]
-    public async Task<FileWrapper> GetSnippetAsHtml(
-        [ActionParameter] SnippetIdentifier getSnippetRequest,
-        [ActionParameter] SegmentationIdentifier getSegmentationRequest,
-        [ActionParameter] SegmentIdentifier getSegmentBySegmentationRequest)
+    [Action("Download snippet content", Description = "Download snippet content")]
+    public async Task<DownloadContentResponse> GetSnippetAsHtml(
+        [ActionParameter] SnippetIdentifier snippetInput,
+        [ActionParameter] DownloadSnippetRequest downloadInput)
     {
-        var snippetInfo = await GetSnippetInfo(getSnippetRequest);
-        var snippetContentResponse = await GetSnippetContent(getSnippetRequest);
-
-        if(snippetContentResponse.ContentItems.Count() == 1 && 
-           snippetContentResponse.ContentItems.First().Type == "DynamicContent")
+        var service = _factory.GetContentService(ContentTypes.Snippet);
+        var input = new DownloadContentRequest
         {
-            snippetContentResponse.ContentItems = 
-                (await GetSnippetDynamicContent(getSnippetRequest, getSegmentationRequest, getSegmentBySegmentationRequest))
-                .Select(x => new SnippetContentDto(x.Type, x.Content)).ToList();
-        }
-        var sectionContent = snippetContentResponse.ContentItems!
-            .ToDictionary(
-                x => x.Type,
-                y => y.Content);
-        var resultHtml = HtmlContentBuilder.GenerateHtml(
-            sectionContent, 
-            snippetInfo.Name, 
-            getSegmentBySegmentationRequest.Segment, 
-            new HtmlIdEntity(MetadataConstants.BlackbirdSnippetId, getSnippetRequest.SnippetId));
+            ContentId = snippetInput.SnippetId,
+            SegmentationId = downloadInput.SegmentationId,
+            Segment = downloadInput.Segment,
+        };
 
-        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
-        var file = await fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html, $"{snippetInfo.Name}.html");
-        return new() { File = file };
+        return await service.DownloadContent(input);
     }
 
     [Action("Translate snippet from HTML file", Description = "Translate snippet from HTML file")]
@@ -195,7 +182,7 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
         return await Client.ExecuteWithErrorHandlingFirst<IdDto>(request);
     }
 
-    private async Task<List<SnippetSegmentDto>> GetSnippetDynamicContent(
+    private async Task<List<SnippetSegmentEntity>> GetSnippetDynamicContent(
         SnippetIdentifier getSnippetRequest,
         SegmentationIdentifier getSegmentationRequest,
         SegmentIdentifier getSegmentBySegmentationRequest)
@@ -203,7 +190,7 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
         var requestSeg = new RestRequest(
                 $"/rest/asset/v1/snippet/{getSnippetRequest.SnippetId}/dynamicContent.json",
                 Method.Get);
-        var responseSeg = await Client.ExecuteWithErrorHandlingFirst<SnippetDynamicContentDto>(requestSeg);
+        var responseSeg = await Client.ExecuteWithErrorHandlingFirst<SnippetDynamicContentEntity>(requestSeg);
         if (responseSeg.Segmentation.ToString() == getSegmentationRequest.SegmentationId)
             return responseSeg.Content
                 .Where(x => x.SegmentName == getSegmentBySegmentationRequest.Segment)
