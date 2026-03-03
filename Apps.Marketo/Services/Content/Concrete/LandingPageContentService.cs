@@ -9,6 +9,7 @@ using Apps.Marketo.HtmlHelpers;
 using Apps.Marketo.Invocables;
 using Apps.Marketo.Models.Content.Request;
 using Apps.Marketo.Models.Content.Response;
+using Apps.Marketo.Models.Entities;
 using Apps.Marketo.Models.Entities.LandingPage;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Files;
@@ -40,7 +41,7 @@ public class LandingPageContentService(InvocationContext invocationContext, IFil
 
         var contentTasks = landingContentResponse
             .Where(x => (x.Type == "HTML" || x.Type == "RichText" || (includeImages && x.Type == "Image")) &&
-                        (!onlyDynamic || JsonHelper.IsJsonObject(x.Content.ToString()!)))
+                        (!onlyDynamic || JsonHelper.IsJsonObject(x.Content?.ToString() ?? string.Empty)))
             .Select(async item =>
             {
                 var content = await GetLandingSectionContent(
@@ -62,13 +63,32 @@ public class LandingPageContentService(InvocationContext invocationContext, IFil
         if (sectionContent.Count == 0)
             throw new PluginMisconfigurationException($"No matching content items found for landing page ID {input.ContentId} with the current filters.");
 
+        var metadata = new List<MetadataEntity> { new(MetadataConstants.BlackbirdLandingPageId, input.ContentId) };
+
+        bool isDynamicLandingPage = landingContentResponse.Any(x =>
+            x.Content != null &&
+            JsonHelper.IsJsonObject(x.Content.ToString() ?? string.Empty) &&
+            x.Content.ToString()!.Contains("DynamicContent"));
+
+        if (isDynamicLandingPage)
+        {
+            var resolvedSegmentName = string.IsNullOrWhiteSpace(input.Segment) ? "Default" : input.Segment;
+            metadata.Add(new(MetadataConstants.BlackbirdSegmentName, resolvedSegmentName));
+
+            if (!string.IsNullOrWhiteSpace(input.SegmentationId))
+                metadata.Add(new(MetadataConstants.BlackbirdSegmentationId, input.SegmentationId));
+        }
+
         var resultHtml = HtmlContentBuilder.GenerateHtml(
             sectionContent,
             landingInfoResponse.Name,
-            [new(MetadataConstants.BlackbirdLandingPageId, input.ContentId)]);
+            metadata);
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(resultHtml));
-        return await fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html,landingInfoResponse.Name.ToHtmlFileName());
+        return await fileManagementClient.UploadAsync(
+            stream, 
+            MediaTypeNames.Text.Html, 
+            landingInfoResponse.Name.ToHtmlFileName());
     }
 
     public async Task<SearchContentResponse> SearchContent(SearchContentRequest input)
@@ -103,8 +123,8 @@ public class LandingPageContentService(InvocationContext invocationContext, IFil
         {
             var landingPageContent = JsonConvert.DeserializeObject<LandingPageContentValueDto>(sectionContent.Content.ToString());
             var requestSeg = new RestRequest(
-                    $"/rest/asset/v1/landingPage/{landingPageId}/dynamicContent/{landingPageContent.Content}.json",
-                    Method.Get);
+                $"/rest/asset/v1/landingPage/{landingPageId}/dynamicContent/{landingPageContent.Content}.json",
+                Method.Get);
 
             var responseSeg = await Client.ExecuteWithErrorHandling<LandingDynamicContentDto<LandingPageImageSegmentDto<object>>>(requestSeg);
             if (responseSeg.First().Segmentation.ToString() == segmentationId)
@@ -144,7 +164,7 @@ public class LandingPageContentService(InvocationContext invocationContext, IFil
             }
             return string.Empty;
         }
-        else if (sectionContent.Type == "Image") // Static images
+        else if (sectionContent.Type == "Image")
         {
             var imageDto = JsonConvert.DeserializeObject<LandingPageImageContent>(sectionContent.Content.ToString());
             var imageUrl = string.IsNullOrWhiteSpace(imageDto.ContentUrl) ? imageDto.Content : imageDto.ContentUrl;
