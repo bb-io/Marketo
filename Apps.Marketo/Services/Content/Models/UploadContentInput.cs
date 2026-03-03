@@ -1,9 +1,23 @@
 ﻿using Apps.Marketo.Models.Content.Request;
+using Apps.Marketo.Models.Emails.Requests;
+using Apps.Marketo.Models.Identifiers.Optional;
 
 namespace Apps.Marketo.Services.Content.Models;
 
 public record UploadContentInput
 {
+    public UploadContentInput(string htmlContent, OptionalEmailIdenfitier emailInput, UploadEmailRequest uploadRequest)
+    {
+        HtmlContent = htmlContent;
+        ContentId = emailInput.EmailId;
+        SegmentationId = uploadRequest.SegmentationId;
+        Segment = uploadRequest.Segment;
+        UploadOnlyDynamicContent = uploadRequest.UploadOnlyDynamic ?? false;
+        RecreateCorruptedEmailModules = uploadRequest.RecreateCorruptedModules ?? true;
+        UpdateEmailSubject = uploadRequest.UpdateEmailSubject ?? true;
+        UpdateStyleForEmailImages = uploadRequest.UpdateStyleForImages ?? false;
+    }
+
     public UploadContentInput(string htmlContent, UploadContentRequest uploadRequest)
     {
         HtmlContent = htmlContent;

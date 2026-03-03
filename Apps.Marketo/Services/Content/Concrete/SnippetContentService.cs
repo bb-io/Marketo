@@ -9,6 +9,7 @@ using Apps.Marketo.Models.Content.Request;
 using Apps.Marketo.Models.Content.Response;
 using Apps.Marketo.Models.Entities;
 using Apps.Marketo.Models.Entities.Snippet;
+using Apps.Marketo.Services.Content.Models;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
@@ -22,6 +23,11 @@ namespace Apps.Marketo.Services.Content.Concrete;
 public class SnippetContentService(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : MarketoInvocable(invocationContext), IContentService
 {
+    public Task UploadContent(UploadContentInput input)
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task<FileReference> DownloadContent(DownloadContentRequest input)
     {
         var snippetInfoRequest = new RestRequest($"/rest/asset/v1/snippet/{input.ContentId}.json", Method.Get);

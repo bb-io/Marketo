@@ -11,6 +11,7 @@ using Apps.Marketo.Models.Content.Request;
 using Apps.Marketo.Models.Content.Response;
 using Apps.Marketo.Models.Entities;
 using Apps.Marketo.Models.Entities.Form;
+using Apps.Marketo.Services.Content.Models;
 using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
@@ -23,6 +24,11 @@ namespace Apps.Marketo.Services.Content.Concrete;
 public class FormContentService(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : MarketoInvocable(invocationContext), IContentService
 {
+    public Task UploadContent(UploadContentInput input)
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task<FileReference> DownloadContent(DownloadContentRequest input)
     {
         var getFormRequest = new RestRequest($"/rest/asset/v1/form/{input.ContentId}.json", Method.Get);
