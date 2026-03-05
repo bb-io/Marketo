@@ -8,7 +8,7 @@ namespace Apps.Marketo.HtmlHelpers.Forms;
 
 public static class HtmlToFormConverter
 { 
-    public static (FormEntity, IEnumerable<FormFieldDto>) ConvertToForm(string html, MarketoClient client)
+    public static async Task<(FormEntity, IEnumerable<FormFieldDto>)> ConvertToForm(string html, MarketoClient client)
     {
         var htmlDocument = new HtmlDocument();
         htmlDocument.LoadHtml(html);
@@ -17,10 +17,10 @@ public static class HtmlToFormConverter
         var formId = outerDiv.Attributes["id"].Value;
 
         var getFormRequest = new RestRequest($"/rest/asset/v1/form/{formId}.json", Method.Get);
-        var originalForm = client.ExecuteWithErrorHandling<FormEntity>(getFormRequest).Result.First();
+        var originalForm = await client.ExecuteWithErrorHandlingFirst<FormEntity>(getFormRequest);
         
         var getFieldsRequest = new RestRequest($"/rest/asset/v1/form/{formId}/fields.json", Method.Get);
-        var originalFields = client.ExecuteWithErrorHandling<FormFieldDto>(getFieldsRequest).Result;
+        var originalFields = await client.ExecuteWithErrorHandling<FormFieldDto>(getFieldsRequest);
 
         const string formElementAttribute = "data-marketo-form-element";
         const string formElementFieldId = "data-marketo-Id";

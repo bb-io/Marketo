@@ -38,16 +38,21 @@ public static class FormToHtmlConverter
 
         foreach (var thankYouPage in form.ThankYouList ?? [])
         {
-            var tyItemDiv = doc.CreateElement("div");
-            foreach (var value in thankYouPage.Values ?? [])
+            if (thankYouPage.Values != null && thankYouPage.Values.Any())
             {
-                var p = doc.CreateElement("p");
-                p.InnerHtml = value;
-                tyItemDiv.AppendChild(p);
+                var tyItemDiv = doc.CreateElement("div");
+                foreach (var value in thankYouPage.Values)
+                {
+                    var p = doc.CreateElement("p");
+                    p.InnerHtml = value;
+                    tyItemDiv.AppendChild(p);
+                }
+                thankYouDiv.AppendChild(tyItemDiv);
             }
-            thankYouDiv.AppendChild(tyItemDiv);
         }
-        containerDiv.AppendChild(thankYouDiv);
+
+        if (thankYouDiv.ChildNodes.Count > 0)
+            containerDiv.AppendChild(thankYouDiv);
 
         var fieldsDiv = doc.CreateElement("div");
         fieldsDiv.SetAttributeValue(FormElementAttribute, "fields");

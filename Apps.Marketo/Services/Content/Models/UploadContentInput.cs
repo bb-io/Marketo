@@ -1,5 +1,6 @@
 ﻿using Apps.Marketo.Models.Content.Request;
 using Apps.Marketo.Models.Emails.Requests;
+using Apps.Marketo.Models.Forms.Requests;
 using Apps.Marketo.Models.Identifiers.Optional;
 using Apps.Marketo.Models.LandingPages.Requests;
 using Apps.Marketo.Models.Snippets.Request;
@@ -8,6 +9,12 @@ namespace Apps.Marketo.Services.Content.Models;
 
 public record UploadContentInput
 {
+    public UploadContentInput(string htmlContent, OptionalFormIdenfitier formInput, UploadFormRequest uploadRequest)
+    {
+        HtmlContent = htmlContent;
+        ContentId = formInput.FormId;
+    }
+
     public UploadContentInput(
         string htmlContent, 
         OptionalLandingPageIdentifier snippetInput, 

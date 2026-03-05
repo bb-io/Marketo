@@ -1,7 +1,9 @@
-﻿using Tests.Marketo.Base;
-using Apps.Marketo.Actions;
-using Apps.Marketo.Models.Identifiers;
+﻿using Apps.Marketo.Actions;
 using Apps.Marketo.Models.Forms.Requests;
+using Apps.Marketo.Models.Identifiers;
+using Apps.Marketo.Models.Identifiers.Optional;
+using Blackbird.Applications.Sdk.Common.Files;
+using Tests.Marketo.Base;
 
 namespace Tests.Marketo;
 
@@ -36,7 +38,7 @@ public class FormTests : TestBase
 		var formId = new FormIdentifier { FormId = "1005" };
 		var input = new DownloadFormRequest
 		{
-			IgnoreVisibilityRules = true
+			//IgnoreVisibilityRules = true
 		};
 
 		// Act
@@ -46,4 +48,19 @@ public class FormTests : TestBase
         Console.WriteLine(result.Content.Name);
 		Assert.IsNotNull(result);
 	}
+
+	[TestMethod]
+	public async Task UploadFormContent_IsSuccess()
+	{
+        // Arrange
+        var action = new FormActions(InvocationContext, FileManager);
+        var formId = new OptionalFormIdenfitier { /*FormId = "1005"*/ };
+		var input = new UploadFormRequest
+		{
+			File = new FileReference { Name = "test.html" }
+		};
+
+		// Act
+		await action.UploadFormContent(formId, input);
+    }
 }
