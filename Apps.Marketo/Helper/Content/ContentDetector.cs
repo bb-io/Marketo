@@ -8,16 +8,18 @@ public static class ContentDetector
 {
     public static string DetectContentType(string inputHtmlContent)
     {
-        if (!string.IsNullOrEmpty(HtmlContentBuilder.ExtractMeta(inputHtmlContent, MetadataConstants.BlackbirdEmailId)))
+        var metaTags = HtmlContentBuilder.ExtractAllMetaTags(inputHtmlContent);
+
+        if (metaTags.Any(m => m.Name == MetadataConstants.BlackbirdEmailId))
             return ContentTypes.Email;
 
-        if (!string.IsNullOrEmpty(HtmlContentBuilder.ExtractMeta(inputHtmlContent, MetadataConstants.BlackbirdFormId)))
+        if (metaTags.Any(m => m.Name == MetadataConstants.BlackbirdFormId))
             return ContentTypes.Form;
 
-        if (!string.IsNullOrEmpty(HtmlContentBuilder.ExtractMeta(inputHtmlContent, MetadataConstants.BlackbirdSnippetId)))
+        if (metaTags.Any(m => m.Name == MetadataConstants.BlackbirdSnippetId))
             return ContentTypes.Snippet;
 
-        if (!string.IsNullOrEmpty(HtmlContentBuilder.ExtractMeta(inputHtmlContent, MetadataConstants.BlackbirdLandingPageId)))
+        if (metaTags.Any(m => m.Name == MetadataConstants.BlackbirdLandingPageId))
             return ContentTypes.LandingPage;
 
         throw new PluginMisconfigurationException("The content type cannot be recognized automatically");

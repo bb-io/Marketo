@@ -25,22 +25,16 @@ public class SnippetContentService(InvocationContext invocationContext, IFileMan
 {
     public async Task UploadContent(UploadContentInput input)
     {
-        string snippetId =
-            input.ContentId ??
-            HtmlContentBuilder.ExtractMeta(input.HtmlContent, MetadataConstants.BlackbirdSnippetId) ??
-            throw new PluginMisconfigurationException();
-        string segmentationId =
-            input.SegmentationId ??
-            HtmlContentBuilder.ExtractMeta(input.HtmlContent, MetadataConstants.BlackbirdSegmentationId) ??
-            throw new PluginMisconfigurationException(
-                "Segmentation ID is not not found in the input file. Please provide it in the optional input"
-                );
-        string segment =
-            input.Segment ??
-            HtmlContentBuilder.ExtractMeta(input.HtmlContent, MetadataConstants.BlackbirdSegmentName) ??
-            throw new PluginMisconfigurationException(
-                "Segment name is not not found in the input file. Please provide it in the optional input"
-                );
+        var metaTags = HtmlContentBuilder.ExtractAllMetaTags(input.HtmlContent);
+
+        string snippetId = HtmlContentBuilder.GetRequiredMetaValue(
+            input.ContentId, metaTags, MetadataConstants.BlackbirdSnippetId, "Snippet ID");
+
+        string segmentationId = HtmlContentBuilder.GetRequiredMetaValue(
+            input.SegmentationId, metaTags, MetadataConstants.BlackbirdSegmentationId, "Segmentation ID");
+
+        string segment = HtmlContentBuilder.GetRequiredMetaValue(
+            input.Segment, metaTags, MetadataConstants.BlackbirdSegmentName, "Segment name");
 
         var snippetContentRequest = new RestRequest($"/rest/asset/v1/snippet/{snippetId}/content.json", Method.Get);
         var snippetContentResponse = await Client.ExecuteWithErrorHandling<SnippetContentDto>(snippetContentRequest);

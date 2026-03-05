@@ -1,5 +1,7 @@
 ﻿using HtmlAgilityPack;
 using Apps.Marketo.Models.Entities;
+using Apps.Marketo.Models.Utility.Html;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 
 namespace Apps.Marketo.HtmlHelpers;
 
@@ -63,12 +65,44 @@ public static class HtmlContentBuilder
         
         return result;
     }
-    
-    public static string? ExtractMeta(string html, string metadataName)
+
+    public static List<MetaTag> ExtractAllMetaTags(string html)
     {
         var htmlDoc = new HtmlDocument();
         htmlDoc.LoadHtml(html);
-        var metaNode = htmlDoc.DocumentNode.SelectSingleNode($"//meta[@name='{metadataName}']");
-        return metaNode?.Attributes["content"].Value;
+
+        var metaNodes = htmlDoc.DocumentNode.SelectNodes("//meta[@name and @content]");
+        var metaTags = new List<MetaTag>();
+
+        if (metaNodes != null)
+        {
+            foreach (var node in metaNodes)
+            {
+                var name = node.GetAttributeValue("name", string.Empty);
+                var content = node.GetAttributeValue("content", string.Empty);
+
+                if (!string.IsNullOrWhiteSpace(name))
+                    metaTags.Add(new MetaTag(name, content));
+            }
+        }
+
+        return metaTags;
+    }
+
+    public static string GetRequiredMetaValue(
+        string? inputValue, 
+        List<MetaTag> metaTags, 
+        string metaKey, 
+        string friendlyName)
+    {
+        if (!string.IsNullOrWhiteSpace(inputValue))
+            return inputValue;
+
+        var meta = metaTags.FirstOrDefault(m => string.Equals(m.Name, metaKey, StringComparison.OrdinalIgnoreCase));
+        if (meta != null && !string.IsNullOrWhiteSpace(meta.Content))
+            return meta.Content;
+
+        throw new PluginMisconfigurationException(
+            $"{friendlyName} was not found in the input file. Please provide it in the optional input.");
     }
 }

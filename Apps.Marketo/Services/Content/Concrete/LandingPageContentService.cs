@@ -28,24 +28,16 @@ public class LandingPageContentService(InvocationContext invocationContext, IFil
 {
     public async Task UploadContent(UploadContentInput input)
     {
-        string pageId =
-            input.ContentId ??
-            HtmlContentBuilder.ExtractMeta(input.HtmlContent, MetadataConstants.BlackbirdLandingPageId) ??
-            throw new PluginMisconfigurationException(
-                "Landing page ID is not not found in the input file. Please provide it in the optional input"
-                );
-        string segmentationId =
-            input.SegmentationId ??
-            HtmlContentBuilder.ExtractMeta(input.HtmlContent, MetadataConstants.BlackbirdSegmentationId) ??
-            throw new PluginMisconfigurationException(
-                "Segmentation ID is not not found in the input file. Please provide it in the optional input"
-                );
-        string segment =
-            input.Segment ??
-            HtmlContentBuilder.ExtractMeta(input.HtmlContent, MetadataConstants.BlackbirdSegmentName) ??
-            throw new PluginMisconfigurationException(
-                "Segment name is not not found in the input file. Please provide it in the optional input"
-                );
+        var metaTags = HtmlContentBuilder.ExtractAllMetaTags(input.HtmlContent);
+
+        string pageId = HtmlContentBuilder.GetRequiredMetaValue(
+            input.ContentId, metaTags, MetadataConstants.BlackbirdLandingPageId, "Landing page ID");
+
+        string segmentationId = HtmlContentBuilder.GetRequiredMetaValue(
+            input.SegmentationId, metaTags, MetadataConstants.BlackbirdSegmentationId, "Segmentation ID");
+
+        string segment = HtmlContentBuilder.GetRequiredMetaValue(
+            input.Segment, metaTags, MetadataConstants.BlackbirdSegmentName, "Segment name");
 
         var landingContentRequest = new RestRequest($"/rest/asset/v1/landingPage/{pageId}/content.json", Method.Get);
         var landingContentResponse = await Client.ExecuteWithErrorHandling<LandingPageContentDto>(landingContentRequest);

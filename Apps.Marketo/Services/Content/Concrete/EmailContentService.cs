@@ -11,7 +11,6 @@ using Apps.Marketo.Models.Content.Response;
 using Apps.Marketo.Models.Entities;
 using Apps.Marketo.Models.Entities.Email;
 using Apps.Marketo.Services.Content.Models;
-using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
@@ -28,24 +27,16 @@ public class EmailContentService(InvocationContext invocationContext, IFileManag
 {
     public async Task UploadContent(UploadContentInput input)
     {
-        string emailId =
-            input.ContentId ??
-            HtmlContentBuilder.ExtractMeta(input.HtmlContent, MetadataConstants.BlackbirdEmailId) ??
-            throw new PluginMisconfigurationException(
-                "Email ID is not not found in the input file. Please provide it in the optional input"
-                );
-        string segmentationId =
-            input.SegmentationId ??
-            HtmlContentBuilder.ExtractMeta(input.HtmlContent, MetadataConstants.BlackbirdSegmentationId) ??
-            throw new PluginMisconfigurationException(
-                "Segmentation ID is not not found in the input file. Please provide it in the optional input"
-                );
-        string segment =
-            input.Segment ??
-            HtmlContentBuilder.ExtractMeta(input.HtmlContent, MetadataConstants.BlackbirdSegmentName) ??
-            throw new PluginMisconfigurationException(
-                "Segment name is not not found in the input file. Please provide it in the optional input"
-                );
+        var metaTags = HtmlContentBuilder.ExtractAllMetaTags(input.HtmlContent);
+
+        string emailId = HtmlContentBuilder.GetRequiredMetaValue(
+            input.ContentId, metaTags, MetadataConstants.BlackbirdEmailId, "Email ID");
+
+        string segmentationId = HtmlContentBuilder.GetRequiredMetaValue(
+            input.SegmentationId, metaTags, MetadataConstants.BlackbirdSegmentationId, "Segmentation ID");
+
+        string segment = HtmlContentBuilder.GetRequiredMetaValue(
+            input.Segment, metaTags, MetadataConstants.BlackbirdSegmentName, "Segment name");
 
         var translatedContent = HtmlContentBuilder.ParseHtml(input.HtmlContent);
 

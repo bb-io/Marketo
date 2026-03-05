@@ -12,7 +12,6 @@ using Apps.Marketo.Models.Content.Response;
 using Apps.Marketo.Models.Entities;
 using Apps.Marketo.Models.Entities.Form;
 using Apps.Marketo.Services.Content.Models;
-using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
@@ -29,11 +28,10 @@ public class FormContentService(InvocationContext invocationContext, IFileManage
     public async Task UploadContent(UploadContentInput input)
     {
         var (formDto, formFields) = await HtmlToFormConverter.ConvertToForm(input.HtmlContent, Client);
+        var metaTags = HtmlContentBuilder.ExtractAllMetaTags(input.HtmlContent);
 
-        string formId =
-            input.ContentId ??
-            formDto.Id ??
-            throw new PluginMisconfigurationException("Form ID was not found in the input or in the file");
+        string formId = HtmlContentBuilder.GetRequiredMetaValue(
+            input.ContentId, metaTags, MetadataConstants.BlackbirdFormId, "Form ID");
 
         var getFormRequest = new RestRequest($"/rest/asset/v1/form/{formId}.json", Method.Get);
         var existingForm = await Client.ExecuteWithErrorHandlingFirst<FormEntity>(getFormRequest);
