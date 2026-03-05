@@ -7,7 +7,7 @@ namespace Apps.Marketo.Polling;
 
 public class BasePollingList(InvocationContext invocationContext) : MarketoInvocable(invocationContext)
 {
-    protected async Task<PollingEventResponse<DateMemory, T>> HandlePolling<T>(
+    protected static async Task<PollingEventResponse<DateMemory, T>> HandlePolling<T>(
         PollingEventRequest<DateMemory> request, 
         Func<DateMemory, Task<T>> func, 
         Func<T, bool> isResultValid)

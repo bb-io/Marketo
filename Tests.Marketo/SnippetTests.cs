@@ -15,7 +15,7 @@ public class SnippetTests : TestBase
 		var action = new SnippetActions(InvocationContext, FileManager);
 		var input = new SearchSnippetsRequest
 		{
-			CreatedBefore = new DateTime(2024, 08, 28, 9, 0, 0, DateTimeKind.Utc)
+			UpdatedAfter = DateTime.UtcNow - TimeSpan.FromHours(2),
 		};
 
 		// Act

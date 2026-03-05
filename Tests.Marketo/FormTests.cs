@@ -17,8 +17,7 @@ public class FormTests : TestBase
 		var action = new FormActions(InvocationContext, FileManager);
 		var input = new SearchFormsRequest
 		{
-			CreatedAfter = new DateTime(2024, 08, 26, 15, 20, 0, DateTimeKind.Utc),
-            CreatedBefore = new DateTime(2024, 08, 26, 15, 25, 0, DateTimeKind.Utc),
+			
         };
 
 		// Act
