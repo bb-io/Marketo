@@ -57,10 +57,13 @@ public static class HtmlContentBuilder
         var result = new Dictionary<string, string>();
         var htmlDoc = new HtmlDocument();
         htmlDoc.LoadHtml(html);
-        var sections = htmlDoc.DocumentNode.SelectSingleNode("//body").ChildNodes;
-        foreach (var section in sections)
+        var body = htmlDoc.DocumentNode.SelectSingleNode("//body") ?? 
+            throw new PluginMisconfigurationException("HTML does not have a <body> tag");
+
+        foreach (var section in body.ChildNodes)
         {
-            result.Add(section.Attributes[HtmlIdAttribute].Value, section.InnerHtml);
+            if (section.NodeType == HtmlNodeType.Element && section.Attributes.Contains(HtmlIdAttribute))
+                result.Add(section.Attributes[HtmlIdAttribute].Value, section.InnerHtml);
         }
         
         return result;

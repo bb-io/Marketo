@@ -11,6 +11,7 @@ using Apps.Marketo.Models.Content.Response;
 using Apps.Marketo.Models.Entities;
 using Apps.Marketo.Models.Entities.Email;
 using Apps.Marketo.Services.Content.Models;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
@@ -40,7 +41,7 @@ public class EmailContentService(InvocationContext invocationContext, IFileManag
 
         var translatedContent = HtmlContentBuilder.ParseHtml(input.HtmlContent);
 
-        var emailContentRequest = new RestRequest($"/rest/asset/v1/email/{input.ContentId}/content.json", Method.Get);
+        var emailContentRequest = new RestRequest($"/rest/asset/v1/email/{emailId}/content.json", Method.Get);
         var emailContentResponse = await Client.ExecuteWithErrorHandling<EmailContentDto>(emailContentRequest);
 
         if (input.UploadOnlyDynamicContent == false)
@@ -48,18 +49,20 @@ public class EmailContentService(InvocationContext invocationContext, IFileManag
             foreach (var item in emailContentResponse)
             {
                 if (item.ContentType == "Text")
+                {
                     await ConvertSectionToDynamicContent(emailId, item.HtmlId, segmentationId);
+                }
             }
             emailContentResponse = await Client.ExecuteWithErrorHandling<EmailContentDto>(emailContentRequest);
         }
 
         if (translatedContent.TryGetValue("data-subject-value", out var subjectContent) && input.UpdateEmailSubject == true)
         {
-            var emailInfoRequest = new RestRequest($"/rest/asset/v1/email/{input.ContentId}.json", Method.Post);
+            var emailInfoRequest = new RestRequest($"/rest/asset/v1/email/{emailId}.json", Method.Get);
             var emailInfo = await Client.ExecuteWithErrorHandlingFirst<EmailEntity>(emailInfoRequest);
             if (emailInfo.Subject?.Type == "Text" && input.UploadOnlyDynamicContent == false)
             {
-                var subjectContentRequest = new RestRequest($"/rest/asset/v1/email/{input.ContentId}/content.json", Method.Post)
+                var subjectContentRequest = new RestRequest($"/rest/asset/v1/email/{emailId}/content.json", Method.Post)
                     .AddParameter("subject", JsonConvert.SerializeObject(new
                     {
                         type = "Text",
@@ -70,11 +73,21 @@ public class EmailContentService(InvocationContext invocationContext, IFileManag
             }
             else if (emailInfo.Subject?.Type == "DynamicContent")
             {
-                var errorMessage = await UpdateEmailDynamicContent(emailId, segmentationId, segment, new EmailContentDto()
+                string message = await UpdateEmailDynamicContent(emailId, segmentationId, segment, new EmailContentDto()
                 {
                     ContentType = "Text",
-                    Value = emailInfo.Subject.Value
-                }, subjectContent, emailContentResponse.ToList(), translatedContent, 0, true, "Text");
+                    Value = emailInfo.Subject.Value,
+                    HtmlId = "Email Subject"
+                }, 
+                subjectContent, 
+                emailContentResponse.ToList(), 
+                translatedContent,
+                tryNumber: 0,
+                reacreateCorruptedModules: input.RecreateCorruptedEmailModules ?? true, 
+                type: "Text");
+
+                if (!string.IsNullOrEmpty(message))
+                    throw new PluginApplicationException(message);
             }
         }
 
@@ -96,7 +109,10 @@ public class EmailContentService(InvocationContext invocationContext, IFileManag
                     0,
                     input.RecreateCorruptedEmailModules ?? true,
                     updateStyle: input.UpdateStyleForEmailImages ?? false);
+
                 modulesToIgnore.Add(ignoreModule);
+
+                await Task.Delay(1000);  // wait for Marketo to process everything to avoid 611 concurrency crash
             }
         }
     }
@@ -150,24 +166,18 @@ public class EmailContentService(InvocationContext invocationContext, IFileManag
 
 
             if (styleAttribute != null && !string.IsNullOrWhiteSpace(styleAttribute.Value) && updateStyle)
-            {
                 request.AddQueryParameter("style", styleAttribute.Value);
-            }
 
             if (widthAttribute != null && !string.IsNullOrWhiteSpace(widthAttribute.Value))
             {
                 if (int.TryParse(widthAttribute.Value, out var width))
-                {
                     request.AddQueryParameter("width", width);
-                }
             }
 
             if (heightAttribute != null && !string.IsNullOrWhiteSpace(heightAttribute.Value))
             {
                 if (int.TryParse(heightAttribute.Value, out var height))
-                {
                     request.AddQueryParameter("height", height);
-                }
             }
         }
 
