@@ -2,6 +2,8 @@
 using Apps.Marketo.Actions;
 using Apps.Marketo.Models.Identifiers;
 using Apps.Marketo.Models.LandingPages.Requests;
+using Apps.Marketo.Models.Identifiers.Optional;
+using Blackbird.Applications.Sdk.Common.Files;
 
 namespace Tests.Marketo;
 
@@ -18,7 +20,7 @@ public class LandingPageTests : TestBase
         {
             IncludeImages = true,
             SegmentationId = "1002",
-            Segment = "Default"
+            Segment = "Test"
         };
 
         // Act
@@ -47,5 +49,22 @@ public class LandingPageTests : TestBase
         Console.WriteLine($"Count: {result.LandingPages.Count}");
         PrintJsonResult(result);
         Assert.IsNotNull(result);
+    }
+
+    [TestMethod]
+    public async Task UploadLandingPage_IsSuccess()
+    {
+        // Arrange
+        var action = new LandingPageActions(InvocationContext, FileManager);
+        var pageInput = new OptionalLandingPageIdentifier { };
+        var input = new UploadLandingPageRequest
+        {
+            File = new FileReference { Name = "test.html" },
+            //SegmentationId = "1002",
+            //Segment = "Test",
+        };
+
+        // Act
+        await action.TranslateLandingWithHtml(pageInput, input);
     }
 }

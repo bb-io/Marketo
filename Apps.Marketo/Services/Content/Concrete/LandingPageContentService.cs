@@ -56,7 +56,6 @@ public class LandingPageContentService(InvocationContext invocationContext, IFil
         }
 
         var translatedContent = HtmlContentBuilder.ParseHtml(input.HtmlContent);
-        var errors = new List<string>();
         foreach (var item in landingContentResponse)
         {
             if (JsonHelper.IsJsonObject(item.Content.ToString() ?? string.Empty) &&
@@ -68,11 +67,16 @@ public class LandingPageContentService(InvocationContext invocationContext, IFil
                     !string.IsNullOrWhiteSpace(content) &&
                     translatedContent.TryGetValue(item.Id, out var translatedContentItem))
                 {
-                    await UpdateLandingDynamicContent(pageId, segment, landingPageContent.Content, item.Type, translatedContentItem);
+                    await UpdateLandingDynamicContent(
+                        pageId, 
+                        segment, 
+                        landingPageContent.Content, 
+                        item.Type, 
+                        translatedContentItem);
                 }
             }
         }
-    }
+    }    
 
     private async Task<IdDto> ConvertSectionToDynamicContent(string landingId, string htmlId, string segmentationId)
     {
@@ -93,9 +97,9 @@ public class LandingPageContentService(InvocationContext invocationContext, IFil
         var endpoint =
             $"/rest/asset/v1/landingPage/{pageId}/dynamicContent/{dynamicContentId}.json";
         var request = new RestRequest(endpoint, Method.Post)
-            .AddQueryParameter("segment", segmentName)
-            .AddQueryParameter("type", contentType)
-            .AddQueryParameter("value", content);
+            .AddParameter("segment", segmentName)
+            .AddParameter("type", contentType)
+            .AddParameter("value", content);
 
         await Client.ExecuteWithErrorHandlingFirst<IdDto>(request);
     }
@@ -194,25 +198,43 @@ public class LandingPageContentService(InvocationContext invocationContext, IFil
         bool includeImages = false)
     {
         var domain = InvocationContext.AuthenticationCredentialsProviders.First(v => v.KeyName == "Munchkin Account ID").Value;
-        if (JsonHelper.IsJsonObject(sectionContent.Content.ToString()) && JsonConvert.DeserializeObject<LandingPageContentValueDto>(sectionContent.Content.ToString()).ContentType == "DynamicContent")
+
+        var contentString = sectionContent?.Content?.ToString();
+
+        if (string.IsNullOrWhiteSpace(contentString))
+            return null;
+
+        LandingPageContentValueDto? parsedContent = null;
+        if (JsonHelper.IsJsonObject(contentString))
+            parsedContent = JsonConvert.DeserializeObject<LandingPageContentValueDto>(contentString);
+
+        if (parsedContent?.ContentType == "DynamicContent")
         {
-            var landingPageContent = JsonConvert.DeserializeObject<LandingPageContentValueDto>(sectionContent.Content.ToString());
             var requestSeg = new RestRequest(
-                $"/rest/asset/v1/landingPage/{landingPageId}/dynamicContent/{landingPageContent.Content}.json",
+                $"/rest/asset/v1/landingPage/{landingPageId}/dynamicContent/{parsedContent.Content}.json",
                 Method.Get);
 
             var responseSeg = await Client.ExecuteWithErrorHandling<LandingDynamicContentDto<LandingPageImageSegmentDto<object>>>(requestSeg);
-            if (responseSeg.First().Segmentation.ToString() == segmentationId)
+
+            var firstResponse = responseSeg?.FirstOrDefault();
+
+            if (firstResponse != null && firstResponse.Segmentation.ToString() == segmentationId)
             {
-                var imageSegment = responseSeg.First().Segments.Where(x => x.SegmentName == segment).FirstOrDefault();
+                var imageSegment = firstResponse.Segments?.FirstOrDefault(x => x.SegmentName == segment);
 
-                if (imageSegment != null && (imageSegment.Type == "Image") && includeImages)
+                if (imageSegment == null || imageSegment.Content == null)
+                    return string.Empty;
+
+                var segmentContentString = imageSegment.Content.ToString();
+
+                if (imageSegment.Type == "Image" && includeImages)
                 {
-                    var imageDto = JsonConvert.DeserializeObject<LandingPageImageContent>(imageSegment.Content.ToString());
-                    var imageUrl = string.IsNullOrWhiteSpace(imageDto.ContentUrl) ? imageDto.Content : imageDto.ContentUrl;
+                    var imageDto = JsonConvert.DeserializeObject<LandingPageImageContent>(segmentContentString);
+                    var imageUrl = string.IsNullOrWhiteSpace(imageDto?.ContentUrl) ? imageDto?.Content?.ToString() : imageDto?.ContentUrl;
 
-                    var builder = new UriBuilder(imageUrl);
-                    builder.Host = $"{domain}.mktoweb.com";
+                    if (string.IsNullOrWhiteSpace(imageUrl)) return string.Empty;
+
+                    var builder = new UriBuilder(imageUrl) { Host = $"{domain}.mktoweb.com" };
 
                     string styleAttr = "";
                     if (imageSegment.FormattingOptions != null)
@@ -220,32 +242,22 @@ public class LandingPageContentService(InvocationContext invocationContext, IFil
 
                     return $"<img src=\"{builder.Uri}\"{styleAttr}>";
                 }
-                else if (imageSegment != null && imageSegment.Type == "Text")
-                {
-                    if (imageSegment.FormattingOptions != null)
-                        return $"<div style=\"left:{imageSegment.FormattingOptions.Left ?? "0px"};top:{imageSegment.FormattingOptions.Top ?? "0px"};position:absolute\">{imageSegment.Content.ToString()}</div>";
-                    else
-                        return imageSegment.Content.ToString();
-                }
-                else
-                {
-                    var res = responseSeg.First().Segments
-                    .Where(x => x.SegmentName == segment).First().Content.ToString();
-                    if (imageSegment?.FormattingOptions != null)
-                        return $"<div style=\"left:{imageSegment.FormattingOptions.Left ?? "0px"};top:{imageSegment.FormattingOptions.Top ?? "0px"};position:absolute\">{res}</div>";
-                    else
-                        return res;
-                }
+
+                if (imageSegment.FormattingOptions != null)
+                    return $"<div style=\"left:{imageSegment.FormattingOptions.Left ?? "0px"};top:{imageSegment.FormattingOptions.Top ?? "0px"};position:absolute\">{segmentContentString}</div>";
+
+                return segmentContentString;
             }
             return string.Empty;
         }
         else if (sectionContent.Type == "Image")
         {
-            var imageDto = JsonConvert.DeserializeObject<LandingPageImageContent>(sectionContent.Content.ToString());
-            var imageUrl = string.IsNullOrWhiteSpace(imageDto.ContentUrl) ? imageDto.Content : imageDto.ContentUrl;
+            var imageDto = JsonConvert.DeserializeObject<LandingPageImageContent>(contentString);
+            var imageUrl = string.IsNullOrWhiteSpace(imageDto?.ContentUrl) ? imageDto?.Content?.ToString() : imageDto?.ContentUrl;
 
-            var builder = new UriBuilder(imageUrl);
-            builder.Host = $"{domain}.mktoweb.com";
+            if (string.IsNullOrWhiteSpace(imageUrl)) return string.Empty;
+
+            var builder = new UriBuilder(imageUrl) { Host = $"{domain}.mktoweb.com" };
 
             var styleAttr = "";
             if (sectionContent.FormattingOptions != null)
@@ -253,6 +265,7 @@ public class LandingPageContentService(InvocationContext invocationContext, IFil
 
             return $"<img src=\"{builder.Uri}\"{styleAttr}>";
         }
-        return sectionContent.Content.ToString();
+
+        return contentString;
     }
 }

@@ -2,6 +2,8 @@
 using Apps.Marketo.Actions;
 using Apps.Marketo.Models.Identifiers;
 using Apps.Marketo.Models.Emails.Requests;
+using Apps.Marketo.Models.Identifiers.Optional;
+using Blackbird.Applications.Sdk.Common.Files;
 
 namespace Tests.Marketo;
 
@@ -52,7 +54,7 @@ public class EmailTests : TestBase
         {
             IncludeImages = true,
             SegmentationId = "1003",
-            Segment = "Dutch",
+            Segment = "English",
         };
 
         // Act
@@ -61,5 +63,23 @@ public class EmailTests : TestBase
         // Assert
         Console.WriteLine(result.Content.Name);
         Assert.IsNotNull(result);
+    }
+
+    [TestMethod]
+    public async Task UploadEmail_IsSuccess()
+    {
+        // Arrange
+        var actions = new EmailActions(InvocationContext, FileManager);
+        var emailId = new OptionalEmailIdenfitier { };
+        var input = new UploadEmailRequest
+        {
+            File = new FileReference { Name = "test.html" },
+            SegmentationId = "1003",
+            Segment = "Italian",
+            RecreateCorruptedModules = true
+        };
+
+        // Act
+        await actions.TranslateEmailWithHtml(emailId, input);
     }
 }
