@@ -19,9 +19,12 @@ public class UploadEmailRequest
     [Display("Upload only dynamic content")]
     public bool? UploadOnlyDynamic { get; set; }
 
-    [Display("Recreate corrupted modules", Description = "Marketo sometimes gives random \"System error\" on updating sections with dynamic content.\n" +
-    "Blackbird will automatically try to reacreate such module from email template, then copy content from old corrupted module and then translate text content from HTML as usual.\n" +
-    "Please be carefull, the ids of content section and the module itself will be changed! You can disable this feature by setting this parameter to false (default value is true)")]
+    [Display("Recreate corrupted modules",
+        Description = "Marketo sometimes gives random \"System error\" on updating sections with dynamic content." +
+        "Blackbird will automatically try to reacreate such module from email template, " +
+        "then copy content from old corrupted module and then translate text content from HTML as usual." +
+        "Please be carefull, the ids of content section and the module itself will be changed! " +
+        "You can disable this feature by setting this parameter to false (default value is true)")]
     public bool? RecreateCorruptedModules { get; set; }
     
     [Display("Update email subject", Description = "True by default")]
