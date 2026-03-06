@@ -43,7 +43,7 @@ Before you can connect you need to make sure that:
 - **Download email content** Download content of a specific email.
 - **Upload email content** Upload content of a specific email.
 - **Get email dynamic content** Get dynamic content of a specific email.
-- **Get email dynamic image content** 
+- **Get email dynamic image content** Get dynamic image content of a specific email.
 
 ### Email templates
 
@@ -152,9 +152,6 @@ Example of how we include metadata in the HTML file:
 
 ## Missing features
 
-- Email templates
-- Programs
-- Segments
 - Smart lists/campaigns
 - Tags and tokens
 
