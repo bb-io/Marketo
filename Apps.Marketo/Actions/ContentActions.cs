@@ -23,7 +23,7 @@ public class ContentActions(InvocationContext invocationContext, IFileManagement
     private readonly ContentServiceFactory _factory = new(invocationContext, fileManagementClient);
 
     [BlueprintActionDefinition(BlueprintAction.SearchContent)]
-    [Display("Search content", Description = "Search different content types")]
+    [Display("Search content", Description = "Search for content across multiple content types using specific criteria")]
     public async Task<SearchContentResponse> SearchContent(
         [ActionParameter] OptionalContentTypesIdentifier contentTypesInput,
         [ActionParameter] SearchContentRequest input)
@@ -36,7 +36,7 @@ public class ContentActions(InvocationContext invocationContext, IFileManagement
     }
 
     [BlueprintActionDefinition(BlueprintAction.DownloadContent)]
-    [Display("Download content", Description = "Download content")]
+    [Display("Download content", Description = "Download content of a specific content type")]
     public async Task<DownloadContentResponse> DownloadContent(
         [ActionParameter] ContentTypeIdentifier contentType,
         [ActionParameter] DownloadContentRequest input)
@@ -47,7 +47,7 @@ public class ContentActions(InvocationContext invocationContext, IFileManagement
     }
 
     [BlueprintActionDefinition(BlueprintAction.UploadContent)]
-    [Display("Upload content", Description = "Upload content")]
+    [Display("Upload content", Description = "Upload content of a specific content type")]
     public async Task UploadContent([ActionParameter] UploadContentRequest uploadInput)
     {
         string html = await ContentDownloader.DownloadHtmlContent(fileManagementClient, uploadInput.Content);

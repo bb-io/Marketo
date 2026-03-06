@@ -26,7 +26,7 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
 {
     private readonly ContentServiceFactory _factory = new(invocationContext, fileManagementClient);
 
-    [Action("Get form", Description = "Get specified form.")]
+    [Action("Get form", Description = "Get information of a specific form")]
     public async Task<FormDto> GetForm([ActionParameter] FormIdentifier input)
     {
         var endpoint = $"/rest/asset/v1/form/{input.FormId}.json";
@@ -35,7 +35,7 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
         return new(result);
     }
 
-    [Action("Search forms", Description = "Search all forms")]
+    [Action("Search forms", Description = "Search forms using specific criteria")]
     public async Task<SearchFormsResponse> ListRecentlyCreatedOrUpdatedForms([ActionParameter] SearchFormsRequest input)
     {
         input.Validate();
@@ -58,7 +58,7 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
         return new(forms.Select(x => new FormDto(x)).ToList());
     }
 
-    [Action("Search forms fields", Description = "Search forms fields")]
+    [Action("Search forms fields", Description = "Search fields of a specific form")]
     public ListFormFieldsResponse ListFormsFields(
         [ActionParameter] GetMultipleFormsRequest getMultipleFormsRequest, 
         [ActionParameter] ListFormFieldsRequest listFormFields)
@@ -66,7 +66,7 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
         return new ListFormFieldsResponse() { FormFieldsIds = listFormFields.FormFields.Select(x => x.Split(' ').First()).ToList() };
     }
 
-    [Action("Update form metadata", Description = "Update form metadata")]
+    [Action("Update form metadata", Description = "Update metadata of a specific form")]
     public async Task<FormDto> UpdateEmailMetadata(
         [ActionParameter] FormIdentifier input,
         [ActionParameter] UpdateFormMetadataRequest updateFormMetadata)
@@ -79,7 +79,7 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
         return new(result);
     }
 
-    [Action("Download form content", Description = "Download form content")]
+    [Action("Download form content", Description = "Download content of a specific form")]
     public async Task<DownloadFormResponse> GetFormAsHtml(
         [ActionParameter] FormIdentifier formInput,
         [ActionParameter] DownloadFormRequest downloadInput)
@@ -96,7 +96,7 @@ public class FormActions(InvocationContext invocationContext, IFileManagementCli
         return new(file);
     }
 
-    [Action("Upload form content", Description = "Upload form content")]
+    [Action("Upload form content", Description = "Upload content of a specific form")]
     public async Task UploadFormContent(
         [ActionParameter] OptionalFormIdenfitier formInput,
         [ActionParameter] UploadFormRequest uploadInput)

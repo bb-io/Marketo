@@ -1,4 +1,5 @@
 ﻿using Apps.Marketo.Dtos;
+using Apps.Marketo.Extensions;
 using Apps.Marketo.Invocables;
 using Apps.Marketo.Models.EmailTemplates.Requests;
 using Apps.Marketo.Models.EmailTemplates.Response;
@@ -15,7 +16,7 @@ namespace Apps.Marketo.Actions;
 [ActionList("Email templates")]
 public class EmailTemplateActions(InvocationContext invocationContext) : MarketoInvocable(invocationContext)
 {
-    [Action("Search email templates", Description = "Search all email templates")]
+    [Action("Search email templates", Description = "Search email templates using specific criteria")]
     public async Task<ListEmailTemplatesResponse> ListEmailTemplates([ActionParameter] ListEmailTemplatesRequest input)
     {
         var request = new RestRequest($"/rest/asset/v1/emailTemplates.json", Method.Get);
@@ -35,14 +36,14 @@ public class EmailTemplateActions(InvocationContext invocationContext) : Marketo
         return new(response);
     }
 
-    [Action("Get email template info", Description = "Get email template info")]
+    [Action("Get email template", Description = "Get information about a specific email template")]
     public async Task<EmailTemplateDto> GetEmailTemplateInfo([ActionParameter] EmailTemplateIdentifier input)
     {
         var request = new RestRequest($"/rest/asset/v1/emailTemplate/{input.EmailTemplateId}.json", Method.Get);
         return await Client.ExecuteWithErrorHandlingFirst<EmailTemplateDto>(request);
     }
 
-    [Action("Get email template content", Description = "Get email template content")]
+    [Action("Get email template content", Description = "Get content of a specific email template")]
     public async Task<EmailTemplateContentResponse> GetEmailTemplateContent([ActionParameter] EmailTemplateIdentifier input)
     {
         var request = new RestRequest($"/rest/asset/v1/emailTemplate/{input.EmailTemplateId}/content.json", Method.Get);
@@ -50,14 +51,14 @@ public class EmailTemplateActions(InvocationContext invocationContext) : Marketo
         return response;
     }
 
-    [Action("Create email template", Description = "Create email template")]
+    [Action("Create email template", Description = "Create new email template")]
     public async Task<EmailTemplateDto> CreateEmailTemplate([ActionParameter] CreateEmailTemplateRequest input)
     {
         var request = new RestRequest($"/rest/asset/v1/emailTemplates.json", Method.Post);
 
         request.AddParameter("name", input.Name);
         request.AddFile("content", Encoding.UTF8.GetBytes(input.Content), "content");
-        if (input.Description != null) request.AddParameter("description", input.Description);
+        request.AddParameterIfNotNull("description", input.Description);
         request.AddParameter("folder", JsonConvert.SerializeObject(new
         {
             id = int.Parse(input.FolderId.Split("_").First()),
@@ -68,7 +69,7 @@ public class EmailTemplateActions(InvocationContext invocationContext) : Marketo
         return response;
     }
 
-    [Action("Update email template content", Description = "Update email template content")]
+    [Action("Update email template content", Description = "Update content of a specific email template")]
     public async Task UpdateEmailTemplateContent(
         [ActionParameter] EmailTemplateIdentifier input,
         [ActionParameter] UpdateEmailTemplateContentRequest emailTemplateContentRequest)
@@ -78,14 +79,14 @@ public class EmailTemplateActions(InvocationContext invocationContext) : Marketo
         await Client.ExecuteWithErrorHandling<IdDto>(request);
     }
 
-    [Action("Delete email template", Description = "Delete email template")]
+    [Action("Delete email template", Description = "Delete a specific email template")]
     public async Task DeleteEmailTemplate([ActionParameter] EmailTemplateIdentifier input)
     {
         var request = new RestRequest($"/rest/asset/v1/emailTemplate/{input.EmailTemplateId}/delete.json", Method.Post);
         await Client.ExecuteWithErrorHandling<IdDto>(request);
     }
 
-    [Action("Approve email template draft", Description = "Approve email template draft")]
+    [Action("Approve email template draft", Description = "Approve a specific email template draft")]
     public async Task<EmailTemplateDto> ApproveEmailTemplateDraft([ActionParameter] EmailTemplateIdentifier input)
     {
         var request = new RestRequest($"/rest/asset/v1/emailTemplate/{input.EmailTemplateId}/approveDraft.json", Method.Post);

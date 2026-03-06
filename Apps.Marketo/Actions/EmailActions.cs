@@ -27,7 +27,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
 {
     private readonly ContentServiceFactory _factory = new(invocationContext, fileManagementClient);
 
-    [Action("Search emails", Description = "Search all emails")]
+    [Action("Search emails", Description = "Search emails using specific criteria")]
     public async Task<SearchEmailsResponse> ListEmails([ActionParameter] SearchEmailsRequest input)
     {
         input.Validate();
@@ -51,7 +51,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
         return new(emails.Select(x => new EmailDto(x)).ToList());
     }
 
-    [Action("Get email info", Description = "Get email info")]
+    [Action("Get email", Description = "Get information about a specific email")]
     public async Task<EmailDto> GetEmailInfo([ActionParameter] EmailIdentifier input)
     {
         var request = new RestRequest($"/rest/asset/v1/email/{input.EmailId}.json", Method.Get);
@@ -59,7 +59,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
         return new(result);
     }
 
-    [Action("Update email metadata", Description = "Update email metadata")]
+    [Action("Update email metadata", Description = "Update metadata of a specific email")]
     public async Task<EmailDto> UpdateEmailMetadata(
         [ActionParameter] EmailIdentifier input,
         [ActionParameter] UpdateEmailMetadataRequest updateEmailMetadata)
@@ -72,7 +72,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
         return new(result);
     }
 
-    [Action("Get email content", Description = "Get email content")]
+    [Action("Get email content", Description = "Get content of a specific email")]
     public async Task<EmailContentUserFriendlyResponse> GetEmailContent([ActionParameter] EmailIdentifier input)
     {
         var request = new RestRequest($"/rest/asset/v1/email/{input.EmailId}/content.json", Method.Get);
@@ -80,14 +80,14 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
         return new(response.ToList());
     }
 
-    [Action("Delete email", Description = "Delete email")]
+    [Action("Delete email", Description = "Delete a specific email")]
     public async Task DeleteEmail([ActionParameter] EmailIdentifier input)
     {
         var request = new RestRequest($"/rest/asset/v1/email/{input.EmailId}/delete.json", Method.Post);
-        await Client.ExecuteWithErrorHandling<IdDto>(request);
+        await Client.ExecuteWithErrorHandling(request);
     }
 
-    [Action("Download email content", Description = "Download email content")]
+    [Action("Download email content", Description = "Download content of a specific email")]
     public async Task<DownloadEmailResponse> GetEmailAsHtml(
         [ActionParameter] EmailIdentifier emailInput,
         [ActionParameter] DownloadEmailRequest downloadInput)
@@ -106,7 +106,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
         return new(file);
     }
 
-    [Action("Upload email content", Description = "Upload email content")]
+    [Action("Upload email content", Description = "Upload content of a specific email")]
     public async Task TranslateEmailWithHtml(
         [ActionParameter] OptionalEmailIdenfitier emailInput,
         [ActionParameter] UploadEmailRequest uploadInput)
@@ -118,7 +118,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
         await service.UploadContent(input);
     }
 
-    [Action("Get email dynamic content", Description = "Get email dynamic content")]
+    [Action("Get email dynamic content", Description = "Get dynamic content of a specific email")]
     public async Task<DynamicContentDto<EmailBaseSegmentDto>> GetEmailDynamicContent(
         [ActionParameter] EmailIdentifier getEmailInfoRequest,
         [ActionParameter] GetEmailDynamicItemRequest getEmailDynamicItemRequest,
@@ -130,7 +130,7 @@ public class EmailActions(InvocationContext invocationContext, IFileManagementCl
         return await Client.ExecuteWithErrorHandlingFirst<DynamicContentDto<EmailBaseSegmentDto>>(request);
     }
 
-    [Action("Get email dynamic image content", Description = "Get email dynamic image content")]
+    [Action("Get email dynamic image content", Description = "Get dynamic image content of a specific email")]
     public async Task<DynamicContentDto<EmailImageSegmentDto>> GetEmailDynamicImageContent(
        [ActionParameter] EmailIdentifier getEmailInfoRequest,
        [ActionParameter] GetEmailDynamicItemRequest getEmailDynamicItemRequest,

@@ -17,7 +17,7 @@ namespace Apps.Marketo.Actions;
 [ActionList("Folders")]
 public class FolderActions(InvocationContext invocationContext) : MarketoInvocable(invocationContext)
 {
-    [Action("Search folders", Description = "Search folders")]
+    [Action("Search folders", Description = "Search folders using specific criteria")]
     public async Task<ListFoldersResponse> ListFolders([ActionParameter] ListFoldersRequest input)
     {
         var request = new RestRequest("/rest/asset/v1/folders.json", Method.Get)
@@ -50,7 +50,7 @@ public class FolderActions(InvocationContext invocationContext) : MarketoInvocab
         return new() { Folders = response };
     }
 
-    [Action("Get folder info", Description = "Get folder info")]
+    [Action("Get folder", Description = "Get information of a specific folder")]
     public async Task<FolderInfoDto> GetFolderInfo([ActionParameter] GetFolderInfoRequest input)
     {
         var endpoint = $"/rest/asset/v1/folder/{input.FolderId}.json".SetQueryParameter("type", input.FolderType);
@@ -59,7 +59,7 @@ public class FolderActions(InvocationContext invocationContext) : MarketoInvocab
         return await Client.ExecuteWithErrorHandlingFirst<FolderInfoDto>(request);
     }
 
-    [Action("Get folder by name", Description = "Get folder by name")]
+    [Action("Get folder by name", Description = "Get information of a specific folder by its name")]
     public async Task<List<FolderInfoDto>> GetFolderByName([ActionParameter][Display("Folder name")] string folderName)
     {
         var endpoint = $"/rest/asset/v1/folder/byName.json".SetQueryParameter("name", folderName);
@@ -68,7 +68,7 @@ public class FolderActions(InvocationContext invocationContext) : MarketoInvocab
         return result.ToList();
     }
 
-    [Action("Create folder", Description = "Create folder")]
+    [Action("Create folder", Description = "Create a folder")]
     public async Task<FolderInfoDto> CreateFolder([ActionParameter] CreateFolderRequest input)
     {
         var request = new RestRequest("/rest/asset/v1/folders.json", Method.Post)
@@ -83,7 +83,7 @@ public class FolderActions(InvocationContext invocationContext) : MarketoInvocab
         return await Client.ExecuteWithErrorHandlingFirst<FolderInfoDto>(request);
     }
 
-    [Action("Delete folder", Description = "Delete folder")]
+    [Action("Delete folder", Description = "Delete a specific folder")]
     public async Task DeleteFolder([ActionParameter] GetFolderInfoRequest input)
     {
         var endpoint = $"/rest/asset/v1/folder/{input.FolderId}/delete.json";
@@ -92,7 +92,7 @@ public class FolderActions(InvocationContext invocationContext) : MarketoInvocab
         await Client.ExecuteWithErrorHandling<IdDto>(request);
     }
 
-    [Action("Add tag to program", Description = "Add tag to program")]
+    [Action("Add tag to program", Description = "Add tag to a specific program")]
     public async Task AddTagToFolder(
         [ActionParameter] ProgramIdentifier programRequest,
         [ActionParameter] TagTypeIdentifier tagTypeRequest,
@@ -111,7 +111,7 @@ public class FolderActions(InvocationContext invocationContext) : MarketoInvocab
         await Client.ExecuteWithErrorHandling<IdDto>(request);
     }
 
-    [Action("Get program tag value", Description = "Get program tag value")]
+    [Action("Get program tag", Description = "Get value of a specific program tag")]
     public async Task<string> GetProgramTagValue(
         [ActionParameter] ProgramIdentifier programRequest,
         [ActionParameter] TagTypeIdentifier tagTypeRequest,

@@ -28,7 +28,7 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
 {
     private readonly ContentServiceFactory _factory = new(invocationContext, fileManagementClient);
 
-    [Action("Search landing pages", Description = "Search landing pages")]
+    [Action("Search landing pages", Description = "Search landing pages using specific criteria")]
     public async Task<SearchLandingPagesResponse> ListLandingPages([ActionParameter] SearchLandingPagesRequest input)
     {
         input.Validate();
@@ -51,7 +51,7 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
         return new(pages.Select(x => new LandingPageDto(x)).ToList());
     }
 
-    [Action("Get landing page info", Description = "Get landing page info")]
+    [Action("Get landing page", Description = "Get information of a specific landing page")]
     public async Task<LandingPageDto> GetLandingInfo([ActionParameter] LandingPageIdentifier input)
     {
         var request = new RestRequest($"/rest/asset/v1/landingPage/{input.LandingPageId}.json", Method.Get);
@@ -59,7 +59,7 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
         return new(result);
     }
 
-    [Action("Get landing page content", Description = "Get landing page content")]
+    [Action("Get landing page content", Description = "Get content of a specific landing page")]
     public async Task<LandingPageContentResponse> GetLandingContent([ActionParameter] LandingPageIdentifier input)
     {
         var request = new RestRequest($"/rest/asset/v1/landingPage/{input.LandingPageId}/content.json", Method.Get);
@@ -67,7 +67,7 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
         return new(response.ToList());
     }
 
-    [Action("Update landing page metadata", Description = "Update landing page metadata")]
+    [Action("Update landing page metadata", Description = "Update metadata of a specific landing page")]
     public async Task<LandingPageDto> UpdateLandingPageMetadata(
         [ActionParameter] LandingPageIdentifier input,
         [ActionParameter] UpdateLandingMetadataRequest updateLandingMetadata)
@@ -80,7 +80,7 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
         return new(result);
     }
 
-    [Action("Create landing page", Description = "Create landing page")]
+    [Action("Create landing page", Description = "Create a landing page")]
     public async Task<LandingPageDto> CreateLandingPage([ActionParameter] CreateLandingRequest input)
     {
         var request = new RestRequest($"/rest/asset/v1/landingPages.json", Method.Post);
@@ -106,7 +106,7 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
         return new(result);
     }
 
-    [Action("Delete landing page", Description = "Delete landing page")]
+    [Action("Delete landing page", Description = "Delete a specific landing page")]
     public async Task DeleteLandingPage([ActionParameter] LandingPageIdentifier input)
     {
         var endpoint = $"/rest/asset/v1/landingPage/{input.LandingPageId}/delete.json";
@@ -115,7 +115,7 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
         await Client.ExecuteWithErrorHandling<IdDto>(request);
     }
 
-    [Action("Approve landing page draft", Description = "Approve landing page draft")]
+    [Action("Approve landing page draft", Description = "Approve a specific landing page draft")]
     public async Task ApproveLandingPage([ActionParameter] LandingPageIdentifier input)
     {
         var endpoint = $"/rest/asset/v1/landingPage/{input.LandingPageId}/approveDraft.json";
@@ -124,7 +124,7 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
         await Client.ExecuteWithErrorHandling<IdDto>(request);
     }
 
-    [Action("Discard landing page draft", Description = "Discard landing page draft")]
+    [Action("Discard landing page draft", Description = "Discard a specific landing page draft")]
     public async Task DiscardLandingPage([ActionParameter] LandingPageIdentifier input)
     {
         var endpoint = $"/rest/asset/v1/landingPage/{input.LandingPageId}/discardDraft.json";
@@ -133,7 +133,7 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
         await Client.ExecuteWithErrorHandling<IdDto>(request);
     }
 
-    [Action("Unapprove landing page (back to draft)", Description = "Unapprove landing page (back to draft)")]
+    [Action("Unapprove landing page", Description = "Revert a specific landing page back to draft")]
     public async Task UnapproveLandingPage([ActionParameter] LandingPageIdentifier input)
     {
         var endpoint = $"/rest/asset/v1/landingPage/{input.LandingPageId}/unapprove.json";
@@ -142,7 +142,7 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
         await Client.ExecuteWithErrorHandling<IdDto>(request);
     }
 
-    [Action("Download landing page content", Description = "Download landing page content")]
+    [Action("Download landing page content", Description = "Download content of a specific landing page")]
     public async Task<DownloadLandingPageResponse> GetLandingPageAsHtml(
         [ActionParameter] LandingPageIdentifier landingPageId,
         [ActionParameter] DownloadLandingPageRequest downloadInput)
@@ -161,7 +161,7 @@ public class LandingPageActions(InvocationContext invocationContext, IFileManage
         return new(file);
     }
 
-    [Action("Upload landing page content", Description = "Upload landing page content")]
+    [Action("Upload landing page content", Description = "Upload content of a specific landing page")]
     public async Task TranslateLandingWithHtml(
         [ActionParameter] OptionalLandingPageIdentifier landingPageInput,
         [ActionParameter] UploadLandingPageRequest uploadInput)

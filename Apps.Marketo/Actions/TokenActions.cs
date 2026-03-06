@@ -13,7 +13,7 @@ namespace Apps.Marketo.Actions;
 [ActionList("Tokens")]
 public class TokenActions(InvocationContext invocationContext) : MarketoInvocable(invocationContext)
 {
-    [Action("Search tokens", Description = "Search all folder tokens")]
+    [Action("Search tokens", Description = "Search tokens in a specific folder")]
     public async Task<ListTokensResponse> ListTokens([ActionParameter] ListTokensRequest input)
     {
         var endpoint = $"/rest/asset/v1/folder/{input.FolderId.Split("_").First()}/tokens.json"
@@ -23,7 +23,7 @@ public class TokenActions(InvocationContext invocationContext) : MarketoInvocabl
         return await Client.ExecuteWithErrorHandlingFirst<ListTokensResponse>(request);
     }
 
-    [Action("Get token", Description = "Get token by name")]
+    [Action("Get token by name", Description = "Get information of a specific token by its name")]
     public async Task<TokenDto> GetToken([ActionParameter] GetTokenRequest input)
     {
         var endpoint = $"/rest/asset/v1/folder/{input.FolderId}/tokens.json"
@@ -47,7 +47,7 @@ public class TokenActions(InvocationContext invocationContext) : MarketoInvocabl
         return token ?? new();
     }
 
-    [Action("Create token", Description = "Create a new token")]
+    [Action("Create token", Description = "Create a token")]
     public async Task<TokenDto> CreateToken([ActionParameter] CreateTokenRequest input)
     {
         var endpoint = $"/rest/asset/v1/folder/{input.FolderId.Split("_").First()}/tokens.json";
@@ -61,7 +61,7 @@ public class TokenActions(InvocationContext invocationContext) : MarketoInvocabl
         return result.Tokens.First();
     }
 
-    [Action("Delete token", Description = "Delete specific token")]
+    [Action("Delete token", Description = "Delete a specific token")]
     public async Task DeleteToken([ActionParameter] DeleteTokenRequest input)
     {
         var endpoint = $"/rest/asset/v1/folder/{input.FolderId.Split("_").First()}/tokens/delete.json";

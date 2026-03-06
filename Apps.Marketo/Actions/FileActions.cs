@@ -18,7 +18,7 @@ namespace Apps.Marketo.Actions;
 public class FileActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) 
     : MarketoInvocable(invocationContext)
 {
-    [Action("Search all files", Description = "Search all files")]
+    [Action("Search files", Description = "Search files")]
     public async Task<ListFilesResponse> ListFiles()
     {
         var request = new RestRequest("/rest/asset/v1/files.json", Method.Get);
@@ -27,7 +27,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         return new() { Files = response };
     }
 
-    [Action("Get file info", Description = "Get file info")]
+    [Action("Get file", Description = "Get information of a specific file")]
     public async Task<FileInfoDto> GetFileInfo([ActionParameter] FileIdentifier input)
     {
         var endpoint = $"/rest/asset/v1/file/{input.FileId}.json";
@@ -36,7 +36,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         return await Client.ExecuteWithErrorHandlingFirst<FileInfoDto>(request);
     }
 
-    [Action("Download file", Description = "Download file")]
+    [Action("Download file", Description = "Download a specific file")]
     public async Task<FileWrapper> DownloadFile([ActionParameter] FileIdentifier input)
     {
         var fileInfo = await GetFileInfo(input);
@@ -46,7 +46,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         };
     }
 
-    [Action("Update file", Description = "Update file content")]
+    [Action("Update file", Description = "Update content of a specific file")]
     public async Task UpdateFile(
         [ActionParameter] FileIdentifier fileId,
         [ActionParameter] UpdateFileRequest input)
@@ -61,7 +61,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         await Client.ExecuteWithErrorHandling(request);
     }
 
-    [Action("Upload file", Description = "Upload file")]
+    [Action("Upload file", Description = "Upload a file")]
     public async Task<FileInfoDto> UploadFile([ActionParameter] UploadFileRequest input)
     {
         var fileBytes = fileManagementClient.DownloadAsync(input.File).Result.GetByteData().Result;

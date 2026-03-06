@@ -28,7 +28,7 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
 {
     private readonly ContentServiceFactory _factory = new(invocationContext, fileManagementClient);
 
-    [Action("Search snippets", Description = "Search snippets")]
+    [Action("Search snippets", Description = "Search snippets using specific criteria")]
     public async Task<SearchSnippetsResponse> ListSnippets([ActionParameter] SearchSnippetsRequest input)
     {
         input.Validate();
@@ -51,7 +51,7 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
         return new(snippets.Select(x => new SnippetDto(x)).ToList());
     }
 
-    [Action("Get snippet info", Description = "Get snippet info")]
+    [Action("Get snippet", Description = "Get information of a specific snippet")]
     public async Task<SnippetDto> GetSnippetInfo([ActionParameter] SnippetIdentifier snippetRequest)
     {
         var endpoit = $"/rest/asset/v1/snippet/{snippetRequest.SnippetId}.json";
@@ -73,7 +73,7 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
         };
     }
 
-    [Action("Create snippet", Description = "Create a new snippet")]
+    [Action("Create snippet", Description = "Create a snippet")]
     public async Task<SnippetDto> CreateSnippet([ActionParameter] CreateSnippetRequest snippetRequest)
     {
         var request = new RestRequest("/rest/asset/v1/snippets.json", Method.Post)
@@ -89,7 +89,7 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
         return new(result);
     }
 
-    [Action("Update snippet metadata", Description = "Update snippet metadata")]
+    [Action("Update snippet metadata", Description = "Update metadata of a specific snippet")]
     public async Task<SnippetDto> UpdateSnippetMetadata(
         [ActionParameter] SnippetIdentifier input,
         [ActionParameter] UpdateSnippetMetadataRequest updateSnippetMetadata)
@@ -102,7 +102,7 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
         return new(result);
     }
 
-    [Action("Download snippet content", Description = "Download snippet content")]
+    [Action("Download snippet content", Description = "Download content of a specific snippet")]
     public async Task<DownloadSnippetResponse> GetSnippetAsHtml(
         [ActionParameter] SnippetIdentifier snippetInput,
         [ActionParameter] DownloadSnippetRequest downloadInput)
@@ -119,7 +119,7 @@ public class SnippetActions(InvocationContext invocationContext, IFileManagement
         return new(file);
     }
 
-    [Action("Upload snippet content", Description = "Upload snippet content")]
+    [Action("Upload snippet content", Description = "Upload content of a specific snippet")]
     public async Task TranslateSnippetWithHtml(
         [ActionParameter] OptionalSnippetIdentifier snippetInput,
         [ActionParameter] UploadSnippetRequest uploadInput)
