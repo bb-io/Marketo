@@ -21,7 +21,7 @@ public class ContentPollingList(InvocationContext invocationContext) : BasePolli
     [BlueprintEventDefinition(BlueprintEvent.ContentCreatedOrUpdatedMultiple)]
     public async Task<PollingEventResponse<DateMemory, SearchContentResponse>> OnContentApproved(
         PollingEventRequest<DateMemory> request,
-        [PollingEventParameter] OptionalContentTypesIdentifier contentTypesInput)
+        [PollingEventParameter] OptionalPollingContentTypeIdentifier contentTypesInput)
     {
         return await HandlePolling<SearchContentResponse>(request, async memory =>
         {

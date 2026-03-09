@@ -16,7 +16,7 @@ public class ContentPollingTests : TestBase
 		var polling = new ContentPollingList(InvocationContext);
 		var memory = new DateMemory { LastInteractionDate = new DateTime(2026, 03, 09, 9, 0, 0, DateTimeKind.Utc) };
 		var pollingRequest = new PollingEventRequest<DateMemory> { Memory = memory };
-        var contentTypes = new OptionalContentTypesIdentifier { };
+        var contentTypes = new OptionalPollingContentTypeIdentifier { };
 
         // Act
         var result = await polling.OnContentApproved(pollingRequest, contentTypes);

@@ -8,4 +8,5 @@ public static class ContentTypes
     public const string Snippet = "Snippet";
 
     public static readonly string[] SupportedContentTypes = [Email, LandingPage, Form, Snippet];
+    public static readonly string[] SupportedPollingContentTypes = [Email, LandingPage, Snippet];
 }
