@@ -20,7 +20,7 @@ public class LandingPageTests : TestBase
         {
             IncludeImages = true,
             SegmentationId = "1002",
-            Segment = "Test"
+            Segment = "Default"
         };
 
         // Act

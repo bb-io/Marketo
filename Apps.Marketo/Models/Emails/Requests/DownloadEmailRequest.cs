@@ -13,8 +13,8 @@ public class DownloadEmailRequest
     public bool? IncludeImages { get; set; }
 
     [Display("Segmentation ID"), DataSource(typeof(SegmentationDataHandler))]
-    public string? SegmentationId { get; set; }
+    public string SegmentationId { get; set; }
 
     [Display("Segment"), DataSource(typeof(SegmentBySegmentationDataHandler))]
-    public string? Segment { get; set; }
+    public string Segment { get; set; }
 }

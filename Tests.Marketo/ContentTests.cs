@@ -38,10 +38,12 @@ public class ContentTests : TestBase
 	{
 		// Arrange
 		var actions = new ContentActions(InvocationContext, FileManager);
-		var contentType = new ContentTypeIdentifier { ContentType = ContentTypes.Form };
+		var contentType = new ContentTypeIdentifier { ContentType = ContentTypes.Snippet };
 		var input = new DownloadContentRequest
-		{
-			ContentId = "1004"
+        {
+			ContentId = "1",
+            SegmentationId = "1002",
+            Segment = "Test"
         };
 
 		// Act

@@ -7,8 +7,8 @@ namespace Apps.Marketo.Models.Snippets.Request;
 public class DownloadSnippetRequest
 {
     [Display("Segmentation ID"), DataSource(typeof(SegmentationDataHandler))]
-    public string? SegmentationId { get; set; }
+    public string SegmentationId { get; set; }
 
     [Display("Segment"), DataSource(typeof(SegmentBySegmentationDataHandler))]
-    public string? Segment { get; set; }
+    public string Segment { get; set; }
 }
