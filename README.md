@@ -125,11 +125,29 @@ Before you can connect you need to make sure that:
 
 ## Events
 
+### Emails
+
 - **On emails created or updated**
+
+### Email templates
+
 - **On email templates created or updated**
+
+### Snippets
+
 - **On snippets created or updated**
+
+### Forms
+
 - **On forms created or updated**
+
+### Landing pages
 - **On landing pages created or updated**
+
+### Content
+
+> Note: These events support 3 different content types: emails, snippets and landing pages. Forms are not supported
+
 - **On content approved**
 
 ## HTML features

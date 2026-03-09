@@ -14,7 +14,7 @@ public class ContentPollingTests : TestBase
     {
 		// Arrange
 		var polling = new ContentPollingList(InvocationContext);
-		var memory = new DateMemory { LastInteractionDate = new DateTime(2026, 03, 05, 16, 25, 0, DateTimeKind.Utc) };
+		var memory = new DateMemory { LastInteractionDate = new DateTime(2026, 03, 09, 9, 0, 0, DateTimeKind.Utc) };
 		var pollingRequest = new PollingEventRequest<DateMemory> { Memory = memory };
         var contentTypes = new OptionalContentTypesIdentifier { };
 
@@ -22,6 +22,7 @@ public class ContentPollingTests : TestBase
         var result = await polling.OnContentApproved(pollingRequest, contentTypes);
 
         // Assert
+        Console.WriteLine($"Count: {result.Result?.Items.Count}");
         PrintJsonResult(result);
         Assert.IsNotNull(result);
     }

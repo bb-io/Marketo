@@ -3,7 +3,6 @@ using Apps.Marketo.Dtos.Content;
 using Apps.Marketo.Helper.Filter;
 using Apps.Marketo.Models.Content.Response;
 using Apps.Marketo.Models.Entities.Email;
-using Apps.Marketo.Models.Entities.Form;
 using Apps.Marketo.Models.Entities.LandingPage;
 using Apps.Marketo.Models.Entities.Snippet;
 using Apps.Marketo.Models.Identifiers.Optional;
@@ -18,7 +17,7 @@ namespace Apps.Marketo.Polling;
 [PollingEventList("Content")]
 public class ContentPollingList(InvocationContext invocationContext) : BasePollingList(invocationContext)
 {
-    [PollingEvent("On content approved", "On content approved")]
+    [PollingEvent("On content approved", "On emails, snippets and landing pages approved")]
     [BlueprintEventDefinition(BlueprintEvent.ContentCreatedOrUpdatedMultiple)]
     public async Task<PollingEventResponse<DateMemory, SearchContentResponse>> OnContentApproved(
         PollingEventRequest<DateMemory> request,
@@ -35,15 +34,6 @@ public class ContentPollingList(InvocationContext invocationContext) : BasePolli
                 fetchTasks.Add(FetchContent<EmailEntity>(
                     "/rest/asset/v1/emails.json", 
                     memory.LastInteractionDate, 
-                    x => x.UpdatedAt,
-                    x => new ContentDto(x)));
-            }
-
-            if (contentTypesInput.ContentTypes!.Contains(ContentTypes.Form))
-            {
-                fetchTasks.Add(FetchContent<FormEntity>(
-                    "/rest/asset/v1/forms.json", 
-                    memory.LastInteractionDate,
                     x => x.UpdatedAt,
                     x => new ContentDto(x)));
             }
