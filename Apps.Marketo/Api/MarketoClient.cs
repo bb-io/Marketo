@@ -22,12 +22,6 @@ public class MarketoClient : BlackBirdRestClient
         this.AddDefaultHeader("accept", "*/*");
     }
 
-    private static Uri GetUri(IEnumerable<AuthenticationCredentialsProvider> creds)
-    {
-        string url = creds.Get(CredsNames.MunchkinAccountId).Value;
-        return new($"https://{url}.mktorest.com");
-    }
-
     public async Task<IEnumerable<T>> Paginate<T>(RestRequest request)
     {
         int offset = 0;
@@ -103,6 +97,12 @@ public class MarketoClient : BlackBirdRestClient
         }
 
         throw new PluginApplicationException($"Status {response.StatusCode}. Unknown Marketo error.");
+    }
+
+    private static Uri GetUri(IEnumerable<AuthenticationCredentialsProvider> creds)
+    {
+        string url = creds.Get(CredsNames.MunchkinAccountId).Value;
+        return new($"https://{url}.mktorest.com");
     }
 
     private async Task AddAccessToken(RestRequest request)

@@ -13,13 +13,10 @@ public class ConnectionValidator : IConnectionValidator
         try
         {
             var client = new MarketoClient(authProviders);
-            var request = new RestRequest("/rest/asset/v1/files.json", Method.Get);
+            var request = new RestRequest("/rest/asset/v1/tagTypes.json", Method.Get);
             await client.ExecuteWithErrorHandling(request);
 
-            return new()
-            {
-                IsValid = true,
-            };
+            return new() { IsValid = true };
         }
         catch (Exception ex)
         {
