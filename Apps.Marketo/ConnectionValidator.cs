@@ -28,12 +28,12 @@ public class ConnectionValidator : IConnectionValidator
                         Message = $"{errorResult?.ErrorDescription} (error code: {errorResult?.Error})" 
                     };
                 }
-                else if (!string.IsNullOrEmpty(result.ErrorMessage) && result.ErrorMessage.Contains("No such host is known"))
+                else if (!string.IsNullOrWhiteSpace(result.ErrorMessage))
                 {
                     return new()
                     {
                         IsValid = false,
-                        Message = "Munchkin Account ID is invalid"
+                        Message = result.ErrorMessage
                     };
                 }
             }
