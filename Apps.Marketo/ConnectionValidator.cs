@@ -2,7 +2,6 @@
 using Apps.Marketo.Models.Utility.Error;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Connections;
-using Blackbird.Applications.Sdk.Common.Exceptions;
 using Newtonsoft.Json;
 using System.Net;
 
@@ -23,11 +22,19 @@ public class ConnectionValidator : IConnectionValidator
                 if (result.StatusCode == HttpStatusCode.Unauthorized)
                 {
                     var errorResult = JsonConvert.DeserializeObject<AuthError>(result.Content ?? "");
-                    throw new PluginApplicationException($"{errorResult?.ErrorDescription} (error code: {errorResult?.Error})");
+                    return new() 
+                    { 
+                        IsValid = false, 
+                        Message = $"{errorResult?.ErrorDescription} (error code: {errorResult?.Error})" 
+                    };
                 }
                 else if (!string.IsNullOrEmpty(result.ErrorMessage) && result.ErrorMessage.Contains("No such host is known"))
                 {
-                    throw new PluginApplicationException("Munchkin Account ID is invalid");
+                    return new()
+                    {
+                        IsValid = false,
+                        Message = "Munchkin Account ID is invalid"
+                    };
                 }
             }
 
