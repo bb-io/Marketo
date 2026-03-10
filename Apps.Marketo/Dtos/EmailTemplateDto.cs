@@ -1,4 +1,5 @@
-﻿using Blackbird.Applications.Sdk.Common;
+﻿using Apps.Marketo.Models.Entities;
+using Blackbird.Applications.Sdk.Common;
 using Newtonsoft.Json;
 
 namespace Apps.Marketo.Dtos
@@ -9,7 +10,7 @@ namespace Apps.Marketo.Dtos
         [JsonConverter(typeof(DateTimeConverter))]
         public DateTime CreatedAt { get; set; }
         public string Description { get; set; }
-        public Folder Folder { get; set; }
+        public AssetFolder Folder { get; set; }
 
         [Display("Template ID")]
         public int Id { get; set; }

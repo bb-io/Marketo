@@ -2,7 +2,7 @@
 
 namespace Apps.Marketo.Models.Files.Requests;
 
-public class UpdateFileRequest : GetFileInfoRequest
+public class UpdateFileRequest
 {
     public FileReference File { get; set; }
 }

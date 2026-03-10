@@ -17,7 +17,7 @@ Before you can connect you need to make sure that:
 
 ## Connecting
 
-1. Navigate to apps and search for Marketo. If you cannot find Marketo then click _Add App_ in the top right corner, select Marketo and add the app to your Blackbird environment.
+1. Navigate to apps and search for Marketo.
 2. Click _Add Connection_.
 3. Name your connection for future reference e.g. 'My client'.
 4. Fill in the "Munchkin Account ID", "Client ID" and "Client secret" of your Marketo instance you want to connect to. You can find it in Marketo settings
@@ -25,59 +25,96 @@ Before you can connect you need to make sure that:
 
 ## Actions
 
+### Content
+
+> Note: These actions support 4 different content types: forms, emails, snippets and landing pages
+
+- **Search content** Search for content across multiple content types using specific criteria.
+- **Download content** Download content of a specific content type.
+- **Upload content** Upload content of a specific content type.
+
 ### Emails
 
-- **Search emails**
-- **Get email info**
-- **Get email content**
-- **Delete email**
-- **Get email as HTML for translation**
-  <br/>Useful input parameters:
-  * "Include images" - if set to true will include images to your exported HTML (default - false)
-  * "Get only dynamic content" - if set to true will include only dynamic content from your email (other types of content will be skipped)
-  
-- **Translate email from HTML file**
+- **Search emails** Search emails using specific criteria.
+- **Get email** Get information about a specific email.
+- **Update email metadata** Update metadata of a specific email.
+- **Get email content** Get content of a specific email.
+- **Delete email** Delete a specific email.
+- **Download email content** Download content of a specific email.
+- **Upload email content** Upload content of a specific email.
+- **Get email dynamic content** Get dynamic content of a specific email.
+- **Get email dynamic image content** Get dynamic image content of a specific email.
+
+### Email templates
+
+- **Search email templates** Search email templates using specific criteria.
+- **Get email template** Get information about a specific email template.
+- **Get email template content** Get content of a specific email template.
+- **Create email template** Create new email template.
+- **Update email template content** Update content of a specific email template.
+- **Delete email template** Delete a specific email template.
+- **Approve email template draft** Approve a specific email template draft.
 
 ### Files
 
-- **List all files**
-- **Get file info**
-- **Download file**
-- **Upload file**
+- **Search files** Search files.
+- **Get file** Get information of a specific file.
+- **Download file** Download a specific file.
+- **Update file** Update content of a specific file.
+- **Upload file** Upload a file.
 
 ### Folders
 
-- **List folders**
-- **Get folder info**
-- **Create folder**
-- **Delete folder**
+- **Search folders** Search folders using specific criteria.
+- **Get folder** Get information of a specific folder.
+- **Get folder by name** Get information of a specific folder by its name.
+- **Create folder** Create a folder.
+- **Delete folder** Delete a specific folder.
+- **Add tag to program** Add tag to a specific program.
+- **Get program tag** Get value of a specific program tag.
 
 ### Landing pages
 
-- **Search landing pages**
-- **Get landing page info**
-- **Create landing page**
-- **Delete landing page**
-- **Approve landing page draft**
-- **Discard landing page draft**
-- **Unapprove landing page (back to draft)**
-- **Get landing page full content**
-- **Get landing page as HTML for translation**
-- **Translate landing page from HTML file**
-
-**Get landing page as HTML for translation** and **Translate landing page from HTML file** are intended to be used together in translation flow: you can retrieve a form as HTML file, put it into TMS, then retrieve a translated HTML file and put it back to Marketo. **Translate landing page from HTML file** expects the same HTML structure as the structure of the file retrieved with **Get landing page as HTML for translation**.
-
+- **Search landing pages** Search landing pages using specific criteria.
+- **Get landing page** Get information of a specific landing page.
+- **Get landing page content** Get content of a specific landing page.
+- **Update landing page metadata** Update metadata of a specific landing page.
+- **Create landing page** Create a landing page.
+- **Delete landing page** Delete a specific landing page.
+- **Approve landing page draft** Approve a specific landing page draft.
+- **Discard landing page draft** Discard a specific landing page draft.
+- **Unapprove landing page** Revert a specific landing page back to draft.
+- **Download landing page content** Download content of a specific landing page.
+- **Upload landing page content** Upload content of a specific landing page.
 
 ### Forms
 
-- **Get form**
-- **Search forms created or updated in date range**
-- **Get form as HTML for translation**
-- **Create new form from translated HTML**
+- **Get form** Get information of a specific form.
+- **Search forms** Search forms using specific criteria.
+- **Search forms fields** Search fields of a specific form.
+- **Update form metadata** Update metadata of a specific form.
+- **Download form content** Download content of a specific form.
+- **Upload form content** Upload content of a specific form.
 
-**Get form as HTML for translation** and **Create new form from translated HTML** are intended to be used together in translation flow: you can retrieve a form as HTML file, put it into TMS, then retrieve a translated HTML file and put it back to Marketo. **Create new form from translated HTML** expects the same HTML structure as the structure of the file retrieved with **Get form as HTML for translation**.
+### Snippets
+
+- **Search snippets** Search snippets using specific criteria.
+- **Get snippet** Get information of a specific snippet.
+- **Get snippet content** Get content of a specific snippet.
+- **Create snippet** Create a snippet.
+- **Update snippet metadata** Update metadata of a specific snippet.
+- **Download snippet content** Download content of a specific snippet.
+- **Upload snippet content** Upload content of a specific snippet.
+
+### Tokens
+
+- **Search tokens** Search tokens in a specific folder.
+- **Get token by name** Get information of a specific token by its name.
+- **Create token** Create a token.
+- **Delete token** Delete a specific token.
 
 ### Translation functionality (dynamic content)
+
 - Translation functionality is based on dynamic content in Marketo. This type of translation is available for emails and landing pages (last two actions specified in email and landing page sections above)
 - In your Marketo you must have a segmentation which contains segments named as language codes or language names (as you wish). Both actions must use the same segmentation but different segments (because segments are simply different languages).
 - Blackbird will automatically convert all text fields (HTML or rich text) to dynamic content during a translation action. If you want to prevent this you can set "Translate only dynamic content" in translation actions to "true" and then only dynamic content fields will be changed (static text content will remain the same). Don't use this flag if you want to translate whole content.
@@ -88,11 +125,30 @@ Before you can connect you need to make sure that:
 
 ## Events
 
+### Emails
+
 - **On emails created or updated**
+
+### Email templates
+
 - **On email templates created or updated**
+
+### Snippets
+
 - **On snippets created or updated**
+
+### Forms
+
 - **On forms created or updated**
+
+### Landing pages
 - **On landing pages created or updated**
+
+### Content
+
+> Note: These events support 3 different content types: emails, snippets and landing pages. Forms are not supported
+
+- **On content approved**
 
 ## HTML features
 

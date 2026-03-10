@@ -1,70 +1,111 @@
-﻿using Blackbird.Applications.Sdk.Common.Files;
-using Blackbird.Applications.Sdk.Utils.Extensions.Files;
-using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
-using HtmlAgilityPack;
-using System.Text;
+﻿using HtmlAgilityPack;
 using Apps.Marketo.Models.Entities;
+using Apps.Marketo.Models.Utility.Html;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 
-namespace Apps.Marketo.HtmlHelpers
+namespace Apps.Marketo.HtmlHelpers;
+
+public static class HtmlContentBuilder
 {
-    public static class HtmlContentBuilder
+    private const string HtmlIdAttribute = "id";
+    
+    public static string GenerateHtml(
+        Dictionary<string, string> sections, 
+        string title,
+        List<MetadataEntity> metadataEntities)
     {
-        private const string HtmlIdAttribute = "id";
-        
-        public static string GenerateHtml(Dictionary<string, string> sections, string title, string language, HtmlIdEntity entity)
+        var htmlDoc = new HtmlDocument();
+        var htmlNode = htmlDoc.CreateElement("html");
+        htmlDoc.DocumentNode.AppendChild(htmlNode);
+
+        var headNode = htmlDoc.CreateElement("head");
+        htmlNode.AppendChild(headNode);
+
+        foreach (var meta in metadataEntities)
         {
-            var htmlDoc = new HtmlDocument();
-            var htmlNode = htmlDoc.CreateElement("html");
-            htmlDoc.DocumentNode.AppendChild(htmlNode);
-
-            var headNode = htmlDoc.CreateElement("head");
-            htmlNode.AppendChild(headNode);
-            
-            var metaNode = htmlDoc.CreateElement("meta");
-            metaNode.SetAttributeValue("name", entity.MetadataName);
-            metaNode.SetAttributeValue("content", entity.Id);
-            headNode.AppendChild(metaNode);
-
-            var titleNode = htmlDoc.CreateElement("title");
-            headNode.AppendChild(titleNode);
-            titleNode.InnerHtml = title;
-
-            var bodyNode = htmlDoc.CreateElement("body");
-            htmlNode.AppendChild(bodyNode);
-
-            foreach (var section in sections)
+            if (!string.IsNullOrWhiteSpace(meta.MetadataContent))
             {
-                if (!string.IsNullOrWhiteSpace(section.Value))
-                {
-                    var sectionNode = htmlDoc.CreateElement("div");
-                    sectionNode.SetAttributeValue(HtmlIdAttribute, section.Key);
-                    sectionNode.InnerHtml = section.Value;
-                    bodyNode.AppendChild(sectionNode);
-                }
+                var metaNode = htmlDoc.CreateElement("meta");
+                metaNode.SetAttributeValue("name", meta.MetadataName);
+                metaNode.SetAttributeValue("content", meta.MetadataContent);
+                headNode.AppendChild(metaNode);
             }
-            return htmlDoc.DocumentNode.OuterHtml;
         }
 
-        public static Dictionary<string, string> ParseHtml(string html)
+        var titleNode = htmlDoc.CreateElement("title");
+        headNode.AppendChild(titleNode);
+        titleNode.InnerHtml = title;
+
+        var bodyNode = htmlDoc.CreateElement("body");
+        htmlNode.AppendChild(bodyNode);
+
+        foreach (var section in sections)
         {
-            var result = new Dictionary<string, string>();
-            var htmlDoc = new HtmlDocument();
-            htmlDoc.LoadHtml(html);
-            var sections = htmlDoc.DocumentNode.SelectSingleNode("//body").ChildNodes;
-            foreach (var section in sections)
+            if (!string.IsNullOrWhiteSpace(section.Value))
             {
+                var sectionNode = htmlDoc.CreateElement("div");
+                sectionNode.SetAttributeValue(HtmlIdAttribute, section.Key);
+                sectionNode.InnerHtml = section.Value;
+                bodyNode.AppendChild(sectionNode);
+            }
+        }
+        return htmlDoc.DocumentNode.OuterHtml;
+    }
+
+    public static Dictionary<string, string> ParseHtml(string html)
+    {
+        var result = new Dictionary<string, string>();
+        var htmlDoc = new HtmlDocument();
+        htmlDoc.LoadHtml(html);
+        var body = htmlDoc.DocumentNode.SelectSingleNode("//body") ?? 
+            throw new PluginMisconfigurationException("HTML does not have a <body> tag");
+
+        foreach (var section in body.ChildNodes)
+        {
+            if (section.NodeType == HtmlNodeType.Element && section.Attributes.Contains(HtmlIdAttribute))
                 result.Add(section.Attributes[HtmlIdAttribute].Value, section.InnerHtml);
-            }
-            
-            return result;
         }
         
-        public static string? ExtractIdFromMeta(string html, string metadataName)
+        return result;
+    }
+
+    public static List<MetaTag> ExtractAllMetaTags(string html)
+    {
+        var htmlDoc = new HtmlDocument();
+        htmlDoc.LoadHtml(html);
+
+        var metaNodes = htmlDoc.DocumentNode.SelectNodes("//meta[@name and @content]");
+        var metaTags = new List<MetaTag>();
+
+        if (metaNodes != null)
         {
-            var htmlDoc = new HtmlDocument();
-            htmlDoc.LoadHtml(html);
-            var metaNode = htmlDoc.DocumentNode.SelectSingleNode($"//meta[@name='{metadataName}']");
-            return metaNode?.Attributes["content"].Value;
+            foreach (var node in metaNodes)
+            {
+                var name = node.GetAttributeValue("name", string.Empty);
+                var content = node.GetAttributeValue("content", string.Empty);
+
+                if (!string.IsNullOrWhiteSpace(name))
+                    metaTags.Add(new MetaTag(name, content));
+            }
         }
+
+        return metaTags;
+    }
+
+    public static string GetRequiredMetaValue(
+        string? inputValue, 
+        List<MetaTag> metaTags, 
+        string metaKey, 
+        string friendlyName)
+    {
+        if (!string.IsNullOrWhiteSpace(inputValue))
+            return inputValue;
+
+        var meta = metaTags.FirstOrDefault(m => string.Equals(m.Name, metaKey, StringComparison.OrdinalIgnoreCase));
+        if (meta != null && !string.IsNullOrWhiteSpace(meta.Content))
+            return meta.Content;
+
+        throw new PluginMisconfigurationException(
+            $"{friendlyName} was not found in the input file. Please provide it in the optional input.");
     }
 }

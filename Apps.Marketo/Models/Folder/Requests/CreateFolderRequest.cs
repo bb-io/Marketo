@@ -1,6 +1,7 @@
-﻿using Apps.Marketo.DataSourceHandlers.Deprecated;
-using Apps.Marketo.DataSourceHandlers.FolderDataHandlers;
+﻿using Apps.Marketo.DataSourceHandlers.FolderDataHandlers;
+using Apps.Marketo.DataSourceHandlers.Static;
 using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Dictionaries;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Marketo.Models.Folder.Requests;
@@ -15,6 +16,6 @@ public class CreateFolderRequest
     public string FolderId { get; set; }
 
     [Display("Parent folder type")]
-    [DataSource(typeof(FolderTypeDataHandler))]
+    [StaticDataSource(typeof(FolderTypeDataHandler))]
     public string? Type { get; set; }
 }

@@ -1,10 +1,19 @@
-﻿namespace Apps.Marketo.Dtos;
+﻿using Newtonsoft.Json;
+using Apps.Marketo.Models.Utility.Error;
+
+namespace Apps.Marketo.Dtos;
 
 public class BaseResponseDto<T>
 {
-    public List<Error> Errors { get; set; }
-    public string RequestId { get; set; }
-    public List<T>? Result { get; set; }
+    [JsonProperty("errors")]
+    public List<Error> Errors { get; set; } = [];
+
+    [JsonProperty("result")]
+    public List<T>? Result { get; set; } = [];
+
+    [JsonProperty("success")]
     public bool Success { get; set; }
-    public List<string> Warnings { get; set; }
+
+    [JsonProperty("warnings")]
+    public List<string> Warnings { get; set; } = [];
 }

@@ -1,12 +1,12 @@
 ﻿using Apps.Marketo.Dtos;
-using Blackbird.Applications.Sdk.Common;
+using Apps.Marketo.Invocables;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using RestSharp;
 
 namespace Apps.Marketo.DataSourceHandlers
 {
-    public class TagTypeDataHandler : BaseInvocable, IAsyncDataSourceHandler
+    public class TagTypeDataHandler : MarketoInvocable, IAsyncDataSourceHandler
     {
         public TagTypeDataHandler(InvocationContext invocationContext) : base(invocationContext)
         {
@@ -15,13 +15,10 @@ namespace Apps.Marketo.DataSourceHandlers
         public async Task<Dictionary<string, string>> GetDataAsync(DataSourceContext context,
             CancellationToken cancellationToken)
         {
-            var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
+            var request = new RestRequest("/rest/asset/v1/tagTypes.json", Method.Get);
+            var items = await Client.ExecuteWithErrorHandling<TagTypeDto>(request);
 
-            var request = new MarketoRequest("/rest/asset/v1/tagTypes.json", Method.Get,
-                InvocationContext.AuthenticationCredentialsProviders);
-            var items = client.ExecuteWithError<TagTypeDto>(request);
-
-            return items.Result
+            return items
                 .Where(str =>
                     context.SearchString is null ||
                     str.TagType.Contains(context.SearchString, StringComparison.OrdinalIgnoreCase))

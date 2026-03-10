@@ -1,12 +1,12 @@
 ﻿using Apps.Marketo.Dtos;
-using Blackbird.Applications.Sdk.Common;
+using Apps.Marketo.Invocables;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using RestSharp;
 
 namespace Apps.Marketo.DataSourceHandlers.ProgramDataHandlers
 {
-    public class ProgramDataHandler : BaseInvocable, IAsyncDataSourceHandler
+    public class ProgramDataHandler : MarketoInvocable, IAsyncDataSourceHandler
     {
         public ProgramDataHandler(InvocationContext invocationContext) : base(invocationContext)
         {
@@ -14,10 +14,9 @@ namespace Apps.Marketo.DataSourceHandlers.ProgramDataHandlers
         public async Task<Dictionary<string, string>> GetDataAsync(DataSourceContext context,
             CancellationToken cancellationToken)
         {
-            var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
-            var request = new MarketoRequest($"/rest/asset/v1/programs.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
+            var request = new RestRequest($"/rest/asset/v1/programs.json", Method.Get);
             request.AddQueryParameter("maxDepth", 10);
-            var response = client.Paginate<ProgramDto>(request);
+            var response = await Client.Paginate<ProgramDto>(request);
             return response.DistinctBy(x => x.Id).Where(str => str.Name.Contains(context.SearchString)).ToDictionary(k => k.Id.ToString(), v => v.Name);
         }
     }

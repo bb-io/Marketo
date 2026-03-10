@@ -1,60 +1,33 @@
 ﻿using Apps.Marketo.Dtos;
-using Apps.Marketo.Models.Forms.Requests;
+using Apps.Marketo.Invocables;
+using Apps.Marketo.Models.Identifiers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using RestSharp;
 
-namespace Apps.Marketo.DataSourceHandlers
+namespace Apps.Marketo.DataSourceHandlers;
+
+public class FormFieldDataHandler(
+    InvocationContext invocationContext, 
+    [ActionParameter] FormIdentifier formIdentifier) 
+    : MarketoInvocable(invocationContext), IAsyncDataSourceItemHandler
 {
-    public class FormFieldDataHandler : BaseInvocable, IDataSourceHandler
+    public async Task<IEnumerable<DataSourceItem>> GetDataAsync(DataSourceContext context, CancellationToken ct)
     {
-        public GetFormRequest GetFormRequest { get; set; }
+        if (formIdentifier == null || string.IsNullOrWhiteSpace(formIdentifier.FormId))
+            throw new PluginMisconfigurationException("Please provide the 'Form ID' input first");
 
-        public FormFieldDataHandler(InvocationContext invocationContext, [ActionParameter] GetFormRequest getFormRequest) : base(invocationContext)
-        {
-            GetFormRequest = getFormRequest;
-        }
+        var getFieldsRequest = new RestRequest($"/rest/asset/v1/form/{formIdentifier.FormId}/fields.json", Method.Get);
+        var formFields = await Client.ExecuteWithErrorHandling<FormFieldDto>(getFieldsRequest);
 
-        public Dictionary<string, string> GetData(DataSourceContext context)
-        {
-            var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
-            if (GetFormRequest == null || string.IsNullOrWhiteSpace(GetFormRequest.FormId))
-                throw new ArgumentException("Specify form first or set the output of \"List form fields\" action here");
+        var filtered = formFields?
+            .Where(formField => 
+                context.SearchString == null || 
+                (!string.IsNullOrEmpty(formField.Label) && 
+                formField.Label.Contains(context.SearchString, StringComparison.OrdinalIgnoreCase))) ?? [];
 
-            var formFields = GetFormFieldsFromSingleForm(client, GetFormRequest.FormId.ToString());
-
-            return formFields.Where(formField => context.SearchString == null ||
-                                                 (!string.IsNullOrEmpty(formField.Label) && formField.Label.Contains(context.SearchString, StringComparison.OrdinalIgnoreCase)))
-                .ToDictionary(formField => formField.Id, formField => formField.Label ?? $"Empty label (id: {formField.Id})");
-        }
-
-        //private List<FormFieldDto> GetFormFieldsFromAllForms(MarketoClient client)
-        //{
-        //    var request = new MarketoRequest($"/rest/asset/v1/forms.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
-        //    var forms = client.Paginate<FormDto>(request);
-        //    var allFormFields = new List<FormFieldDto>();
-        //    foreach(var form in forms)
-        //    {
-        //        var getFieldsRequest = new MarketoRequest($"/rest/asset/v1/form/{form.Id}/fields.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
-        //        var formFields = GetFormFieldsFromSingleForm(client, form.Id.ToString());
-        //        if (formFields != null)
-        //        {
-        //            foreach(var field in formFields)
-        //            {
-        //                field.Label = $"{field.Label ?? $"Empty label (id: {field.Id})"} - {form.Name}";
-        //                allFormFields.Add(field);
-        //            }
-        //        }
-        //    }
-        //    return allFormFields;
-        //}
-
-        private List<FormFieldDto>? GetFormFieldsFromSingleForm(MarketoClient client, string formId)
-        {
-            var getFieldsRequest = new MarketoRequest($"/rest/asset/v1/form/{formId}/fields.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
-            var formFields = client.ExecuteWithError<FormFieldDto>(getFieldsRequest);
-            return formFields.Result;
-        }
+        return filtered.Select(x => new DataSourceItem(x.Id, x.Label ?? $"Empty label (id: {x.Id})")).ToList();
     }
 }

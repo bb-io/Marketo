@@ -3,15 +3,16 @@ using Blackbird.Applications.Sdk.Common;
 using Apps.Marketo.Dtos;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using RestSharp;
-using Apps.Marketo.Models.Emails.Requests;
+using Apps.Marketo.Models.Identifiers;
+using Apps.Marketo.Invocables;
 
 namespace Apps.Marketo.DataSourceHandlers.Deprecated
 {
-    public class EmailDynamicItemsDataHandler : BaseInvocable, IAsyncDataSourceHandler
+    public class EmailDynamicItemsDataHandler : MarketoInvocable, IAsyncDataSourceHandler
     {
-        public GetEmailInfoRequest EmailInfoRequest { get; set; }
+        public EmailIdentifier EmailInfoRequest { get; set; }
         public EmailDynamicItemsDataHandler(InvocationContext invocationContext,
-            [ActionParameter] GetEmailInfoRequest emailInfoRequest) : base(invocationContext)
+            [ActionParameter] EmailIdentifier emailInfoRequest) : base(invocationContext)
         {
             EmailInfoRequest = emailInfoRequest;
         }
@@ -21,9 +22,8 @@ namespace Apps.Marketo.DataSourceHandlers.Deprecated
         {
             if (EmailInfoRequest == null)
                 throw new ArgumentException("Please, specify an email first");
-            var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
-            var request = new MarketoRequest($"/rest/asset/v1/email/{EmailInfoRequest.EmailId}/content.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
-            var response = client.Paginate<EmailContentDto>(request);
+            var request = new RestRequest($"/rest/asset/v1/email/{EmailInfoRequest.EmailId}/content.json", Method.Get);
+            var response = await Client.Paginate<EmailContentDto>(request);
 
             return response.Where(e => e.ContentType == "DynamicContent").ToDictionary(k => k.Value.ToString()!, v => v.HtmlId);
         }

@@ -1,11 +1,11 @@
-﻿using Apps.Marketo.DataSourceHandlers;
-using Blackbird.Applications.Sdk.Common.Dynamic;
+﻿using Apps.Marketo.DataSourceHandlers.Static;
+using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Dictionaries;
 
-namespace Apps.Marketo.Models.EmailTemplates.Requests
+namespace Apps.Marketo.Models.EmailTemplates.Requests;
+
+public class ListEmailTemplatesRequest
 {
-    public class ListEmailTemplatesRequest
-    {
-        [DataSource(typeof(StatusDataHandler))]
-        public string? Status { get; set; }
-    }
+    [Display("Status"), StaticDataSource(typeof(StatusDataHandler))]
+    public string? Status { get; set; }
 }

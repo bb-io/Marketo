@@ -1,28 +1,70 @@
-﻿using Apps.Marketo.Actions;
-using Apps.Marketo.Models.Emails.Requests;
+﻿using Tests.Marketo.Base;
+using Apps.Marketo.Actions;
+using Apps.Marketo.Models.Identifiers;
 using Apps.Marketo.Models.LandingPages.Requests;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Tests.Marketo.Base;
+using Apps.Marketo.Models.Identifiers.Optional;
+using Blackbird.Applications.Sdk.Common.Files;
 
-namespace Tests.Marketo
+namespace Tests.Marketo;
+
+[TestClass]
+public class LandingPageTests : TestBase
 {
-    [TestClass]
-    public class LandingPageTests :TestBase
+    [TestMethod]
+    public async Task DownloadLandingPage_IsSuccess()
     {
-        [TestMethod]
-        public async Task GetLandingPages()
+        // Arrange
+        var action = new LandingPageActions(InvocationContext, FileManager);
+        var landingId = new LandingPageIdentifier { LandingPageId = "1007" };
+        var input = new DownloadLandingPageRequest
         {
-            var action = new LandingPageActions(InvocationContext,FileManager);
-            var response = await action.GetLandingPageAsHtml(new GetLandingInfoRequest { Id= "1006" },
-                new GetSegmentationRequest {  SegmentationId= "1002" },
-                new GetSegmentBySegmentationRequest { Segment= "Test" },
-                new GetLandingPageAsHtmlRequest { });
-            Assert.IsNotNull(response);
+            IncludeImages = true,
+            SegmentationId = "1002",
+            Segment = "Default"
+        };
 
-        }
+        // Act
+        var result = await action.GetLandingPageAsHtml(landingId, input);
+
+        // Assert
+        Console.WriteLine(result.Content.Name);
+        Assert.IsNotNull(result);
+    }
+
+    [TestMethod]
+    public async Task ListLandingPages_ReturnsLandingPages()
+    {
+        // Arrange
+        var action = new LandingPageActions(InvocationContext, FileManager);
+        var input = new SearchLandingPagesRequest
+        {
+            UpdatedAfter = new DateTime(2024, 11, 13, 19, 10, 0, DateTimeKind.Utc),
+            UpdatedBefore = new DateTime(2024, 11, 13, 19, 15, 0, DateTimeKind.Utc),
+        };
+
+        // Act
+        var result = await action.ListLandingPages(input);
+
+        // Assert
+        Console.WriteLine($"Count: {result.LandingPages.Count}");
+        PrintJsonResult(result);
+        Assert.IsNotNull(result);
+    }
+
+    [TestMethod]
+    public async Task UploadLandingPage_IsSuccess()
+    {
+        // Arrange
+        var action = new LandingPageActions(InvocationContext, FileManager);
+        var pageInput = new OptionalLandingPageIdentifier { };
+        var input = new UploadLandingPageRequest
+        {
+            File = new FileReference { Name = "test.html" },
+            //SegmentationId = "1002",
+            //Segment = "Test",
+        };
+
+        // Act
+        await action.TranslateLandingWithHtml(pageInput, input);
     }
 }

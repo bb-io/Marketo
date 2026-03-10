@@ -1,121 +1,133 @@
-﻿using System.Text;
+﻿using HtmlAgilityPack;
 using Apps.Marketo.Dtos;
-using Apps.Marketo.Models.Forms.Requests;
+using Apps.Marketo.Models.Entities.Form;
 
 namespace Apps.Marketo.HtmlHelpers.Forms;
 
 public static class FormToHtmlConverter
 {
-    public static string ConvertToHtml(FormDto formDto, IEnumerable<FormFieldDto> formData, IgnoreFieldsRequest ignoreFieldsRequest)
+    private const string FormElementAttribute = "data-marketo-form-element";
+    private const string DataFieldDataAttribute = "data-marketo-field-data";
+
+    public static string ConvertToInnerHtml(
+        FormEntity form,
+        IEnumerable<FormFieldDto> formData,
+        bool? ignoreVisibilityRules,
+        IEnumerable<string>? ignoreFields)
     {
-        const string formElementAttribute = "data-marketo-form-element";
-        
-        var html = new StringBuilder();
-        html.Append($"<div id=\"{formDto.Id}\">");
+        var doc = new HtmlDocument();
+        var containerDiv = doc.CreateElement("div");
 
-        html.Append($"<div {formElementAttribute}=\"button\">");
-        html.Append($"<p {formElementAttribute}=\"{nameof(formDto.ButtonLabel)}\">{formDto.ButtonLabel}</p>");
-        html.Append($"<p {formElementAttribute}=\"{nameof(formDto.WaitingLabel)}\">{formDto.WaitingLabel}</p>");
-        html.Append("</div>");
+        var buttonDiv = doc.CreateElement("div");
+        buttonDiv.SetAttributeValue(FormElementAttribute, "button");
 
-        html.Append($"<div {formElementAttribute}=\"thankYouList\">");
+        var btnLabelP = doc.CreateElement("p");
+        btnLabelP.SetAttributeValue(FormElementAttribute, nameof(form.ButtonLabel));
+        btnLabelP.InnerHtml = form.ButtonLabel;
+        buttonDiv.AppendChild(btnLabelP);
 
-        foreach (var thankYouPage in formDto.ThankYouList)
+        var waitLabelP = doc.CreateElement("p");
+        waitLabelP.SetAttributeValue(FormElementAttribute, nameof(form.WaitingLabel));
+        waitLabelP.InnerHtml = form.WaitingLabel;
+        buttonDiv.AppendChild(waitLabelP);
+
+        containerDiv.AppendChild(buttonDiv);
+
+        var thankYouDiv = doc.CreateElement("div");
+        thankYouDiv.SetAttributeValue(FormElementAttribute, "thankYouList");
+
+        foreach (var thankYouPage in form.ThankYouList ?? [])
         {
-            html.Append("<div>");
-
-            if (thankYouPage.Values != null)
+            if (thankYouPage.Values != null && thankYouPage.Values.Any())
+            {
+                var tyItemDiv = doc.CreateElement("div");
                 foreach (var value in thankYouPage.Values)
                 {
-                    html.Append($"<p>{value}</p>");
+                    var p = doc.CreateElement("p");
+                    p.InnerHtml = value;
+                    tyItemDiv.AppendChild(p);
                 }
-
-            html.Append("</div>");
-        }
-        
-        html.Append("</div>");
-
-        html.Append($"<div {formElementAttribute}=\"fields\">");
-        
-        foreach (var field in formData)
-        {
-            if(ignoreFieldsRequest.IgnoreFields != null && ignoreFieldsRequest.IgnoreFields.Contains(field.Id))
-            {
-                continue;
+                thankYouDiv.AppendChild(tyItemDiv);
             }
-            var htmlField = WrapFieldInDiv(field, ignoreFieldsRequest.IgnoreVisibilityRules ?? false);
-            html.Append(htmlField);
         }
 
-        html.Append("</div>");
-        html.Append("</div>");
-        return html.ToString();
+        if (thankYouDiv.ChildNodes.Count > 0)
+            containerDiv.AppendChild(thankYouDiv);
+
+        var fieldsDiv = doc.CreateElement("div");
+        fieldsDiv.SetAttributeValue(FormElementAttribute, "fields");
+
+        var fieldsToProcess = formData.Where(f => ignoreFields == null || !ignoreFields.Contains(f.Id));
+
+        foreach (var field in fieldsToProcess)
+            fieldsDiv.AppendChild(CreateFieldNode(doc, field, ignoreVisibilityRules ?? false));
+
+        containerDiv.AppendChild(fieldsDiv);
+
+        return containerDiv.InnerHtml;
     }
-    
-    private static string WrapFieldInDiv(FormFieldDto field, bool ignoreVisibilityRulesContent)
+
+    private static HtmlNode CreateFieldNode(HtmlDocument doc, FormFieldDto field, bool ignoreVisibilityRules)
     {
-        const string dataFieldDataAttribute = "data-marketo-field-data";
-        var htmlField = new StringBuilder();
-        
-        htmlField.Append($"<div data-marketo-{nameof(field.Id)}=\"{field.Id}\">");
-        
-        if (field.Label != null)
-            htmlField.Append($"<div {dataFieldDataAttribute}=\"{nameof(field.Label)}\">{field.Label}</div>");
-        
-        if (field.Instructions != null)
-            htmlField.Append($"<div {dataFieldDataAttribute}=\"{nameof(field.Instructions)}\">{field.Instructions}</div>");
-            
-        if (field.DefaultValue != null)
-            htmlField.Append($"<div {dataFieldDataAttribute}=\"{nameof(field.DefaultValue)}\">{field.DefaultValue}</div>");
-        
-        if (field.ValidationMessage != null)
-            htmlField.Append($"<div {dataFieldDataAttribute}=\"{nameof(field.ValidationMessage)}\">{field.ValidationMessage}</div>");
-            
-        if (field.HintText != null)
-            htmlField.Append($"<div {dataFieldDataAttribute}=\"{nameof(field.HintText)}\">{field.HintText}</div>");
-            
-        if (field.Text != null)
-            htmlField.Append($"<div {dataFieldDataAttribute}=\"{nameof(field.Text)}\">{field.Text}</div>");
+        var fieldDiv = doc.CreateElement("div");
+        fieldDiv.SetAttributeValue($"data-marketo-{nameof(field.Id)}", field.Id);
 
-        if (field.VisibilityRules != null && !ignoreVisibilityRulesContent)
+        void AddDataField(string propertyName, string? value)
         {
-            htmlField.Append($"<div {dataFieldDataAttribute}=\"{nameof(field.VisibilityRules)}\">");
-        
-            if (field.VisibilityRules.Rules != null)
+            if (!string.IsNullOrEmpty(value))
             {
-                foreach (var rule in field.VisibilityRules.Rules)
-                {
-                    htmlField.Append("<div>");
-                    htmlField.Append($"<label>{rule.AltLabel}</label>");
-
-                    foreach (var value in rule.Values)
-                    {
-                        htmlField.Append($"<p>{value}</p>");
-                    }
-                    htmlField.Append("</div>");
-                }
+                var div = doc.CreateElement("div");
+                div.SetAttributeValue(DataFieldDataAttribute, propertyName);
+                div.InnerHtml = value;
+                fieldDiv.AppendChild(div);
             }
-
-            htmlField.Append("</div>");
-        }
-        
-        if (field.FieldMetaData != null)
-        {
-            htmlField.Append($"<div {dataFieldDataAttribute}=\"{nameof(field.FieldMetaData)}\">");
-
-            if (field.FieldMetaData.Values != null)
-            {
-                foreach (var value in field.FieldMetaData.Values)
-                {
-                    htmlField.Append($"<p>{value.Label}</p>");
-                }
-            }
-            
-            htmlField.Append("</div>");
         }
 
-        htmlField.Append("</div>");
+        AddDataField(nameof(field.Label), field.Label);
+        AddDataField(nameof(field.Instructions), field.Instructions);
+        AddDataField(nameof(field.DefaultValue), field.DefaultValue);
+        AddDataField(nameof(field.ValidationMessage), field.ValidationMessage);
+        AddDataField(nameof(field.HintText), field.HintText);
+        AddDataField(nameof(field.Text), field.Text);
 
-        return htmlField.ToString();
+        if (field.VisibilityRules?.Rules != null && !ignoreVisibilityRules)
+        {
+            var visDiv = doc.CreateElement("div");
+            visDiv.SetAttributeValue(DataFieldDataAttribute, nameof(field.VisibilityRules));
+
+            foreach (var rule in field.VisibilityRules.Rules)
+            {
+                var ruleDiv = doc.CreateElement("div");
+
+                var label = doc.CreateElement("label");
+                label.InnerHtml = rule.AltLabel;
+                ruleDiv.AppendChild(label);
+
+                foreach (var value in rule.Values ?? [])
+                {
+                    var p = doc.CreateElement("p");
+                    p.InnerHtml = value;
+                    ruleDiv.AppendChild(p);
+                }
+                visDiv.AppendChild(ruleDiv);
+            }
+            fieldDiv.AppendChild(visDiv);
+        }
+
+        if (field.FieldMetaData?.Values != null)
+        {
+            var metaDiv = doc.CreateElement("div");
+            metaDiv.SetAttributeValue(DataFieldDataAttribute, nameof(field.FieldMetaData));
+
+            foreach (var value in field.FieldMetaData.Values)
+            {
+                var p = doc.CreateElement("p");
+                p.InnerHtml = value.Label;
+                metaDiv.AppendChild(p);
+            }
+            fieldDiv.AppendChild(metaDiv);
+        }
+
+        return fieldDiv;
     }
 }

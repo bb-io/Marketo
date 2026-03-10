@@ -25,12 +25,6 @@ public class FileInfoDto
     public FileFolder Folder { get; set; }
 }
 
-public class Error
-{
-    public string Message { get; set; }
-    public string Code { get; set; }
-}
-
 public class FileFolder
 {
     [Display("Folder ID")]

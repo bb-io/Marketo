@@ -4,15 +4,17 @@ using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Common;
 using RestSharp;
+using Apps.Marketo.Models.Identifiers;
+using Apps.Marketo.Invocables;
 
 namespace Apps.Marketo.DataSourceHandlers.Deprecated
 {
-    public class EmailSegmentDataHandler : BaseInvocable, IAsyncDataSourceHandler
+    public class EmailSegmentDataHandler : MarketoInvocable, IAsyncDataSourceHandler
     {
-        public GetEmailInfoRequest EmailInfoRequest { get; set; }
+        public EmailIdentifier EmailInfoRequest { get; set; }
         public GetEmailDynamicItemRequest DynamicItemRequest { get; set; }
         public EmailSegmentDataHandler(InvocationContext invocationContext,
-            [ActionParameter] GetEmailInfoRequest emailInfoRequest,
+            [ActionParameter] EmailIdentifier emailInfoRequest,
             [ActionParameter] GetEmailDynamicItemRequest dynamicItemRequest) : base(invocationContext)
         {
             EmailInfoRequest = emailInfoRequest;
@@ -27,9 +29,8 @@ namespace Apps.Marketo.DataSourceHandlers.Deprecated
             if (DynamicItemRequest == null)
                 throw new ArgumentException("Please, specify an email dynamic content first");
 
-            var client = new MarketoClient(InvocationContext.AuthenticationCredentialsProviders);
-            var request = new MarketoRequest($"/rest/asset/v1/email/{EmailInfoRequest.EmailId}/dynamicContent/{DynamicItemRequest.DynamicContentId}.json", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
-            var response = client.Paginate<DynamicContentDto<EmailBaseSegmentDto>>(request);
+            var request = new RestRequest($"/rest/asset/v1/email/{EmailInfoRequest.EmailId}/dynamicContent/{DynamicItemRequest.DynamicContentId}.json", Method.Get);
+            var response = await Client.Paginate<DynamicContentDto<EmailBaseSegmentDto>>(request);
 
             return response.First().Content.Where(s => s.Type == "HTML").ToDictionary(k => k.SegmentName, v => v.SegmentName);
         }
