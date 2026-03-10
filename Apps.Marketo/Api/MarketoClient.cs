@@ -81,6 +81,20 @@ public class MarketoClient : BlackBirdRestClient
         return result;
     }
 
+    public async Task<RestResponse<AuthDto>> ExecuteTokenEndpoint()
+    {
+        string clientId = _creds.Get(CredsNames.ClientId).Value;
+        string clientSecret = _creds.Get(CredsNames.ClientSecret).Value;
+
+        var authRequest = new RestRequest("/identity/oauth/token", Method.Get);
+        authRequest.AddQueryParameter("grant_type", "client_credentials");
+        authRequest.AddQueryParameter("client_id", clientId);
+        authRequest.AddQueryParameter("client_secret", clientSecret);
+
+        var authResponse = await this.ExecuteAsync<AuthDto>(authRequest);
+        return authResponse;
+    }
+
     protected override Exception ConfigureErrorException(RestResponse response)
     {
         var errorEnvelope = JsonConvert.DeserializeObject<ErrorResponse>(response.Content!);
@@ -107,17 +121,9 @@ public class MarketoClient : BlackBirdRestClient
 
     private async Task AddAccessToken(RestRequest request)
     {
-        string clientId = _creds.Get(CredsNames.ClientId).Value;
-        string clientSecret = _creds.Get(CredsNames.ClientSecret).Value;
-
-        var authRequest = new RestRequest("/identity/oauth/token", Method.Get);
-        authRequest.AddQueryParameter("grant_type", "client_credentials");
-        authRequest.AddQueryParameter("client_id", clientId);
-        authRequest.AddQueryParameter("client_secret", clientSecret);
-
-        var authResponse = await this.ExecuteAsync<AuthDto>(authRequest);
-        if (authResponse.Data == null)
-            throw new Exception("Auth response was null");
+        var authResponse = await ExecuteTokenEndpoint();
+        if (authResponse == null || authResponse.Data == null)
+            throw new PluginApplicationException("Auth response was null");
 
         request.AddOrUpdateHeader("Authorization", $"Bearer {authResponse.Data.AccessToken}");
     }
