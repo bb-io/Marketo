@@ -5,12 +5,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <OutputType>Library</OutputType>
     <Product>Marketo</Product>
-    <Version>1.9.0</Version>
+    <Version>1.9.1</Version>
     <Description>Marketo is a marketing automation solution from Adobe.</Description>
     <AssemblyName>Apps.Marketo</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Blackbird.Applications.SDK.Blueprints" Version="1.0.1" />
+    <PackageReference Include="Blackbird.Applications.SDK.Blueprints" Version="1.0.2" />
     <PackageReference Include="Blackbird.Applications.SDK.Extensions.FileManagement" Version="1.1.0" />
     <PackageReference Include="Blackbird.Applications.Sdk.Utils" Version="1.0.26" />
     <PackageReference Include="Blackbird.Filters" Version="1.1.53" />
