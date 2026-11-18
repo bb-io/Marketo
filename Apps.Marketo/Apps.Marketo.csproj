@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <OutputType>Library</OutputType>
     <Product>Marketo</Product>
-    <Version>1.9.1</Version>
+    <Version>1.9.2</Version>
     <Description>Marketo is a marketing automation solution from Adobe.</Description>
     <AssemblyName>Apps.Marketo</AssemblyName>
   </PropertyGroup>
@@ -20,8 +20,6 @@
     <EmbeddedResource CopyToOutputDirectory="Always" Include="image\icon.png" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\README.md">
-      <Link>README.md</Link>
-    </Content>
+    <EmbeddedResource Include="..\README.md" Link="README.md" CopyToOutputDirectory="Always" />
   </ItemGroup>
 </Project>
